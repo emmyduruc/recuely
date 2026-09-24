@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { HealthStatus } from '@repo/contracts';
 
 declare global {
   interface Window {
@@ -22,8 +23,10 @@ test('T0: home page loads without requesting camera or microphone', async ({ pag
   expect(await page.evaluate(() => window.getUserMediaCalls)).toBe(0);
 });
 
-test('T0: health endpoint responds', async ({ request }) => {
+test('T1: health endpoint responds and reports the database status', async ({ request }) => {
   const response = await request.get('/api/health');
   expect(response.ok()).toBe(true);
-  expect(await response.json()).toEqual({ app: 'ok' });
+  const health: unknown = await response.json();
+  expect(health).toMatchObject({ app: HealthStatus.Ok });
+  expect(Object.values(HealthStatus)).toContain((health as { db: unknown }).db);
 });

@@ -16,4 +16,14 @@ export default [
       ],
     },
   },
+  {
+    // TypeORM is reached only through @repo/db, so there is one resolved copy (SPEC.md §B3).
+    files: ['server/**/*.ts', 'test/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { patterns: [{ group: ['typeorm', 'typeorm/*'], message: 'Import TypeORM types from @repo/db.' }] },
+      ],
+    },
+  },
 ];

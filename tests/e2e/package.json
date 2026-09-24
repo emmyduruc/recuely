@@ -9,6 +9,7 @@
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
+    "@repo/contracts": "workspace:*",
     "@repo/web": "workspace:*"
   }
 }

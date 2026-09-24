@@ -17,9 +17,12 @@ export default defineNuxtConfig({
   typescript: {
     strict: true,
     tsConfig: { compilerOptions: strictCompilerOptions },
-    nodeTsConfig: { compilerOptions: strictCompilerOptions, include: ['../test/**/*'] },
+    nodeTsConfig: { compilerOptions: strictCompilerOptions, include: ['../test/**/*', '../vitest.config.ts', '../vitest.int.config.ts'] },
   },
   nitro: {
     typescript: { tsConfig: { compilerOptions: strictCompilerOptions } },
+    // Workspace packages ship TS source, so they are bundled; TypeORM and pg stay external
+    // and are traced into .output/server/node_modules (SPEC.md §B2, H-20).
+    externals: { inline: ['@repo/contracts', '@repo/db'], external: ['typeorm', 'pg'] },
   },
 });

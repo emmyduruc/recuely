@@ -3,22 +3,25 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "nuxt dev --port 3000",
+    "dev": "nuxt dev --port 3000 --dotenv ../../.env",
     "build": "nuxt build",
     "preview": "node .output/server/index.mjs",
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck",
     "lint": "eslint . --max-warnings=0",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:int": "vitest run --config vitest.int.config.ts"
   },
   "dependencies": {
     "@nuxt/ui": "4.11.2",
+    "@repo/contracts": "workspace:*",
+    "@repo/db": "workspace:*",
     "nuxt": "4.5.2",
     "tailwindcss": "4.3.3",
     "vue": "3.5.43"
   },
   "devDependencies": {
-    "@repo/contracts": "workspace:*",
+    "ajv": "8.20.0",
     "vue-tsc": "3.3.11"
   }
 }

@@ -1,14 +1,5 @@
-export const HealthStatus = {
-  Ok: 'ok',
-  Degraded: 'degraded',
-  Unavailable: 'unavailable',
-} as const;
-export type HealthStatus = (typeof HealthStatus)[keyof typeof HealthStatus];
+import { type AppHealth, HealthStatus } from '@repo/contracts';
 
-export interface AppHealth {
-  app: HealthStatus;
-}
-
-export function buildAppHealth(): AppHealth {
-  return { app: HealthStatus.Ok };
+export function buildAppHealth(db: HealthStatus): AppHealth {
+  return { app: HealthStatus.Ok, db };
 }

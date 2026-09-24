@@ -14,7 +14,8 @@
     "test": "turbo run test",
     "test:int": "turbo run test:int",
     "test:e2e": "turbo run test:e2e",
-    "db:migrate": "turbo run db:migrate"
+    "db:migrate": "turbo run db:migrate",
+    "db:seed": "turbo run db:seed"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

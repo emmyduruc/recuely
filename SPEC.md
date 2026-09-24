@@ -1,10 +1,10 @@
 # SPEC — Filming Assistant
 
-> Single source of truth for this project. Version **0.3.1** · Last updated 2026-09-23
+> Single source of truth for this project. Version **0.8.1** · Last updated 2026-09-24
 > Input brief: `product.md` (frozen). Repo rules for Claude Code: `CLAUDE.md`.
 > "Filming Assistant" is a placeholder name. Never use it in package names, identifiers, or branding.
 
-**Contents:** Part A What & Why · Part B How (architecture, stack, contracts, code standards) · Part C Testing · Part D Task Plan (gated) · Part E Assumptions & open decisions · Part F Change log
+**Contents:** Part A What & Why · Part B How (architecture, stack, contracts, code standards, i18n) · Part C Testing · Part D Task Plan (gated) · Part E Assumptions & open decisions · Part F Change log
 
 ---
 
@@ -85,7 +85,7 @@ Honesty rules: never claim control over Bluetooth routing; "system default outpu
 
 ## A8. Out of scope for R1
 
-Voice cloning, AI avatars, a non-linear editor, social posting, Notion/Google Docs OAuth, browser extension, native mobile/background listening, billing, hosted AI, cloud storage, OCR for image-only PDFs, barge-in during speaker playback. **Login/auth** is also out of R1: the `User` model exists (Task 1), but R1 runs as a single local user.
+Voice cloning, AI avatars, a non-linear editor, social posting, Notion/Google Docs OAuth, browser extension, native mobile/background listening, billing, hosted AI, cloud storage, OCR for image-only PDFs, barge-in during speaker playback, **languages other than English** (UI and voice). R1 is English only; §B11 keeps the UI ready for more languages, which will be rolled out later with their own spec change if R1 works. **Login/auth** is also out of R1: the `User` model exists (Task 1), but R1 runs as a single local user.
 
 ---
 
@@ -144,7 +144,7 @@ Root scripts: `pnpm dev`, `pnpm build`, `pnpm typecheck`, `pnpm lint`, `pnpm tes
 | Frontend | Nuxt 4, Vue 3, TypeScript, Nuxt UI + Tailwind | Studio/preflight/teleprompter pages are client-only |
 | API | Nitro server routes in `apps/web/server/api` | No NestJS/GraphQL |
 | ORM | **TypeORM** (not Prisma) | Entities use `EntitySchema` (no decorators), because Nitro/esbuild doesn't emit decorator metadata. Migrations in `packages/db/migrations`. `typeorm` + `pg` marked external in the Nitro build. |
-| Database | **PostgreSQL 16** (Homebrew locally) | Separate `recuely_test` DB for integration tests |
+| Database | **PostgreSQL 16+ on Neon** (hosted; no local install) | Connection comes only from `DATABASE_URL` (dev) and `DATABASE_URL_TEST` (integration tests), each a separate Neon branch or database. TLS required (`sslmode=require`). Any PostgreSQL URL works, so a local server stays possible. See §C1.1 |
 | Media files | Browser OPFS first (crash-safe), then upload to local disk storage (`STORAGE_DIR`) via the API | Large media never goes in DB rows. Storage sits behind a `Storage` interface so S3-compatible storage can be added later. |
 | AI service | FastAPI; candidates: faster-whisper (STT), Silero or in-browser VAD, Kokoro (TTS), Ollama (optional segmentation) | Candidates until measured (Tasks 7–9) |
 | Tests | Vitest, fast-check, Playwright, pytest, ruff | See Part C |
@@ -189,7 +189,7 @@ All ids are UUID v7 (`uuid` primary key, generated in app code). All tables have
 
 | Entity | Key fields | Relations / notes |
 |---|---|---|
-| **User** | id, email (nullable, unique), display_name, locale, is_local (bool) | R1: one seeded local user (`is_local = true`). Auth comes later with its own spec. |
+| **User** | id, email (nullable, unique), display_name, locale (`Locale` value, default `en`, §B11), is_local (bool) | R1: one seeded local user (`is_local = true`). Auth comes later with its own spec. |
 | **UserSettings** | user_id (PK/FK), default_voice_id, default_rate, theme, reduced_motion, command_aliases (jsonb), match_thresholds (jsonb) | 1:1 User |
 | **VoiceFavorite** | id, user_id, provider, voice_id, label | N:1 User; unique (user_id, provider, voice_id) |
 | **Device** | id, user_id, label, user_agent, echo_settle_ms, capability_probe (jsonb), last_seen_at | Per-device calibration + capability results |
@@ -201,6 +201,17 @@ All ids are UUID v7 (`uuid` primary key, generated in app code). All tables have
 | **Session** | id, project_id, user_id, device_id, chunk_plan_id, state, current_chunk_id, seq (bigint), settings (jsonb), completed_at | Snapshot only; the event log is a capped client ring buffer exported for debugging, **not** event sourcing |
 | **Take** | id, session_id, chunk_id, ordinal, status (`recording\|complete\|interrupted\|unusable`), selected (bool), media_key, mime_type, kind (`audio\|video`), bytes, duration_ms, timing (jsonb), transcript (jsonb), match (jsonb) | N:1 Session, N:1 ScriptChunk; unique (session_id, chunk_id, ordinal); **partial unique index: one `selected = true` per (session_id, chunk_id)**; deletes are soft (`deleted_at`) and need confirmation |
 | **Export** | id, session_id, status (`pending\|running\|done\|failed`), kind (`per_take\|stitched`), media_key, error | N:1 Session |
+
+**Task 1 tables** (migration `InitUsers1727136000000`; snake_case columns, plural table names, schema-qualified):
+
+```
+users 1 ──── 1 user_settings        (user_id PK/FK, ON DELETE CASCADE)
+users 1 ──── * voice_favorites      (user_id FK, CASCADE; UNIQUE (user_id, provider, voice_id))
+users 1 ──── * devices              (user_id FK, CASCADE; index on user_id)
+```
+- `users`: unique index on `lower(email)` (so email is case-insensitive unique; NULLs allowed); partial unique index on `is_local WHERE is_local` (at most one local user); CHECK `locale IN (Locale values)`; CHECK non-blank `display_name`.
+- `user_settings`: CHECK `theme IN (Theme values)` (`dark` default), CHECK `default_rate BETWEEN 0.5 AND 2`; `match_thresholds` defaults to `{"coverage":0.8,"similarity":0.7}`.
+- Fixed value sets in CHECKs are generated from the `packages/contracts` constants, so adding a value needs a migration.
 
 DB invariants enforced by constraints + tests:
 - A take row is never hard-deleted by application code paths reachable from the session flow.
@@ -257,7 +268,7 @@ interface CommandEvent { intent: Intent; args?: Record<string,string>; source: '
 | Service | Method & path | Purpose |
 |---|---|---|
 | Nitro | `GET /api/health` | App + DB + AI-service health |
-| Nitro | `GET/PATCH /api/me`, `/api/me/settings`, `/api/me/voices` | Local user, settings, favorites |
+| Nitro | `GET/PATCH /api/me`, `GET/PATCH /api/me/settings`, `GET/POST /api/me/voices`, `DELETE /api/me/voices/:id` | Local user, settings, favorites |
 | Nitro | `GET/POST /api/projects`, `GET/PATCH/DELETE /api/projects/:id` | Projects (delete = archive) |
 | Nitro | `POST /api/projects/:id/scripts`, `GET /api/scripts/:id` | Script versions + blocks |
 | Nitro | `POST /api/scripts/:id/chunk-plans`, `PATCH /api/chunk-plans/:id` | Chunking (the invariant is checked server-side too) |
@@ -269,6 +280,75 @@ interface CommandEvent { intent: Intent; args?: Record<string,string>; source: '
 | AI | `POST /v0/stt` | Per-take transcription (echoes sessionId/chunkId/seq) |
 | AI | `WS /v0/stt/stream` | Streaming transcription (teleprompter, R1.1) |
 | AI | `POST /v0/segment` | Boundary proposals only |
+
+### B5.1 API documentation (OpenAPI 3.1 + Swagger UI)
+
+Both HTTP services publish an OpenAPI document and Swagger UI. **An endpoint doesn't exist until it is documented.** The completeness test below fails the build if any route is undocumented or under-documented.
+
+**Where**
+
+| Service | OpenAPI JSON | Swagger UI | Enabled |
+|---|---|---|---|
+| Web API (Nitro) | `/api/openapi.json` | `/api/docs` | Dev: always. Production: only when `API_DOCS_ENABLED=true` |
+| AI service (FastAPI) | `/openapi.json` | `/docs` | Always (local service) |
+
+**How (web API).** Nitro's experimental generator was checked in Task 1 and **can't meet the standard** (H-21 refuted). It emits no top-level `tags` with descriptions and hard-codes `servers`. So the documented fallback applies:
+
+- `apps/web/server/openapi/` holds a hand-written document, typed against a small OpenAPI 3.1 type: one module per tag, plus shared component schemas.
+- It is served by `server/routes/api/openapi.json.get.ts` (JSON) and `server/routes/api/docs.get.ts` (Swagger UI; `swagger-ui-dist` pinned, loaded from jsDelivr). These are docs infrastructure, not API operations, so they live outside `server/api/`.
+- Docs are always on in dev. In production they're on only when `API_DOCS_ENABLED=true` at **runtime**; otherwise both routes return 404.
+
+**Tags** (registered in `meta` with descriptions; every operation has **exactly one**):
+
+| Tag | Description | Routes (introduced in) |
+|---|---|---|
+| Health | Liveness and dependency status (DB, AI service) | `/api/health` (Task 0/1) |
+| User | The current (local) user profile | `/api/me` (Task 1) |
+| Settings | Per-user preferences: voice, speed, thresholds, theme, command aliases | `/api/me/settings` (Task 1) |
+| Voices | Favorite voices | `/api/me/voices` (Task 1) |
+| Devices | Per-device calibration and capability results | `/api/me/devices` (Task 14) |
+| Projects | Projects owning scripts and sessions | Task 4 |
+| Scripts | Versioned scripts and blocks | Task 4 |
+| Chunk Plans | Chunk boundaries over spoken text | Task 4 |
+| Sessions | Recording session snapshots | Task 4 |
+| Takes | Recorded takes: upload, select, soft delete | Task 4 |
+| Exports | Per-take and stitched exports | Task 4/17 |
+
+**Documentation standard (every operation):**
+1. `tags`: exactly one registered tag.
+2. `operationId`: unique, camelCase, verb + noun (`getMe`, `updateSettings`, `addFavoriteVoice`).
+3. `summary`: ≤ 60 characters, imperative mood.
+4. `description`: what it does, side effects, idempotency, and any safety rule that applies (e.g. "Takes are never hard-deleted; requires `confirm=true`").
+5. Every path/query parameter has a `description`, a `schema` and an `example`.
+6. The `requestBody` (if any) has `required`, a `$ref` schema and an `example`.
+7. Responses:
+   - The success response has a `$ref` schema and an `example`.
+   - Every applicable error response (`400`, `404`, `409`, `422`, `500`) references `ApiError`.
+8. Component schemas have a `description` on the schema **and on every property**. Enums list their values, and formats are set (`uuid`, `date-time`, `email`).
+
+**Error shape** (all web API errors):
+
+```ts
+interface ApiError {
+  statusCode: number;           // HTTP status
+  code: string;                 // stable machine code from the ApiErrorCode constant, e.g. 'validation_failed', 'not_found', 'conflict'
+  message: string;              // human-readable, safe to show
+  details?: { field: string; issue: string }[];  // validation details
+}
+```
+
+**AI service (FastAPI).**
+- `openapi_tags` declares tags with descriptions: Health, TTS, STT, Segmentation.
+- Every route sets `tags`, `summary`, `description`, `response_model` and `responses` for errors.
+- Every Pydantic model and field has a `description` (`Field(description=…)`) and an example (`json_schema_extra`).
+- The same completeness test is applied in pytest.
+
+**Completeness tests (part of `pnpm test:int` and pytest).** These fetch the generated document and assert:
+- every file under `server/api/**` maps to a documented path and method, and every documented path has a handler
+- every operation meets rules 1–7
+- every schema meets rule 8
+- operationIds are unique, and all `$ref` targets resolve
+- the document validates as OpenAPI 3.1
 
 ## B6. Session state machine (normative)
 
@@ -327,14 +407,16 @@ States: `idle, preparing, ready, assistant_speaking, settle, waiting_for_speech,
 |---|---|---|---|---|---|
 | turbo | Monorepo task runner | pnpm -r | MIT | Task 0 | Approved (user) |
 | nuxt, @nuxt/ui, tailwindcss | App + UI | — | MIT | Brief | Approved |
-| typeorm, pg | ORM + driver | raw `pg` | MIT | Task 1 | Approved (user) |
+| typeorm, pg (+ @types/pg, dev) | ORM + driver (+ driver types; `pg` is passed to TypeORM explicitly so the Nitro build traces it) | raw `pg` | MIT | Task 1 | Approved (user) |
+| (none) Nitro built-in OpenAPI + Swagger UI | API docs | — | MIT (Nitro) | §B5.1, Task 1 | Approved (user). No new package; Swagger UI assets load from Nitro's configured CDN in dev |
 | vitest, @playwright/test | Tests | node:test | MIT/Apache-2.0 | Task 0 | Approved (Task 0) |
+| @nuxtjs/i18n (vue-i18n transitively) | UI text from `en.json` with typed keys, so later languages only add a file | hand-rolled `Record<MessageKey, string>` | MIT | §B11, Task 11 | Proposed |
 | fast-check | Property tests | hand-written loops | MIT | Task 3/5 | Proposed |
 | typescript 6.0.x (pinned) | Types | — | Apache-2.0 | §B10 R1 | Approved (Task 0). TS 7 blocked: typescript-eslint supports < 6.1 |
 | vue-tsc | Vue typecheck (`nuxt typecheck`) | — | MIT | §B10 R1 | Approved (Task 0) |
 | eslint, @eslint/js, typescript-eslint, eslint-plugin-vue, vue-eslint-parser, globals | Lint + §B10 rules | — | MIT | §B10 R2–R4 | Approved (Task 0) |
 | @types/node | Node types | — | MIT | Task 0 | Approved (Task 0) |
-| ajv | JSON Schema validation | hand validators | MIT | Task 2 | Proposed |
+| ajv | JSON Schema validation (OpenAPI 3.1 document check in Task 1; contract schemas in Task 2) | hand validators | MIT | Task 1, Task 2 | Approved (user) |
 | fastapi, uvicorn (pydantic transitively) | AI service | — | MIT/BSD | Task 0 | Approved (Task 0) |
 | pytest, ruff, pyright, httpx2 | Py tests, lint, strict types; httpx2 backs Starlette 1.7's TestClient | — | MIT/BSD | Task 0 | Approved (Task 0) |
 | faster-whisper | STT candidate | whisper.cpp | MIT | Task 8 | Candidate |
@@ -346,7 +428,7 @@ States: `idle, preparing, ready, assistant_speaking, settle, waiting_for_speech,
 - **Semantic color tokens** as CSS variables (studio dark by default, plus light): canvas, surface-1/2, text/muted/subtle, accent, success, warning, error, **live** (recording), **listening** (mic armed), **assistant** (speaking), highlight-current/spoken/upcoming. No raw hex outside `tokens.css`.
 - **Typography:** system stack; UI scale 0.75 → 2.25 rem; teleprompter scale 2.5 → 6.5 rem.
 - **Spacing:** 4-pt scale. **Radii:** 6/10/16/full. **Motion:** 120/200/320 ms; reduced motion means instant changes.
-- **Status language (icon + text + color):** "Reading line 4/32" · "Get ready…" · "Your turn" · "Recording take 2" · "Checking…" · "Next · Repeat · Retake" · "Paused" · specific error + recovery action.
+- **Status language (icon + text + color):** shown here in English. Every string comes from the locale files (§B11), e.g. `studio.status.reading_line` = "Reading line {current}/{total}" · "Get ready…" · "Your turn" · "Recording take 2" · "Checking…" · "Next · Repeat · Retake" · "Paused" · specific error + recovery action.
 - **Breakpoints:** < 640 phone · 640–1024 tablet · 1024–1440 laptop · > 1440. No horizontal scroll at 320 px.
 - **Accessibility:** WCAG 2.2 AA; keyboard shortcuts (Space pause/continue, → next, ← previous, R repeat, T retake, ? help); touch targets ≥ 44 px; ARIA live announcements; `aria-current` on the current chunk.
 - **Surfaces:** project list, script import/review, preflight, recording studio, teleprompter, take review/export, settings.
@@ -402,22 +484,54 @@ const noStringLiteralCompare = [
 
 ```ts
 // ✗ const label = s === 'paused' ? 'Paused' : s === 'creator_speaking' ? 'Your turn' : s === … ? … : '';
-// ✓
-const STATUS_LABEL: Record<SessionState, string> = {
-  [SessionState.Idle]: 'Ready when you are',
-  [SessionState.AssistantSpeaking]: 'Reading',
-  [SessionState.CreatorSpeaking]: 'Your turn',
-  [SessionState.Paused]: 'Paused',
-  // … compile error if any state is missing
+// ✓ (values are translation keys, §B11)
+const STATUS_LABEL_KEY: Record<SessionState, MessageKey> = {
+  [SessionState.Idle]: 'studio.status.ready',
+  [SessionState.AssistantSpeaking]: 'studio.status.reading',
+  [SessionState.CreatorSpeaking]: 'studio.status.your_turn',
+  [SessionState.Paused]: 'studio.status.paused',
+  // … compile error if any state is missing or a key doesn't exist
 };
-const label = STATUS_LABEL[snapshot.state];
+const label = t(STATUS_LABEL_KEY[snapshot.state]);
 ```
 
 - Behavior maps use the same pattern, e.g. `Record<Intent, CommandHandler>`, `Record<Arrangement, ArrangementPolicy>`, and `Record<SessionState, Partial<Record<EventType, Transition>>>` for the engine's transition table.
 - `if/else if` chains with more than two branches on the same key should be a record as well (review rule).
 - Python: use `dict[MyEnum, T]` lookups with an exhaustiveness test.
 
-**R5. Enforcement.** Configure all of this in `packages/config/eslint` (flat config) and share it with every package in Task 0. CI fails on any violation. Each task report includes the `pnpm typecheck` and `pnpm lint` output.
+**R5. No hard-coded user-facing text.** All UI copy goes through `t()` with a key from §B11. Enforced by `vue/no-bare-strings-in-template` (text, `title`, `aria-label`, `placeholder`, `alt`), which is part of the already-approved eslint-plugin-vue.
+
+**R6. Enforcement.** Configure all of this in `packages/config/eslint` (flat config) and share it with every package in Task 0. CI fails on any violation. Each task report includes the `pnpm typecheck` and `pnpm lint` output.
+
+## B11. Internationalization (i18n)
+
+**Scope.** R1 is **English only** (`en`). All UI text still goes through i18n from day one, so another language can be added later by adding a locale file, without touching components. UI text includes labels, status language, errors and recovery hints, a11y text (`aria-label`, live announcements) and the privacy statement. The creator's **script content is never translated or changed** (§A6.5). Voice (TTS, STT, commands) is English in R1. Swagger/OpenAPI docs and `ApiError.message` are developer-facing and stay English.
+
+**Setup.** `@nuxtjs/i18n` in `apps/web`, strategy `no_prefix` (no locale in URLs), `en` as default and fallback:
+
+```
+apps/web/i18n/locales/en.json   ← the only locale in R1; source of truth for keys
+```
+
+**Key rules.**
+- Keys are **nested by feature** (`common`, `nav`, `studio`, `preflight`, `script`, `takes`, `settings`, `errors`, …), and **every key segment is snake_case**: `^[a-z][a-z0-9]*(_[a-z0-9]+)*$`. Example: `studio.status.your_turn`, `errors.mic_permission_denied`.
+- Interpolation placeholders are snake_case too: `"Recording take {take_number}"`.
+- Plurals use vue-i18n's pipe syntax. Dates, times and numbers use `Intl` with the active locale. They are never concatenated by hand.
+- Keys describe meaning, not wording (`studio.action.retake`, not `studio.try_again_button`).
+
+```json
+{ "studio": { "status": { "your_turn": "Your turn", "recording_take": "Recording take {take_number}" } } }
+```
+
+**Typed keys.** `MessageKey` is derived from `en.json` (vue-i18n `DefineLocaleMessage` augmentation), so `t('studio.status.typo')` is a type error (§B10 R1). Key-dependent copy uses `Record<Union, MessageKey>` (§B10 R4). API errors map `Record<ApiErrorCode, MessageKey>` → `errors.*`, so the UI never shows the raw `message`.
+
+**Locale values.** `Locale` const in `packages/contracts` with only `Locale.En = 'en'` in R1 (§B10 R3). `User.locale` stores it (default `en`). There's no language switcher while only one locale exists.
+
+**Locale test (unit, `pnpm test`).** Runs over every file in `i18n/locales/` and fails if a key segment isn't snake_case or a value is empty. It's written so that once a second file exists, it also fails on key sets that differ from `en.json` and on mismatched placeholders.
+
+**Runtime.** Missing-key warnings are errors in dev and tests.
+
+**Adding a language later** (new spec version) covers: a locale file plus the parity check, a switcher, and, for voice, per-language TTS/STT/grammar/segmentation/matching. The v0.7.0 change-log entry lists what a full German rollout touched.
 
 ---
 
@@ -430,11 +544,22 @@ const label = STATUS_LABEL[snapshot.state];
 | **Unit** | Pure logic: engine transitions, segmentation, offsets, grammar, matcher | Vitest / pytest | `pnpm test` |
 | **Property** | Invariants hold for random inputs (text preservation, engine invariants) | fast-check | `pnpm test` |
 | **Contract** | TS and Python accept/reject the same fixtures; API responses match schemas | Vitest + ajv, pytest + Pydantic | `pnpm test` |
-| **Integration (DB)** | TypeORM entities, migrations, constraints, repositories against real PostgreSQL | Vitest + `recuely_test` DB | `pnpm test:int` |
+| **Integration (DB)** | TypeORM entities, migrations, constraints, repositories against real PostgreSQL | Vitest + Neon test DB (`DATABASE_URL_TEST`, §C1.1) | `pnpm test:int` |
 | **Integration (API)** | Nitro routes end-to-end against the test DB | Vitest + `$fetch` against a built server | `pnpm test:int` |
 | **Synthetic audio** | VAD/STT/TTS on recorded WAV fixtures | pytest | `pnpm --filter ai test:audio` |
 | **E2E browser** | UI flows, a11y, permission errors, fake media devices | Playwright (Chromium full; WebKit/Firefox smoke) | `pnpm test:e2e` |
 | **Manual device** | Real audio/video quality, latency, leakage, routing | Checklist in C3; results in `docs/measurements/` | — |
+
+### C1.1 Integration test database (Neon)
+
+- `pnpm test:int` reads `DATABASE_URL_TEST` from `.env` (gitignored). If it's missing, the run **fails** with a clear message. It never skips silently and never falls back to `DATABASE_URL`.
+- **Safety guard:** the run refuses to start if `DATABASE_URL_TEST` points at the same host + database as `DATABASE_URL`. Use a dedicated Neon branch (e.g. `test`) or database (e.g. `recuely_test`).
+- **Isolated schema per run:** global setup creates a fresh schema `it_<timestamp>_<random>`, points the DataSource at it, and runs all migrations there. Tests never touch `public`, and two runs (local + CI) can't collide.
+- **Between tests:** each test file truncates every table (`TRUNCATE … RESTART IDENTITY CASCADE`) in `beforeEach`. Integration files run serially (`fileParallelism: false`).
+- **Server under test:** API tests run the built server (`.output/server/index.mjs`) with `DATABASE_URL` set to the test URL and a test-only `DB_SCHEMA` naming the run's schema. `DB_SCHEMA` is never set outside tests (default `public`). Migrations qualify every table with the DataSource schema instead of relying on `search_path`.
+- **Always cleared afterwards:** global teardown drops the run's schema (`DROP SCHEMA … CASCADE`), on success or failure. Teardown also removes any leftover `it_*` schema older than 1 hour from a crashed run. After `pnpm test:int` the test database holds no test data.
+- **Neon specifics:** use the **direct** (non-pooled) connection string for tests and migrations, since the PgBouncer pooler breaks session-level `search_path` and advisory locks. The app may use the pooled string. Connect timeout ≥ 15 s so Neon's scale-to-zero cold start doesn't flake tests.
+- CI doesn't run `test:int` yet. When it does, it'll use a `DATABASE_URL_TEST` repository secret.
 
 **A mocked AI response does not prove a real recording flow works.** Any task touching capture, playback, or routing needs manual device evidence.
 
@@ -478,7 +603,7 @@ Every test cites the acceptance criterion it proves: `it('T5-AC3: late eval resu
 1. **One task at a time.** Only one task is `IN PROGRESS`. Tasks run in order unless marked parallel-safe.
 2. **Before coding**, Claude restates the task's scope and plan in a few lines and flags anything unclear.
 3. **Implement only what the task lists.** No work from future tasks, and no dependencies outside §B8 without updating it.
-4. **Prove it:** run the task's tests and report the actual output. `pnpm typecheck` and `pnpm lint` must show **0 errors and 0 warnings** (§B10). Manual checks are listed for the user to perform or confirm.
+4. **Prove it:** run the task's tests and report the actual output. Any task that adds UI text adds its snake_case keys to `en.json` (§B11). `pnpm typecheck` and `pnpm lint` must show **0 errors and 0 warnings** (§B10). Manual checks are listed for the user to perform or confirm.
 5. **Gate:** the task moves to `DONE` only when **the user confirms**. Claude then updates the status here and adds a change-log line (Part F). Claude doesn't start the next task before confirmation.
 6. If a task reveals that the spec is wrong, stop, propose the spec change, and continue after approval.
 
@@ -488,8 +613,8 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 
 | # | Task | Status | Depends on |
 |---|---|---|---|
-| 0 | Monorepo foundation (Turborepo, Nuxt, FastAPI, CI) | AWAITING CONFIRMATION | — |
-| 1 | User modelling & database (TypeORM + PostgreSQL) | TODO | 0 |
+| 0 | Monorepo foundation (Turborepo, Nuxt, FastAPI, CI) | DONE | — |
+| 1 | User modelling & database (TypeORM + PostgreSQL) | IN PROGRESS | 0 |
 | 2 | Shared contracts & fixtures | TODO | 0 |
 | 3 | Script model: parsing, segmentation, text preservation | TODO | 2 |
 | 4 | Project, script & session persistence (entities + API) | TODO | 1, 3 |
@@ -520,7 +645,7 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 **What:** A Turborepo + pnpm monorepo containing `apps/web` (Nuxt 4 shell), `apps/ai` (FastAPI skeleton), empty packages from §B1, shared config, and a CI workflow.
 **Why:** Every later task needs working build/test commands and package boundaries that enforce the architecture.
 **Scope:**
-- Prerequisites: Node 22 LTS (`.nvmrc`), `uv` (Python 3.12 pinned). PostgreSQL moved to Task 1 and ffmpeg to Task 9, because Homebrew no longer supports Intel macOS (see Part E)
+- Prerequisites: Node 22 LTS (`.nvmrc`), `uv` (Python 3.12 pinned). PostgreSQL is hosted on Neon (no local install, §B2) and ffmpeg moved to Task 9, because Homebrew no longer supports Intel macOS (see Part E)
 - `turbo.json`, `pnpm-workspace.yaml`, root scripts (§B1), `packages/config` presets
 - Nuxt 4 + Nuxt UI + Tailwind; `/api/health` returns `{ app: 'ok' }`
 - `apps/ai`: FastAPI `/v0/health` (all capabilities `unavailable`), `package.json` scripts wrapping `uv run`
@@ -542,20 +667,44 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 
 ### Task 1 — User modelling & database
 
-**What:** `packages/db` with a TypeORM DataSource, the `User`, `UserSettings`, `VoiceFavorite`, `Device` entities, migrations, repositories, and a seeded local user. Nitro routes `GET/PATCH /api/me`, `/api/me/settings`, `/api/me/voices`.
+**What:** `packages/db` with a TypeORM DataSource, the `User`, `UserSettings`, `VoiceFavorite`, `Device` entities, migrations, repositories, and a seeded local user. Nitro routes `GET/PATCH /api/me`, `GET/PATCH /api/me/settings`, `GET/POST /api/me/voices`, `DELETE /api/me/voices/:id`.
 **Why:** Settings, favorites, per-device calibration, and project ownership all hang off a user. Modelling it now, with a single local user in R1, avoids a painful migration when auth arrives.
 **Scope:**
 - Entities as `EntitySchema` (§B2), UUID v7 ids, timestamps, `synchronize: false`, migrations only
 - `pnpm db:migrate`, `db:seed` (idempotent local user + default settings)
 - Nitro plugin that initializes the DataSource once; `typeorm`/`pg` external in the Nitro build
 - Request bodies checked with typed guards for now; replaced by contract-schema validation (ajv) once Task 2 lands
-- `.env.example`: `DATABASE_URL`, `DATABASE_URL_TEST`
-**Tests:** Integration (DB): migrations up/down; unique constraints (email, favorite triple); 1:1 settings cascade · Integration (API): `/api/me` returns the seeded user; PATCH settings persists and rejects invalid values · Unit: repository helpers
+- The `ApiError` shape (§B5.1) and an `ApiErrorCode` constant; one error helper used by every route
+- `Locale` constant (§B11); `User.locale` accepts only `Locale` values (DB check constraint, default `en`); `PATCH /api/me` rejects others with `422`
+- **Swagger / OpenAPI setup (§B5.1):**
+  - Nitro OpenAPI enabled; JSON at `/api/openapi.json`, Swagger UI at `/api/docs`, production only with `API_DOCS_ENABLED=true`
+  - All tags registered with descriptions
+  - Shared component schemas (`User`, `UserSettings`, `UpdateSettingsRequest`, `VoiceFavorite`, `AddVoiceFavoriteRequest`, `Health`, `ApiError`), each with descriptions and examples
+  - `/api/health` (now also reporting DB status), `/api/me`, `/api/me/settings` and `/api/me/voices` fully documented to the standard
+- The same standard applied to FastAPI's `/v0/health`: `openapi_tags`, route summary/description, and model field descriptions and examples
+- DataSource built only from `DATABASE_URL` (TLS on, connect timeout ≥ 15 s); a clear startup error when it's missing or unreachable
+- Integration-test DB lifecycle per §C1.1: required `DATABASE_URL_TEST`, same-DB guard, per-run schema, truncate between tests, drop on teardown, stale-schema sweep
+- `.env.example`: `DATABASE_URL`, `DATABASE_URL_TEST` (Neon direct connection strings, with placeholders and comments), `API_DOCS_ENABLED`
+**Tests:**
+- Integration (DB): the §C1.1 guard refuses a missing `DATABASE_URL_TEST` or one equal to `DATABASE_URL`; migrations up/down; unique constraints (email, favorite triple); 1:1 settings cascade
+- Integration (API): `/api/me` returns the seeded user; PATCH settings persists valid values and rejects invalid ones with a `422` `ApiError`
+- **OpenAPI completeness test** (web + AI service, §B5.1)
+- Unit: repository helpers
 **Done when:**
 - [ ] Fresh DB → `pnpm db:migrate && pnpm db:seed` → the local user exists; running seed twice creates no duplicates
-- [ ] `pnpm test:int` green against `recuely_test`
+- [ ] `pnpm test:int` green against the Neon test DB, and afterwards the test DB has no `it_*` schemas left (checked with a query, also after a deliberately failing run)
 - [ ] `pnpm build` works with TypeORM (proves the Nitro bundling setup)
 - [ ] The ERD for these four entities is added to §B4 if it changed
+- [ ] `/api/docs` shows every Task 1 route grouped by tag, with descriptions, request/response schemas and examples, and "Try it out" works against the local DB (screenshot)
+- [ ] `/docs` on the AI service shows `/v0/health` under the Health tag, fully described
+- [ ] The completeness tests pass, and fail on a deliberately undocumented route and on a route missing its tag (demonstrated, then removed)
+
+**Evidence so far (2026-09-24):**
+- `pnpm typecheck` 9/9 · `pnpm lint` 9/9 (0 warnings) · `pnpm test` 8/8 tasks: contracts 3, db 21, web 20, ai 6 (pytest) · `pnpm build` ✓ · `pnpm test:e2e` 2/2 (the Playwright Chromium shell had to be reinstalled; its cache was missing).
+- Built server without a DB: `/api/health` → `{"app":"ok","db":"unavailable"}`; `/api/me` → 503 `database_unavailable`; bad JSON → 400; invalid settings → 422 with `details`; docs 404 unless `API_DOCS_ENABLED=true`, then `/api/openapi.json` 200 and `/api/docs` 200 text/html.
+- `pnpm test:int` without `DATABASE_URL_TEST` fails in both suites with `TestDatabaseConfigError` (no skip). `db:migrate` without `DATABASE_URL` prints the fix and exits 1.
+- Completeness test demonstrated: a temporary `server/api/secret.get.ts` → "route file exists but is not documented"; removing `getMe`'s tag → "must have exactly one registered tag". Both reverted, 12/12 green. Permanent synthetic-bad-document cases are in `test/openapi.test.ts`.
+- **Pending (needs the Neon URLs in `.env`):** `db:migrate` + `db:seed` ×2, `pnpm test:int` (db + API suites), the leftover-schema check (`pnpm --filter @repo/db db:test-schemas`, also after a deliberately failing run), Swagger "Try it out" screenshot.
 
 ### Task 2 — Shared contracts & fixtures
 
@@ -634,7 +783,7 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 
 ### Task 10 — AI service v0
 
-**What:** `/v0/health`, `/v0/tts/voices`, `/v0/tts` (+ timings or derived, cached by text hash/voice/rate), `/v0/stt` (echoes sessionId/chunkId/seq); timeouts, cancellation on client disconnect, per-capability health.
+**What:** `/v0/health`, `/v0/tts/voices`, `/v0/tts` (+ timings or derived, cached by text hash/voice/rate), `/v0/stt` (echoes sessionId/chunkId/seq); timeouts, cancellation on client disconnect, per-capability health. Every route is documented in `/docs` to the §B5.1 standard (tags TTS, STT, Health).
 **Why:** Gives the web app real, versioned voice and transcription providers.
 **Tests:** Contract (responses validate against the shared fixtures) · Synthetic audio (STT on fixtures; TTS returns audio + timings) · Unit (cache key, timeout, cancellation)
 **Done when:**
@@ -643,12 +792,14 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 
 ### Task 11 — Design system & app shell
 
-**What:** Token CSS (dark studio + light), Nuxt UI theme mapping, layout shell, status components (StatusPill, CaptureIndicator, DecisionBar, ChunkText with three highlight tiers) as props-only components, and a dev `/_design` page.
-**Why:** Clear, calm, unmistakable recording status is part of the product, and later UI tasks build on these pieces.
-**Tests:** Unit (component rendering; `chunk` tier renders no word-level markers) · E2E (contrast test on token pairs; reduced-motion check; raw-hex lint)
+**What:** Token CSS (dark studio + light), Nuxt UI theme mapping, layout shell, status components (StatusPill, CaptureIndicator, DecisionBar, ChunkText with three highlight tiers) as props-only components, and a dev `/_design` page. **i18n setup (§B11):** `@nuxtjs/i18n`, `en.json`, typed `MessageKey`, and lint rule §B10 R5.
+**Why:** Clear, calm, unmistakable recording status is part of the product, and later UI tasks build on these pieces. Doing i18n now means no later task hard-codes text, so more languages can be added later without rework.
+**Tests:** Unit (component rendering; `chunk` tier renders no word-level markers; **locale test**) · E2E (contrast test on token pairs; reduced-motion check; raw-hex lint; shell + `/_design` with zero missing-key warnings)
 **Done when:**
 - [ ] Screenshots of `/_design` at 360, 768, 1280, and 1728 widths
 - [ ] Every status shows icon + text
+- [ ] The locale test and R5 lint fail on deliberate bad samples (a camelCase key, an empty value, a bare string in a template), then the samples are removed
+- [ ] From Task 11 on, every UI task adds its keys to `en.json`
 
 ### Task 12 — Script import & review UI
 
@@ -734,7 +885,7 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 
 # PART E — ASSUMPTIONS & OPEN DECISIONS
 
-**Environment (updated 2026-09-24):** macOS 15.6.1, Intel i9-9980HK, 32 GB RAM, no Apple Silicon/CUDA → CPU-only inference; **~9 GB free disk**. Node 22.23.3 via nvm (Homebrew's `node@20` sits earlier on PATH, so shells must put `~/.nvm/versions/node/v22.23.3/bin` first); pnpm 10.15 via corepack; uv 0.12.18 (in `~/.local/share/uv-tool`, linked into `~/.local/bin`); Python 3.12.6 for the AI service; Ollama 0.34 (no models); Playwright headless Chromium installed. **Homebrew 6 has dropped Intel macOS support** (formulae would build from source and need newer Xcode CLT), so PostgreSQL will come from Postgres.app (or an installer) and ffmpeg from a static build. Missing: PostgreSQL, ffmpeg, docker. Git repo initialized, no commits.
+**Environment (updated 2026-09-24):** macOS 15.6.1, Intel i9-9980HK, 32 GB RAM, no Apple Silicon/CUDA → CPU-only inference; **~9 GB free disk**. Node 22.23.3 via nvm (Homebrew's `node@20` sits earlier on PATH, so shells must put `~/.nvm/versions/node/v22.23.3/bin` first); pnpm 10.15 via corepack; uv 0.12.18 (in `~/.local/share/uv-tool`, linked into `~/.local/bin`); Python 3.12.6 for the AI service; Ollama 0.34 (no models); Playwright headless Chromium installed. **Homebrew 6 has dropped Intel macOS support** (formulae would build from source and need newer Xcode CLT), so ffmpeg will come from a static build. **PostgreSQL is not installed locally: the database is hosted on Neon** (user decision, 2026-09-24). Missing: ffmpeg, docker. Git repo initialized, no commits.
 
 | ID | Hypothesis | Validated in | Status |
 |---|---|---|---|
@@ -749,12 +900,15 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | H-17 | In-browser VAD is good enough (no onnxruntime-web needed) | Task 8 | Open |
 | H-18 | A rolling recorder avoids clipping take starts | Task 9 | Open |
 | H-19 | Same-MIME take stitching works in Chrome and Safari without ffmpeg.wasm | Task 9 | Open |
-| H-20 | TypeORM bundles cleanly in Nitro with `EntitySchema` + externals | Task 1 | Open |
+| H-20 | TypeORM bundles cleanly in Nitro with `EntitySchema` + externals | Task 1 | **Validated (build)**: `@repo/*` inlined, `typeorm`/`pg` external and traced into `.output/server/node_modules`; `pg` passed to TypeORM as `driver`. The live-DB run is pending the Neon URLs |
+| H-22 | Neon (direct connection, cold start) keeps `pnpm test:int` under 60 s and dev API calls responsive from this machine | Task 1 | Open |
+| H-21 | Nitro's experimental OpenAPI generator (`defineRouteMeta` + `$global` components) can meet the §B5.1 standard; else fall back to a hand-written typed document | Task 1 | **Refuted** (nitropack 2.13.4: no top-level tags, fixed `servers`) → fallback |
 
 **Decisions needed from the user:**
 1. Test devices and browsers actually available (sets the device matrix).
 2. Disk: free ≥ 15 GB, or name an external folder for models and media, before Tasks 7–9.
 3. Git remote, and permission to commit.
+4. Neon connection strings: the user puts `DATABASE_URL` (dev branch) and `DATABASE_URL_TEST` (test branch/database) in `.env` before Task 1's integration tests. Storing scripts in a hosted DB the user chose and configured is the user's opt-in under §A6.8. Media stays on local disk (`STORAGE_DIR`).
 
 ---
 
@@ -766,3 +920,10 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 0.2.0 | 2026-09-23 | Consolidated into a single SPEC.md; Turborepo monorepo; TypeORM + PostgreSQL (replaces the "no DB in R1" plan and Prisma); User modelling added as Task 1; gated task-by-task protocol |
 | 0.3.0 | 2026-09-23 | Added §B10 code standards: zero TS/lint errors, named constants instead of string-literal comparisons, Record lookups instead of nested ternaries; wired into Task 0 and the D0 gate |
 | 0.3.1 | 2026-09-24 | Task 0 implemented; TypeScript pinned to 6.0.x; PostgreSQL/ffmpeg install moved to Tasks 1/9 (Homebrew dropped Intel); dependency register updated |
+| 0.3.2 | 2026-09-24 | Task 0 confirmed by user → DONE |
+| 0.8.1 | 2026-09-24 | Task 1 started. ajv approved for Task 1 (OpenAPI 3.1 validation); `DELETE /api/me/voices/:id` added; H-21 refuted → hand-written OpenAPI document with a runtime `API_DOCS_ENABLED` gate; test-only `DB_SCHEMA` for the server under test |
+| 0.8.0 | 2026-09-24 | **R1 is English only** (user decision). v0.7.0 reverted; §B11 reduced to `en.json` only (snake_case keys, typed `MessageKey`, `Locale.En`, no switcher), kept so languages can be rolled out later; German removed from Tasks 11/21; other languages listed as out of scope in §A8 |
+| 0.7.0 | 2026-09-24 | *(Draft, superseded by 0.8.0 before implementation.)* English **and German** in R1 for everything spoken, not just the UI: new §B12 (script `language`, per-language segmentation, voices, STT, grammar, normalizers, thresholds); de command grammar; language-keyed settings and `VoiceFavorite.language` (Task 1), `Script.language` (Task 4); German TTS engine candidate (Piper) and a one-engine-per-language exception; multilingual STT; tasks 2–3, 6–8, 10, 12, 15–16, 19 and scenarios E1/E2/E4 cover both languages; H-23–H-25 |
+| 0.6.0 | 2026-09-24 | Added §B11 i18n: UI in `en` + `de` via `@nuxtjs/i18n`, nested snake_case keys, typed `MessageKey`, parity test, `Locale` const + `User.locale`; §B10 R5 no hard-coded UI text (old R5 → R6); set up in Task 11, `Locale` in Task 1, language setting in Task 21; German voice out of R1 scope |
+| 0.5.0 | 2026-09-24 | Database hosted on Neon instead of a local PostgreSQL install; connection only via `DATABASE_URL` / `DATABASE_URL_TEST`; new §C1.1 integration-test DB lifecycle (required URL, same-DB guard, per-run schema, truncate between tests, always dropped afterwards); Task 1 scope/done-when updated; H-22 added |
+| 0.4.0 | 2026-09-24 | Added §B5.1 API documentation: OpenAPI 3.1 + Swagger UI for the web API (Nitro built-in) and AI service (FastAPI), tag registry, per-operation documentation standard, ApiError shape, completeness tests; wired into Task 1 (and Task 10) |

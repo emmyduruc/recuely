@@ -1,8 +1,9 @@
+import { HealthStatus } from '@repo/contracts';
 import { describe, expect, it } from 'vitest';
-import { buildAppHealth, HealthStatus } from '../server/utils/health';
+import { buildAppHealth } from '../server/utils/health';
 
 describe('app health', () => {
-  it('T0: reports the app as ok', () => {
-    expect(buildAppHealth()).toEqual({ app: HealthStatus.Ok });
+  it('T1: reports the app as ok together with the database status', () => {
+    expect(buildAppHealth(HealthStatus.Unavailable)).toEqual({ app: HealthStatus.Ok, db: HealthStatus.Unavailable });
   });
 });
