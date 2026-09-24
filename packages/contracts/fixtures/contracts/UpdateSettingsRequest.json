@@ -1,0 +1,83 @@
+{
+  "type": "UpdateSettingsRequest",
+  "valid": [
+    {
+      "name": "every field",
+      "value": {
+        "defaultVoiceId": "af_heart",
+        "defaultRate": 0.9,
+        "theme": "light",
+        "reducedMotion": true,
+        "commandAliases": {
+          "NEXT": [
+            "onward"
+          ]
+        },
+        "matchThresholds": {
+          "coverage": 0.85,
+          "similarity": 0.75
+        }
+      }
+    },
+    {
+      "name": "clear voice",
+      "value": {
+        "defaultVoiceId": null
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "rate too high",
+      "path": "defaultRate",
+      "value": {
+        "defaultRate": 5
+      }
+    },
+    {
+      "name": "unknown theme",
+      "path": "theme",
+      "value": {
+        "theme": "neon"
+      }
+    },
+    {
+      "name": "unknown intent key",
+      "path": "commandAliases.JUMP",
+      "value": {
+        "commandAliases": {
+          "JUMP": [
+            "go"
+          ]
+        }
+      }
+    },
+    {
+      "name": "blank alias",
+      "path": "commandAliases.NEXT[0]",
+      "value": {
+        "commandAliases": {
+          "NEXT": [
+            " "
+          ]
+        }
+      }
+    },
+    {
+      "name": "thresholds missing similarity",
+      "path": "matchThresholds.similarity",
+      "value": {
+        "matchThresholds": {
+          "coverage": 0.8
+        }
+      }
+    },
+    {
+      "name": "reducedMotion not boolean",
+      "path": "reducedMotion",
+      "value": {
+        "reducedMotion": "yes"
+      }
+    }
+  ]
+}

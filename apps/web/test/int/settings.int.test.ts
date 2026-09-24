@@ -39,7 +39,7 @@ describe('/api/me/settings', () => {
       message: 'The request body is invalid.',
       details: [
         { field: 'extra', issue: 'unknown field' },
-        { field: 'defaultRate', issue: 'must be a number from 0.5 to 2' },
+        { field: 'defaultRate', issue: 'must be at most 2' },
         { field: 'theme', issue: 'must be one of: dark, light, system' },
       ],
     });

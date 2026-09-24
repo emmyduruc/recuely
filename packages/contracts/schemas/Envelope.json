@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Envelope.json",
+  "title": "Envelope",
+  "type": "object",
+  "description": "Envelope of every event/message. Consumers ignore unknown fields and reject a different major `v`.",
+  "properties": {
+    "v": {
+      "type": "string",
+      "pattern": "^0\\.\\d+$",
+      "description": "Contract major.minor; major must be 0."
+    },
+    "type": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Message type."
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique message id."
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Session the message belongs to."
+    },
+    "chunkId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Chunk the message belongs to."
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Engine sequence number; stale results (lower seq) are dropped."
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Correlates a response with its request."
+    },
+    "t": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Monotonic timestamp in ms."
+    },
+    "payload": {
+      "type": "object",
+      "description": "Message-specific payload."
+    }
+  },
+  "required": [
+    "v",
+    "type",
+    "id",
+    "t",
+    "payload"
+  ],
+  "additionalProperties": true
+}

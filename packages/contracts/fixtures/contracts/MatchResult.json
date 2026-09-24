@@ -1,0 +1,88 @@
+{
+  "type": "MatchResult",
+  "valid": [
+    {
+      "name": "advance",
+      "value": {
+        "coverage": 0.93,
+        "similarity": 0.88,
+        "missingSpans": [],
+        "decision": "advance",
+        "reasons": [
+          "coverage 0.93 ≥ 0.80",
+          "end tokens covered"
+        ]
+      }
+    },
+    {
+      "name": "ask with a missing ending",
+      "value": {
+        "coverage": 0.61,
+        "similarity": 0.72,
+        "missingSpans": [
+          {
+            "charStart": 40,
+            "charEnd": 58
+          }
+        ],
+        "decision": "ask",
+        "reasons": [
+          "ending not covered"
+        ]
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "coverage above 1",
+      "path": "coverage",
+      "value": {
+        "coverage": 1.2,
+        "similarity": 0.5,
+        "missingSpans": [],
+        "decision": "ask",
+        "reasons": []
+      }
+    },
+    {
+      "name": "unknown decision",
+      "path": "decision",
+      "value": {
+        "coverage": 0.5,
+        "similarity": 0.5,
+        "missingSpans": [],
+        "decision": "skip",
+        "reasons": []
+      }
+    },
+    {
+      "name": "inverted missing span",
+      "path": "missingSpans[0].charEnd",
+      "value": {
+        "coverage": 0.5,
+        "similarity": 0.5,
+        "missingSpans": [
+          {
+            "charStart": 9,
+            "charEnd": 3
+          }
+        ],
+        "decision": "ask",
+        "reasons": []
+      }
+    },
+    {
+      "name": "reasons not strings",
+      "path": "reasons[0]",
+      "value": {
+        "coverage": 0.5,
+        "similarity": 0.5,
+        "missingSpans": [],
+        "decision": "ask",
+        "reasons": [
+          1
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "UpdateSettingsRequest.json",
+  "title": "UpdateSettingsRequest",
+  "type": "object",
+  "description": "PATCH /api/me/settings body. At least one field; unknown fields are rejected.",
+  "properties": {
+    "defaultVoiceId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "\\S",
+      "description": "Voice id, or null for the provider default."
+    },
+    "defaultRate": {
+      "type": "number",
+      "minimum": 0.5,
+      "maximum": 2,
+      "description": "Speech rate multiplier."
+    },
+    "theme": {
+      "type": "string",
+      "enum": [
+        "dark",
+        "light",
+        "system"
+      ],
+      "description": "Color theme."
+    },
+    "reducedMotion": {
+      "type": "boolean",
+      "description": "Reduced motion on or off."
+    },
+    "commandAliases": {
+      "type": "object",
+      "description": "Extra phrases per intent (replaces the stored map).",
+      "propertyNames": {
+        "enum": [
+          "START",
+          "PAUSE",
+          "CONTINUE",
+          "REPEAT",
+          "RETAKE",
+          "NEXT",
+          "PREVIOUS",
+          "NAVIGATE",
+          "SPEED",
+          "CHUNK_SIZE",
+          "HELP"
+        ]
+      },
+      "additionalProperties": {
+        "type": "array",
+        "maxItems": 20,
+        "items": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "pattern": "\\S",
+          "description": "One phrase."
+        }
+      }
+    },
+    "matchThresholds": {
+      "type": "object",
+      "description": "Replacement thresholds.",
+      "properties": {
+        "coverage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum coverage."
+        },
+        "similarity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum similarity."
+        }
+      },
+      "required": [
+        "coverage",
+        "similarity"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [],
+  "minProperties": 1,
+  "additionalProperties": false
+}

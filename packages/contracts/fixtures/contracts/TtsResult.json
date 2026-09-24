@@ -1,0 +1,113 @@
+{
+  "type": "TtsResult",
+  "valid": [
+    {
+      "name": "provider timings",
+      "value": {
+        "audioUrl": "/v0/tts/audio/ab12",
+        "durationMs": 1830,
+        "timings": [
+          {
+            "index": 0,
+            "start": 0,
+            "end": 320,
+            "charStart": 0,
+            "charEnd": 5
+          },
+          {
+            "index": 1,
+            "start": 340,
+            "end": 700,
+            "charStart": 6,
+            "charEnd": 11
+          }
+        ],
+        "timingSource": "provider",
+        "cacheKey": "ab12"
+      }
+    },
+    {
+      "name": "no timings: chunk highlight only",
+      "value": {
+        "audioUrl": "/v0/tts/audio/cd34",
+        "durationMs": 900,
+        "timings": null,
+        "timingSource": "none",
+        "cacheKey": "cd34"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "timings claimed but null",
+      "path": "timings",
+      "value": {
+        "audioUrl": "/a",
+        "durationMs": 1,
+        "timings": null,
+        "timingSource": "provider",
+        "cacheKey": "k"
+      }
+    },
+    {
+      "name": "timings present but source none",
+      "path": "timings",
+      "value": {
+        "audioUrl": "/a",
+        "durationMs": 1,
+        "timings": [
+          {
+            "index": 0,
+            "start": 0,
+            "end": 320,
+            "charStart": 0,
+            "charEnd": 5
+          }
+        ],
+        "timingSource": "none",
+        "cacheKey": "k"
+      }
+    },
+    {
+      "name": "unknown timing source",
+      "path": "timingSource",
+      "value": {
+        "audioUrl": "/a",
+        "durationMs": 1,
+        "timings": null,
+        "timingSource": "guessed",
+        "cacheKey": "k"
+      }
+    },
+    {
+      "name": "inverted word inside timings",
+      "path": "timings[0].end",
+      "value": {
+        "audioUrl": "/a",
+        "durationMs": 1,
+        "timings": [
+          {
+            "index": 0,
+            "start": 9,
+            "end": 1,
+            "charStart": 0,
+            "charEnd": 5
+          }
+        ],
+        "timingSource": "provider",
+        "cacheKey": "k"
+      }
+    },
+    {
+      "name": "empty cache key",
+      "path": "cacheKey",
+      "value": {
+        "audioUrl": "/a",
+        "durationMs": 1,
+        "timings": null,
+        "timingSource": "none",
+        "cacheKey": ""
+      }
+    }
+  ]
+}

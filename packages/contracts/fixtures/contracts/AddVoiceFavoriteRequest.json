@@ -1,0 +1,42 @@
+{
+  "type": "AddVoiceFavoriteRequest",
+  "valid": [
+    {
+      "name": "voice",
+      "value": {
+        "provider": "kokoro",
+        "voiceId": "af_heart",
+        "label": "Heart"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "missing label",
+      "path": "label",
+      "value": {
+        "provider": "kokoro",
+        "voiceId": "af_heart"
+      }
+    },
+    {
+      "name": "blank provider",
+      "path": "provider",
+      "value": {
+        "provider": "",
+        "voiceId": "af_heart",
+        "label": "Heart"
+      }
+    },
+    {
+      "name": "unknown field",
+      "path": "color",
+      "value": {
+        "provider": "kokoro",
+        "voiceId": "af_heart",
+        "label": "Heart",
+        "color": "red"
+      }
+    }
+  ]
+}

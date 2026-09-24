@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "UpdateMeRequest.json",
+  "title": "UpdateMeRequest",
+  "type": "object",
+  "description": "PATCH /api/me body. At least one field; unknown fields are rejected.",
+  "properties": {
+    "displayName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "pattern": "\\S",
+      "description": "New display name."
+    },
+    "email": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 320,
+      "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+      "description": "Email address, or null to clear it."
+    },
+    "locale": {
+      "type": "string",
+      "enum": [
+        "en"
+      ],
+      "description": "UI language."
+    }
+  },
+  "required": [],
+  "minProperties": 1,
+  "additionalProperties": false
+}

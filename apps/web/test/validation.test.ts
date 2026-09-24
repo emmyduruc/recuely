@@ -15,8 +15,8 @@ function issuesOf(action: () => unknown): string[] {
   throw new Error('expected a validation error');
 }
 
-describe('request validation', () => {
-  it('T1: parseUpdateMe accepts valid fields and trims text', () => {
+describe('request validation (contract schemas, SPEC.md Task 2)', () => {
+  it('T2: parseUpdateMe accepts valid fields and trims text', () => {
     expect(parseUpdateMe({ displayName: '  Ada ', email: 'ada@example.com' })).toEqual({
       displayName: 'Ada',
       email: 'ada@example.com',
@@ -26,7 +26,8 @@ describe('request validation', () => {
 
   it('T1: parseUpdateMe rejects unknown fields, bad email, unsupported locale and empty bodies', () => {
     expect(issuesOf(() => parseUpdateMe({ nickname: 'x' }))).toEqual(['nickname: unknown field']);
-    expect(issuesOf(() => parseUpdateMe({ email: 'nope' }))).toEqual(['email: must be an email address or null']);
+    expect(issuesOf(() => parseUpdateMe({ email: 'nope' }))).toEqual(['email: has an invalid format or is blank']);
+    expect(issuesOf(() => parseUpdateMe({ displayName: '   ' }))).toEqual(['displayName: has an invalid format or is blank']);
     expect(issuesOf(() => parseUpdateMe({ locale: 'de' }))).toEqual(['locale: must be one of: en']);
     expect(issuesOf(() => parseUpdateMe({}))).toEqual(['(body): must contain at least one field']);
     expect(issuesOf(() => parseUpdateMe([]))).toEqual(['(body): must be a JSON object']);
@@ -42,6 +43,9 @@ describe('request validation', () => {
       matchThresholds: { coverage: 0.85, similarity: 0.75 },
     };
     expect(parseUpdateSettings(body)).toEqual(body);
+    expect(parseUpdateSettings({ commandAliases: { [Intent.Pause]: ['  hang on '] } })).toEqual({
+      commandAliases: { [Intent.Pause]: ['hang on'] },
+    });
   });
 
   it('T1: parseUpdateSettings rejects out-of-range and malformed values', () => {
@@ -56,12 +60,12 @@ describe('request validation', () => {
         }),
       ),
     ).toEqual([
-      'defaultRate: must be a number from 0.5 to 2',
+      'defaultRate: must be at most 2',
       'theme: must be one of: dark, light, system',
-      'reducedMotion: must be a boolean',
-      `commandAliases.JUMP: unknown intent; use one of: ${Object.values(Intent).join(', ')}`,
-      'matchThresholds.coverage: must be a number from 0 to 1',
-      'matchThresholds.similarity: must be a number from 0 to 1',
+      'reducedMotion: must be boolean',
+      `commandAliases.JUMP: unknown key; use one of: ${Object.values(Intent).join(', ')}`,
+      'matchThresholds.similarity: is required',
+      'matchThresholds.coverage: must be at most 1',
     ]);
   });
 
@@ -72,8 +76,8 @@ describe('request validation', () => {
       label: 'Heart',
     });
     expect(issuesOf(() => parseAddVoiceFavorite({ provider: 'kokoro' }))).toEqual([
-      'voiceId: must be a string',
-      'label: must be a string',
+      'voiceId: is required',
+      'label: is required',
     ]);
   });
 

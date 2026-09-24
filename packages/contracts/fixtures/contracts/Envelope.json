@@ -1,0 +1,121 @@
+{
+  "type": "Envelope",
+  "valid": [
+    {
+      "name": "minimal",
+      "value": {
+        "v": "0.1",
+        "type": "tts.request",
+        "id": "m-1",
+        "t": 1200.5,
+        "payload": {}
+      }
+    },
+    {
+      "name": "all fields",
+      "value": {
+        "v": "0.1",
+        "type": "stt.result",
+        "id": "m-2",
+        "sessionId": "s-1",
+        "chunkId": "c-7",
+        "seq": 42,
+        "requestId": "r-9",
+        "t": 0,
+        "payload": {
+          "text": "hello"
+        }
+      }
+    },
+    {
+      "name": "newer minor version is accepted",
+      "value": {
+        "v": "0.7",
+        "type": "x",
+        "id": "m-3",
+        "t": 1,
+        "payload": {}
+      }
+    },
+    {
+      "name": "unknown fields are ignored",
+      "value": {
+        "v": "0.1",
+        "type": "x",
+        "id": "m-4",
+        "t": 1,
+        "payload": {},
+        "trace": "abc"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "different major version",
+      "path": "v",
+      "value": {
+        "v": "1.0",
+        "type": "x",
+        "id": "m",
+        "t": 1,
+        "payload": {}
+      }
+    },
+    {
+      "name": "missing payload",
+      "path": "payload",
+      "value": {
+        "v": "0.1",
+        "type": "x",
+        "id": "m",
+        "t": 1
+      }
+    },
+    {
+      "name": "negative seq",
+      "path": "seq",
+      "value": {
+        "v": "0.1",
+        "type": "x",
+        "id": "m",
+        "t": 1,
+        "seq": -1,
+        "payload": {}
+      }
+    },
+    {
+      "name": "fractional seq",
+      "path": "seq",
+      "value": {
+        "v": "0.1",
+        "type": "x",
+        "id": "m",
+        "t": 1,
+        "seq": 1.5,
+        "payload": {}
+      }
+    },
+    {
+      "name": "payload is not an object",
+      "path": "payload",
+      "value": {
+        "v": "0.1",
+        "type": "x",
+        "id": "m",
+        "t": 1,
+        "payload": "text"
+      }
+    },
+    {
+      "name": "t is a string",
+      "path": "t",
+      "value": {
+        "v": "0.1",
+        "type": "x",
+        "id": "m",
+        "t": "1",
+        "payload": {}
+      }
+    }
+  ]
+}

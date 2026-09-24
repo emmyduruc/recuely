@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "TextSpan.json",
+  "title": "TextSpan",
+  "type": "object",
+  "description": "A range of chunk text in UTF-16 code units; charEnd ≥ charStart.",
+  "properties": {
+    "charStart": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "First UTF-16 code unit."
+    },
+    "charEnd": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "UTF-16 code unit after the span."
+    }
+  },
+  "required": [
+    "charStart",
+    "charEnd"
+  ],
+  "additionalProperties": true
+}

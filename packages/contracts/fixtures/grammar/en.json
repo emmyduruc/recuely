@@ -1,0 +1,58 @@
+{
+  "locale": "en",
+  "intents": {
+    "START": [
+      "start",
+      "begin"
+    ],
+    "PAUSE": [
+      "pause",
+      "stop",
+      "hold on",
+      "wait"
+    ],
+    "CONTINUE": [
+      "continue",
+      "resume",
+      "go on"
+    ],
+    "REPEAT": [
+      "repeat",
+      "read it again",
+      "repeat this line",
+      "again"
+    ],
+    "RETAKE": [
+      "retake",
+      "let me try again",
+      "one more time"
+    ],
+    "NEXT": [
+      "next",
+      "next line"
+    ],
+    "PREVIOUS": [
+      "go back",
+      "previous",
+      "previous line"
+    ],
+    "NAVIGATE": [
+      "go to {target}",
+      "back to {target}"
+    ],
+    "SPEED": [
+      "slower",
+      "faster",
+      "normal speed"
+    ],
+    "CHUNK_SIZE": [
+      "read less",
+      "read a full sentence",
+      "read the paragraph"
+    ],
+    "HELP": [
+      "what can i say",
+      "help"
+    ]
+  }
+}

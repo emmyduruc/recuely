@@ -1,0 +1,60 @@
+{
+  "type": "UpdateMeRequest",
+  "valid": [
+    {
+      "name": "display name",
+      "value": {
+        "displayName": "Ada"
+      }
+    },
+    {
+      "name": "clear email",
+      "value": {
+        "email": null
+      }
+    },
+    {
+      "name": "all fields",
+      "value": {
+        "displayName": "Ada",
+        "email": "ada@example.com",
+        "locale": "en"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "empty body",
+      "path": "(root)",
+      "value": {}
+    },
+    {
+      "name": "unknown field",
+      "path": "nickname",
+      "value": {
+        "nickname": "x"
+      }
+    },
+    {
+      "name": "blank display name",
+      "path": "displayName",
+      "value": {
+        "displayName": "   "
+      }
+    },
+    {
+      "name": "bad email",
+      "path": "email",
+      "value": {
+        "email": "nope"
+      }
+    },
+    {
+      "name": "unsupported locale",
+      "path": "locale",
+      "value": {
+        "locale": "de"
+      }
+    }
+  ]
+}

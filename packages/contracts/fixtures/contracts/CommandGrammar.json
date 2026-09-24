@@ -1,0 +1,372 @@
+{
+  "type": "CommandGrammar",
+  "valid": [
+    {
+      "name": "the en grammar",
+      "value": {
+        "locale": "en",
+        "intents": {
+          "START": [
+            "start",
+            "begin"
+          ],
+          "PAUSE": [
+            "pause",
+            "stop",
+            "hold on",
+            "wait"
+          ],
+          "CONTINUE": [
+            "continue",
+            "resume",
+            "go on"
+          ],
+          "REPEAT": [
+            "repeat",
+            "read it again",
+            "repeat this line",
+            "again"
+          ],
+          "RETAKE": [
+            "retake",
+            "let me try again",
+            "one more time"
+          ],
+          "NEXT": [
+            "next",
+            "next line"
+          ],
+          "PREVIOUS": [
+            "go back",
+            "previous",
+            "previous line"
+          ],
+          "NAVIGATE": [
+            "go to {target}",
+            "back to {target}"
+          ],
+          "SPEED": [
+            "slower",
+            "faster",
+            "normal speed"
+          ],
+          "CHUNK_SIZE": [
+            "read less",
+            "read a full sentence",
+            "read the paragraph"
+          ],
+          "HELP": [
+            "what can i say",
+            "help"
+          ]
+        }
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "an intent is missing",
+      "path": "intents.HELP",
+      "value": {
+        "locale": "en",
+        "intents": {
+          "START": [
+            "start",
+            "begin"
+          ],
+          "PAUSE": [
+            "pause",
+            "stop",
+            "hold on",
+            "wait"
+          ],
+          "CONTINUE": [
+            "continue",
+            "resume",
+            "go on"
+          ],
+          "REPEAT": [
+            "repeat",
+            "read it again",
+            "repeat this line",
+            "again"
+          ],
+          "RETAKE": [
+            "retake",
+            "let me try again",
+            "one more time"
+          ],
+          "NEXT": [
+            "next",
+            "next line"
+          ],
+          "PREVIOUS": [
+            "go back",
+            "previous",
+            "previous line"
+          ],
+          "NAVIGATE": [
+            "go to {target}",
+            "back to {target}"
+          ],
+          "SPEED": [
+            "slower",
+            "faster",
+            "normal speed"
+          ],
+          "CHUNK_SIZE": [
+            "read less",
+            "read a full sentence",
+            "read the paragraph"
+          ]
+        }
+      }
+    },
+    {
+      "name": "an intent has no phrases",
+      "path": "intents.NEXT",
+      "value": {
+        "locale": "en",
+        "intents": {
+          "START": [
+            "start",
+            "begin"
+          ],
+          "PAUSE": [
+            "pause",
+            "stop",
+            "hold on",
+            "wait"
+          ],
+          "CONTINUE": [
+            "continue",
+            "resume",
+            "go on"
+          ],
+          "REPEAT": [
+            "repeat",
+            "read it again",
+            "repeat this line",
+            "again"
+          ],
+          "RETAKE": [
+            "retake",
+            "let me try again",
+            "one more time"
+          ],
+          "NEXT": [],
+          "PREVIOUS": [
+            "go back",
+            "previous",
+            "previous line"
+          ],
+          "NAVIGATE": [
+            "go to {target}",
+            "back to {target}"
+          ],
+          "SPEED": [
+            "slower",
+            "faster",
+            "normal speed"
+          ],
+          "CHUNK_SIZE": [
+            "read less",
+            "read a full sentence",
+            "read the paragraph"
+          ],
+          "HELP": [
+            "what can i say",
+            "help"
+          ]
+        }
+      }
+    },
+    {
+      "name": "unknown intent",
+      "path": "intents.JUMP",
+      "value": {
+        "locale": "en",
+        "intents": {
+          "START": [
+            "start",
+            "begin"
+          ],
+          "PAUSE": [
+            "pause",
+            "stop",
+            "hold on",
+            "wait"
+          ],
+          "CONTINUE": [
+            "continue",
+            "resume",
+            "go on"
+          ],
+          "REPEAT": [
+            "repeat",
+            "read it again",
+            "repeat this line",
+            "again"
+          ],
+          "RETAKE": [
+            "retake",
+            "let me try again",
+            "one more time"
+          ],
+          "NEXT": [
+            "next",
+            "next line"
+          ],
+          "PREVIOUS": [
+            "go back",
+            "previous",
+            "previous line"
+          ],
+          "NAVIGATE": [
+            "go to {target}",
+            "back to {target}"
+          ],
+          "SPEED": [
+            "slower",
+            "faster",
+            "normal speed"
+          ],
+          "CHUNK_SIZE": [
+            "read less",
+            "read a full sentence",
+            "read the paragraph"
+          ],
+          "HELP": [
+            "what can i say",
+            "help"
+          ],
+          "JUMP": [
+            "jump"
+          ]
+        }
+      }
+    },
+    {
+      "name": "unknown placeholder",
+      "path": "intents.NAVIGATE[0]",
+      "value": {
+        "locale": "en",
+        "intents": {
+          "START": [
+            "start",
+            "begin"
+          ],
+          "PAUSE": [
+            "pause",
+            "stop",
+            "hold on",
+            "wait"
+          ],
+          "CONTINUE": [
+            "continue",
+            "resume",
+            "go on"
+          ],
+          "REPEAT": [
+            "repeat",
+            "read it again",
+            "repeat this line",
+            "again"
+          ],
+          "RETAKE": [
+            "retake",
+            "let me try again",
+            "one more time"
+          ],
+          "NEXT": [
+            "next",
+            "next line"
+          ],
+          "PREVIOUS": [
+            "go back",
+            "previous",
+            "previous line"
+          ],
+          "NAVIGATE": [
+            "go to {chunk}"
+          ],
+          "SPEED": [
+            "slower",
+            "faster",
+            "normal speed"
+          ],
+          "CHUNK_SIZE": [
+            "read less",
+            "read a full sentence",
+            "read the paragraph"
+          ],
+          "HELP": [
+            "what can i say",
+            "help"
+          ]
+        }
+      }
+    },
+    {
+      "name": "phrases are lower-case",
+      "path": "intents.HELP[0]",
+      "value": {
+        "locale": "en",
+        "intents": {
+          "START": [
+            "start",
+            "begin"
+          ],
+          "PAUSE": [
+            "pause",
+            "stop",
+            "hold on",
+            "wait"
+          ],
+          "CONTINUE": [
+            "continue",
+            "resume",
+            "go on"
+          ],
+          "REPEAT": [
+            "repeat",
+            "read it again",
+            "repeat this line",
+            "again"
+          ],
+          "RETAKE": [
+            "retake",
+            "let me try again",
+            "one more time"
+          ],
+          "NEXT": [
+            "next",
+            "next line"
+          ],
+          "PREVIOUS": [
+            "go back",
+            "previous",
+            "previous line"
+          ],
+          "NAVIGATE": [
+            "go to {target}",
+            "back to {target}"
+          ],
+          "SPEED": [
+            "slower",
+            "faster",
+            "normal speed"
+          ],
+          "CHUNK_SIZE": [
+            "read less",
+            "read a full sentence",
+            "read the paragraph"
+          ],
+          "HELP": [
+            "Help"
+          ]
+        }
+      }
+    }
+  ]
+}

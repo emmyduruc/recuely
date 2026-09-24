@@ -1,0 +1,30 @@
+{
+  "type": "TextSpan",
+  "valid": [
+    {
+      "name": "span",
+      "value": {
+        "charStart": 2,
+        "charEnd": 8
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "inverted",
+      "path": "(root).charEnd",
+      "value": {
+        "charStart": 8,
+        "charEnd": 2
+      }
+    },
+    {
+      "name": "negative",
+      "path": "charStart",
+      "value": {
+        "charStart": -1,
+        "charEnd": 2
+      }
+    }
+  ]
+}

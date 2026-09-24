@@ -1,6 +1,6 @@
 # SPEC — Filming Assistant
 
-> Single source of truth for this project. Version **0.8.4** · Last updated 2026-09-24
+> Single source of truth for this project. Version **0.9.0** · Last updated 2026-09-24
 > Input brief: `product.md` (frozen). Repo rules for Claude Code: `CLAUDE.md`.
 > "Filming Assistant" is a placeholder name. Never use it in package names, identifiers, or branding.
 
@@ -100,6 +100,9 @@ Voice cloning, AI avatars, a non-linear editor, social posting, Notion/Google Do
 │   └── ai/                  Python FastAPI service (STT, VAD, TTS); package.json wraps uv for turbo
 ├── packages/
 │   ├── contracts/           Shared TS types + JSON Schemas + fixtures (TS & Python both test against them)
+│   │   ├── src/schemas/     Schemas typed against the TS types (objectSchema<T>); validation in src/validation.ts
+│   │   ├── schemas/         Emitted <Type>.json files (JSON Schema 2020-12), read by the Python tests
+│   │   └── fixtures/        contracts/<Type>.json (valid/invalid), text/utf16-offsets.json, grammar/en.json
 │   ├── db/                  TypeORM DataSource, entities (EntitySchema), migrations, repositories
 │   ├── session-engine/      Framework-free TS state machine (events in → effects out)
 │   ├── script-model/        Parsing, segmentation, offsets, text-preservation invariant
@@ -619,8 +622,8 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | # | Task | Status | Depends on |
 |---|---|---|---|
 | 0 | Monorepo foundation (Turborepo, Nuxt, FastAPI, CI) | DONE | — |
-| 1 | User modelling & database (TypeORM + PostgreSQL) | AWAITING CONFIRMATION | 0 |
-| 2 | Shared contracts & fixtures | TODO | 0 |
+| 1 | User modelling & database (TypeORM + PostgreSQL) | DONE | 0 |
+| 2 | Shared contracts & fixtures | AWAITING CONFIRMATION | 0 |
 | 3 | Script model: parsing, segmentation, text preservation | TODO | 2 |
 | 4 | Project, script & session persistence (entities + API) | TODO | 1, 3 |
 | 5 | Session engine (state machine) | TODO | 2 |
@@ -721,8 +724,20 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 **Why:** Web, engine, and AI service must agree on data exactly. Fixtures both runtimes test against catch drift early.
 **Tests:** Contract (TS + Python load the same fixtures; valid ones pass, invalid ones fail; the UTF-16 fixture gives identical offsets)
 **Done when:**
-- [ ] `pnpm test` and `pnpm --filter ai test` both pass the shared fixture suite
-- [ ] Contract version `0.1.0` recorded here and exported from the package
+- [x] `pnpm test` and `pnpm --filter ai test` both pass the shared fixture suite
+- [x] Contract version `0.1.0` recorded here and exported from the package (`CONTRACT_VERSION`, `package.json` version, Python `CONTRACT_VERSION`; envelope `v` is `0.1`)
+
+**How it's built:**
+- **Schemas** (JSON Schema 2020-12) live in `packages/contracts/src/schemas`, written with `objectSchema<T>()`: a property missing from the schema, an extra property, or a required key left out of `required` is a **compile error** (demonstrated). `pnpm --filter @repo/contracts schemas:emit` writes `schemas/<Type>.json`; a test fails when they're stale.
+- **Contracts:** Envelope, WordTiming, TtsResult, TextSpan, MatchResult, CommandEvent, CommandGrammar (shared with Python) and the Task 1 request bodies UpdateMeRequest, UpdateSettingsRequest, AddVoiceFavoriteRequest (web only). Fixed value sets are constants: `TimingSource`, `MatchDecision`, `CommandSource` (+ existing `Intent`, `Locale`).
+- **Messages ignore unknown fields** (`additionalProperties: true`, Pydantic `extra="ignore"`); **request bodies reject them**. Optional fields may be absent but never `null`, in both runtimes.
+- **Cross-field rules** in both runtimes: `end ≥ start`, `charEnd ≥ charStart` (timings and spans), and **`timings` is null exactly when `timingSource` is `none`** (§A6.4, no fake word highlight). Envelope `v` must be `0.x`.
+- **Validation:** `@repo/contracts/validation` (`validateContract(type, value)`, ajv) returns typed values or `{ path, issue }` lists. The web API now validates bodies with it (Task 1's typed guards are gone); text is trimmed after validation.
+- **Python:** `apps/ai/app/contracts.py` (strict Pydantic, camelCase aliases, StrEnums) and `app/text_offsets.py` (UTF-16 ↔ code-point conversion; offsets inside a surrogate pair are rejected). The AI health endpoint takes `v` from `ENVELOPE_VERSION`.
+- **Drift checks:** pytest compares every Pydantic model's properties/required and every enum with `schemas/*.json`; a web test compares the OpenAPI request-body schemas with the contract schemas.
+- **Known difference:** JSON Schema treats `1.0` as an integer, strict Pydantic doesn't. No fixture relies on it; senders emit integers.
+
+**Evidence (2026-09-24):** `pnpm typecheck` 9/9 · `pnpm lint` 9/9 (0 warnings; ruff + pyright strict 0) · `pnpm test`: contracts 86, db 28, web 23, ai 75 (pytest) · `pnpm build` ✓ · `pnpm test:e2e` 2/2 · `pnpm test:int` db 13 + API 14 (bodies validated by contract schemas through the built server). Drift demo: adding `Estimated` to TS `TimingSource` only → pytest `test_t2_enum_values_match_the_schemas[TtsResult-timingSource]` fails; restored → 75 passed. `objectSchema` demo: missing required key, extra property and missing property each fail typecheck.
 
 ### Task 3 — Script model
 
@@ -931,6 +946,8 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 0.3.0 | 2026-09-23 | Added §B10 code standards: zero TS/lint errors, named constants instead of string-literal comparisons, Record lookups instead of nested ternaries; wired into Task 0 and the D0 gate |
 | 0.3.1 | 2026-09-24 | Task 0 implemented; TypeScript pinned to 6.0.x; PostgreSQL/ffmpeg install moved to Tasks 1/9 (Homebrew dropped Intel); dependency register updated |
 | 0.3.2 | 2026-09-24 | Task 0 confirmed by user → DONE |
+| 0.9.0 | 2026-09-24 | Task 2 implemented: JSON Schemas typed against TS types, emitted schema files, ajv validation (`@repo/contracts/validation`), Pydantic mirrors + UTF-16 helpers in `apps/ai`, shared fixtures (contracts, UTF-16, en grammar), drift tests both ways; web request bodies now validated by contract schemas; Task 2 → AWAITING CONFIRMATION |
+| 0.8.5 | 2026-09-24 | Task 1 confirmed by user ("start task 2") → DONE. The two Swagger manual checks (/api/docs screenshot, AI /docs) were not reported back. Task 2 started |
 | 0.8.4 | 2026-09-24 | Task 1 verified against live Neon + Supabase; H-22 validated; Task 1 → AWAITING CONFIRMATION |
 | 0.8.3 | 2026-09-24 | Clarified by user: **Neon for `DATABASE_URL`, Supabase for `DATABASE_URL_TEST`**. CA setting is per connection (`DATABASE_URL_CA_CERT`, `DATABASE_URL_TEST_CA_CERT`); Neon platform features beyond Postgres stay out of R1 |
 | 0.8.2 | 2026-09-24 | Database host is **Supabase** (user decision; replaces Neon); tests use a separate Supabase project via the session pooler; guard identifies Supabase projects by ref; `DATABASE_CA_CERT` for verified TLS; `sslmode`/`pgbouncer` URL params stripped; RLS enabled on all tables (Supabase Data API); Task 4 streaming-upload rule |

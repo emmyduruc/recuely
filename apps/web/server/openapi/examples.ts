@@ -60,7 +60,7 @@ export const exampleValidationError: ApiError = {
   statusCode: 422,
   code: ApiErrorCode.ValidationFailed,
   message: 'The request body is invalid.',
-  details: [{ field: 'defaultRate', issue: 'must be a number from 0.5 to 2' }],
+  details: [{ field: 'defaultRate', issue: 'must be at most 2' }],
 };
 
 export const exampleBadJsonError: ApiError = {

@@ -74,7 +74,15 @@ importers:
 
   packages/config: {}
 
-  packages/contracts: {}
+  packages/contracts:
+    dependencies:
+      ajv:
+        specifier: 8.20.0
+        version: 8.20.0
+    devDependencies:
+      '@types/node':
+        specifier: 22.20.4
+        version: 22.20.4
 
   packages/db:
     dependencies:

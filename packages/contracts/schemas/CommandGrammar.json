@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CommandGrammar.json",
+  "title": "CommandGrammar",
+  "type": "object",
+  "description": "Spoken phrases per intent for one locale (SPEC.md §B5).",
+  "properties": {
+    "locale": {
+      "type": "string",
+      "enum": [
+        "en"
+      ],
+      "description": "Language of the phrases."
+    },
+    "intents": {
+      "type": "object",
+      "description": "Phrases per intent; every intent must be present.",
+      "properties": {
+        "START": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Phrases for START.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+( [a-z]+)*( \\{target\\})?$"
+          }
+        },
+        "PAUSE": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Phrases for PAUSE.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+( [a-z]+)*( \\{target\\})?$"
+          }
+        },
+        "CONTINUE": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Phrases for CONTINUE.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+( [a-z]+)*( \\{target\\})?$"
+          }
+        },
+        "REPEAT": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Phrases for REPEAT.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+( [a-z]+)*( \\{target\\})?$"
+          }
+        },
+        "RETAKE": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Phrases for RETAKE.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+( [a-z]+)*( \\{target\\})?$"
+          }
+        },
+        "NEXT": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Phrases for NEXT.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+( [a-z]+)*( \\{target\\})?$"
+          }
+        },
+        "PREVIOUS": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Phrases for PREVIOUS.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+( [a-z]+)*( \\{target\\})?$"
+          }
+        },
+        "NAVIGATE": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Phrases for NAVIGATE.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+( [a-z]+)*( \\{target\\})?$"
+          }
+        },
+        "SPEED": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Phrases for SPEED.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+( [a-z]+)*( \\{target\\})?$"
+          }
+        },
+        "CHUNK_SIZE": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Phrases for CHUNK_SIZE.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+( [a-z]+)*( \\{target\\})?$"
+          }
+        },
+        "HELP": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Phrases for HELP.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+( [a-z]+)*( \\{target\\})?$"
+          }
+        }
+      },
+      "required": [
+        "START",
+        "PAUSE",
+        "CONTINUE",
+        "REPEAT",
+        "RETAKE",
+        "NEXT",
+        "PREVIOUS",
+        "NAVIGATE",
+        "SPEED",
+        "CHUNK_SIZE",
+        "HELP"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "locale",
+    "intents"
+  ],
+  "additionalProperties": false
+}

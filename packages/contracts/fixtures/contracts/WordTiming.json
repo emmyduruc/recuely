@@ -1,0 +1,81 @@
+{
+  "type": "WordTiming",
+  "valid": [
+    {
+      "name": "a word",
+      "value": {
+        "index": 0,
+        "start": 0,
+        "end": 320,
+        "charStart": 0,
+        "charEnd": 5
+      }
+    },
+    {
+      "name": "zero-length at the same instant",
+      "value": {
+        "index": 3,
+        "start": 500,
+        "end": 500,
+        "charStart": 9,
+        "charEnd": 9
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "end before start",
+      "path": "(root).end",
+      "value": {
+        "index": 0,
+        "start": 400,
+        "end": 100,
+        "charStart": 0,
+        "charEnd": 5
+      }
+    },
+    {
+      "name": "charEnd before charStart",
+      "path": "(root).charEnd",
+      "value": {
+        "index": 0,
+        "start": 0,
+        "end": 320,
+        "charStart": 5,
+        "charEnd": 2
+      }
+    },
+    {
+      "name": "negative start",
+      "path": "start",
+      "value": {
+        "index": 0,
+        "start": -1,
+        "end": 320,
+        "charStart": 0,
+        "charEnd": 5
+      }
+    },
+    {
+      "name": "missing charEnd",
+      "path": "charEnd",
+      "value": {
+        "index": 0,
+        "start": 0,
+        "end": 1,
+        "charStart": 0
+      }
+    },
+    {
+      "name": "string number",
+      "path": "start",
+      "value": {
+        "index": 0,
+        "start": "0",
+        "end": 320,
+        "charStart": 0,
+        "charEnd": 5
+      }
+    }
+  ]
+}

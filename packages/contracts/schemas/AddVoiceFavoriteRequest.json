@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "AddVoiceFavoriteRequest.json",
+  "title": "AddVoiceFavoriteRequest",
+  "type": "object",
+  "description": "POST /api/me/voices body.",
+  "properties": {
+    "provider": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "\\S",
+      "description": "TTS provider."
+    },
+    "voiceId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "\\S",
+      "description": "The provider's voice id."
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "pattern": "\\S",
+      "description": "Label shown in the picker."
+    }
+  },
+  "required": [
+    "provider",
+    "voiceId",
+    "label"
+  ],
+  "additionalProperties": false
+}

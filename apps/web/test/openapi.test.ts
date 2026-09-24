@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url';
+import { ContractType, SCHEMAS } from '@repo/contracts';
 import { describe, expect, it } from 'vitest';
 import { apiDocsEnabled, openApiDocument } from '../server/openapi/document';
 import { ApiTag } from '../server/openapi/tags';
@@ -116,4 +117,23 @@ describe('docs gate', () => {
     expect(apiDocsEnabled(false, { API_DOCS_ENABLED: 'false' })).toBe(false);
     expect(apiDocsEnabled(false, { API_DOCS_ENABLED: 'true' })).toBe(true);
   });
+});
+
+describe('OpenAPI request bodies match the contract schemas (SPEC.md Task 2)', () => {
+  const pairs = [ContractType.UpdateMeRequest, ContractType.UpdateSettingsRequest, ContractType.AddVoiceFavoriteRequest];
+
+  for (const type of pairs) {
+    it(`T2: ${type} has the same fields, required fields and enums in both`, () => {
+      const documented = openApiDocument.components.schemas[type];
+      const contract = SCHEMAS[type];
+      expect(documented, type).toBeDefined();
+      const docProps = documented?.properties ?? {};
+      const contractProps = contract.properties ?? {};
+      expect(Object.keys(docProps).sort()).toEqual(Object.keys(contractProps).sort());
+      expect([...(documented?.required ?? [])].sort()).toEqual([...(contract.required ?? [])].sort());
+      for (const [name, property] of Object.entries(contractProps)) {
+        expect(docProps[name]?.enum, `${type}.${name}`).toEqual(property.enum);
+      }
+    });
+  }
 });

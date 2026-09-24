@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "MatchResult.json",
+  "title": "MatchResult",
+  "type": "object",
+  "description": "How well a take matched its chunk, and whether to advance (SPEC.md §B7).",
+  "properties": {
+    "coverage": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Share of chunk tokens heard."
+    },
+    "similarity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Transcript-to-chunk similarity."
+    },
+    "missingSpans": {
+      "type": "array",
+      "items": {
+        "$ref": "TextSpan.json"
+      },
+      "description": "Chunk text not heard."
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "advance",
+        "ask"
+      ],
+      "description": "Advance, or ask the creator."
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Why this decision was made."
+    }
+  },
+  "required": [
+    "coverage",
+    "similarity",
+    "missingSpans",
+    "decision",
+    "reasons"
+  ],
+  "additionalProperties": true
+}

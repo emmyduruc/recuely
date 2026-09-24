@@ -3,7 +3,7 @@ from enum import StrEnum
 from fastapi import FastAPI
 from pydantic import BaseModel, ConfigDict, Field
 
-CONTRACT_VERSION = "0.1"
+from app.contracts import ENVELOPE_VERSION
 
 
 class CapabilityStatus(StrEnum):
@@ -121,4 +121,4 @@ app = FastAPI(
 def health() -> HealthResponse:
     # No providers are wired yet (Task 10); every capability reports unavailable.
     capabilities = {cap: CapabilityHealth(status=CapabilityStatus.UNAVAILABLE) for cap in Capability}
-    return HealthResponse(v=CONTRACT_VERSION, status=CapabilityStatus.DEGRADED, capabilities=capabilities)
+    return HealthResponse(v=ENVELOPE_VERSION, status=CapabilityStatus.DEGRADED, capabilities=capabilities)

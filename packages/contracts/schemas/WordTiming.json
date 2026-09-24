@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "WordTiming.json",
+  "title": "WordTiming",
+  "type": "object",
+  "description": "One spoken word. Times are ms from audio start; offsets are UTF-16 code units (SPEC.md §B5).",
+  "properties": {
+    "index": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Word index within the chunk."
+    },
+    "start": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Start time in ms."
+    },
+    "end": {
+      "type": "number",
+      "minimum": 0,
+      "description": "End time in ms; ≥ start."
+    },
+    "charStart": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "First UTF-16 code unit of the word."
+    },
+    "charEnd": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "UTF-16 code unit after the word; ≥ charStart."
+    }
+  },
+  "required": [
+    "index",
+    "start",
+    "end",
+    "charStart",
+    "charEnd"
+  ],
+  "additionalProperties": true
+}

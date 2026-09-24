@@ -1,0 +1,50 @@
+{
+  "description": "Offsets are UTF-16 code units (JS string indices). Python must convert (SPEC.md \u00a7B5 rule 1). The text is NOT NFC-normalized on purpose.",
+  "text": "Cafe\u0301 time \ud83d\udc4b\ud83c\udffd! The \ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67 waits \u2014 na\u00efve \u201cquotes\u201d.",
+  "utf16Length": 53,
+  "codePointLength": 48,
+  "spans": [
+    {
+      "label": "decomposed e-acute word",
+      "start": 0,
+      "end": 5,
+      "text": "Cafe\u0301"
+    },
+    {
+      "label": "emoji with skin tone",
+      "start": 11,
+      "end": 15,
+      "text": "\ud83d\udc4b\ud83c\udffd"
+    },
+    {
+      "label": "word after emoji",
+      "start": 17,
+      "end": 20,
+      "text": "The"
+    },
+    {
+      "label": "ZWJ family emoji",
+      "start": 21,
+      "end": 29,
+      "text": "\ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67"
+    },
+    {
+      "label": "word after ZWJ sequence",
+      "start": 30,
+      "end": 35,
+      "text": "waits"
+    },
+    {
+      "label": "precomposed i-diaeresis word",
+      "start": 38,
+      "end": 43,
+      "text": "na\u00efve"
+    },
+    {
+      "label": "curly-quoted word",
+      "start": 44,
+      "end": 52,
+      "text": "\u201cquotes\u201d"
+    }
+  ]
+}

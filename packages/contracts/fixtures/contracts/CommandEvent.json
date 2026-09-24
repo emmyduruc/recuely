@@ -1,0 +1,62 @@
+{
+  "type": "CommandEvent",
+  "valid": [
+    {
+      "name": "touch pause",
+      "value": {
+        "intent": "PAUSE",
+        "source": "touch"
+      }
+    },
+    {
+      "name": "voice navigate with target",
+      "value": {
+        "intent": "NAVIGATE",
+        "source": "voice",
+        "args": {
+          "target": "the intro"
+        },
+        "utterance": "go to the intro",
+        "confidence": 0.91
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "unknown intent",
+      "path": "intent",
+      "value": {
+        "intent": "JUMP",
+        "source": "voice"
+      }
+    },
+    {
+      "name": "unknown source",
+      "path": "source",
+      "value": {
+        "intent": "NEXT",
+        "source": "gesture"
+      }
+    },
+    {
+      "name": "confidence above 1",
+      "path": "confidence",
+      "value": {
+        "intent": "NEXT",
+        "source": "voice",
+        "confidence": 1.5
+      }
+    },
+    {
+      "name": "non-string arg",
+      "path": "args.target",
+      "value": {
+        "intent": "NAVIGATE",
+        "source": "voice",
+        "args": {
+          "target": 3
+        }
+      }
+    }
+  ]
+}
