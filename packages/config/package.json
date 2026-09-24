@@ -1,0 +1,9 @@
+{
+  "name": "@repo/config",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./eslint": "./eslint.js",
+    "./tsconfig.base.json": "./tsconfig.base.json"
+  }
+}

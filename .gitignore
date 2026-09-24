@@ -1,0 +1,27 @@
+node_modules/
+.turbo/
+dist/
+coverage/
+.nuxt/
+.output/
+.data/
+.env
+.env.*
+!.env.example
+# python
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+# media & models (never commit)
+models/
+media/
+storage/
+*.webm
+*.mp4
+*.wav
+!tests/fixtures/**/*.wav
+# playwright
+test-results/
+playwright-report/
+.DS_Store

@@ -1,0 +1,11 @@
+{
+  "name": "@repo/ai",
+  "private": true,
+  "scripts": {
+    "postinstall": "uv sync",
+    "dev": "uv run uvicorn app.main:app --reload --port 8008",
+    "typecheck": "uv run pyright",
+    "lint": "uv run ruff check . && uv run ruff format --check .",
+    "test": "uv run pytest"
+  }
+}

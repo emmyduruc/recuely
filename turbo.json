@@ -1,0 +1,13 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "tasks": {
+    "build": { "dependsOn": ["^build"], "outputs": ["dist/**", ".output/**"] },
+    "typecheck": {},
+    "lint": {},
+    "test": { "outputs": ["coverage/**"] },
+    "test:int": { "cache": false },
+    "test:e2e": { "dependsOn": ["^build"], "cache": false },
+    "dev": { "cache": false, "persistent": true },
+    "db:migrate": { "cache": false }
+  }
+}
