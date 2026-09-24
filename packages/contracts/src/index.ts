@@ -6,6 +6,7 @@ export * from './intent.ts';
 export * from './locale.ts';
 export * from './payloads.ts';
 export * from './schemas/index.ts';
+export * from './script.ts';
 export * from './theme.ts';
 export * from './user.ts';
 export * from './values.ts';

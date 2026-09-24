@@ -1,6 +1,6 @@
 # SPEC — Filming Assistant
 
-> Single source of truth for this project. Version **0.9.0** · Last updated 2026-09-24
+> Single source of truth for this project. Version **0.10.0** · Last updated 2026-09-24
 > Input brief: `product.md` (frozen). Repo rules for Claude Code: `CLAUDE.md`.
 > "Filming Assistant" is a placeholder name. Never use it in package names, identifiers, or branding.
 
@@ -238,7 +238,7 @@ Consumers ignore unknown fields and reject a different major `v`.
 2. Chunk ranges cover every non-whitespace character of spoken text exactly once. No gaps, no overlaps.
 3. `normalize(s)` = NFC, collapse whitespace, trim. Invariant: `normalize(join(chunks.text)) === normalize(join(spokenBlocks.text))`.
 4. `spoken_text` may differ from `text` only by whitespace, markdown emphasis markers, and explicitly listed, unit-tested rules.
-5. AI segmenters return **boundary offsets only**. An offset that isn't on a whitespace or punctuation boundary is snapped or rejected.
+5. AI segmenters return **boundary offsets only**. An offset that isn't on a boundary is snapped (≤ 12 UTF-16 units) or rejected. Boundaries are **whitespace-separated word starts only**, never inside a token like `now—then`, because chunks are rejoined with a space for rule 3 (found by the Task 3 property tests).
 
 **Key payloads**
 ```ts
@@ -414,7 +414,7 @@ States: `idle, preparing, ready, assistant_speaking, settle, waiting_for_speech,
 | (none) Nitro built-in OpenAPI + Swagger UI | API docs | — | MIT (Nitro) | §B5.1, Task 1 | Approved (user). No new package; Swagger UI assets load from Nitro's configured CDN in dev |
 | vitest, @playwright/test | Tests | node:test | MIT/Apache-2.0 | Task 0 | Approved (Task 0) |
 | @nuxtjs/i18n (vue-i18n transitively) | UI text from `en.json` with typed keys, so later languages only add a file | hand-rolled `Record<MessageKey, string>` | MIT | §B11, Task 11 | Proposed |
-| fast-check | Property tests | hand-written loops | MIT | Task 3/5 | Proposed |
+| fast-check | Property tests | hand-written loops | MIT | Task 3/5 | Approved (fixed stack in CLAUDE.md; first used in Task 3) |
 | typescript 6.0.x (pinned) | Types | — | Apache-2.0 | §B10 R1 | Approved (Task 0). TS 7 blocked: typescript-eslint supports < 6.1 |
 | vue-tsc | Vue typecheck (`nuxt typecheck`) | — | MIT | §B10 R1 | Approved (Task 0) |
 | eslint, @eslint/js, typescript-eslint, eslint-plugin-vue, vue-eslint-parser, globals | Lint + §B10 rules | — | MIT | §B10 R2–R4 | Approved (Task 0) |
@@ -623,8 +623,8 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 |---|---|---|---|
 | 0 | Monorepo foundation (Turborepo, Nuxt, FastAPI, CI) | DONE | — |
 | 1 | User modelling & database (TypeORM + PostgreSQL) | DONE | 0 |
-| 2 | Shared contracts & fixtures | AWAITING CONFIRMATION | 0 |
-| 3 | Script model: parsing, segmentation, text preservation | TODO | 2 |
+| 2 | Shared contracts & fixtures | DONE | 0 |
+| 3 | Script model: parsing, segmentation, text preservation | AWAITING CONFIRMATION | 2 |
 | 4 | Project, script & session persistence (entities + API) | TODO | 1, 3 |
 | 5 | Session engine (state machine) | TODO | 2 |
 | 6 | Command grammar & transcript matcher | TODO | 2 |
@@ -745,9 +745,21 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 **Why:** The whole product depends on reading exactly what the creator wrote, in sensible pieces. Wording must never change.
 **Tests:** Unit (each mode on fixtures; block typing) · Property (random boundary edits keep coverage; invalid AI boundaries snapped or rejected) · Unit (stable IDs across unrelated edits)
 **Done when:**
-- [ ] E1 passes at the model level (fixture with headings, paragraphs, comma, full stop, table)
-- [ ] Property tests run ≥ 1,000 cases green
-- [ ] Headings, notes, and cues never appear in chunks unless re-typed as spoken
+- [x] E1 passes at the model level (fixture with headings, paragraphs, comma, full stop, table)
+- [x] Property tests run ≥ 1,000 cases green
+- [x] Headings, notes, and cues never appear in chunks unless re-typed as spoken
+
+**How it's built (`packages/script-model`, pure TS):**
+- **Parser:** `# ` headings, `Note:` lines, whole-line `[…]` scene cues, `- `/`* `/`•` bullets (one spoken block each), pipe tables and tab-separated tables (first row = header; one block per cell with `source.table` = index/row/column/header), everything else spoken paragraphs. Spoken table column: a header naming spoken text (script, line, dialogue, voice-over, narration, text, copy, words, read…), else the column with the longest cells; timestamp/number columns never. Header cells are headings, other body cells notes. Invariant: `paste.slice(source.start, source.end) === block.text`; markers go to `metadata.marker`.
+- **Modes** (`DEFAULT_TUNING`, provisional until Task 19): `paragraph` = block; `sentence` = `Intl.Segmenter('en')` + abbreviation/initial merge (Dr., Mr., e.g., J.); `short` = breath groups ≤ 8 words split at `, ; :` and spaced dashes, tails < 3 words rejoin; `smart` = sentences ≤ 16 words whole, longer ones split at clauses, neighbouring sentences < 6 words merged up to 12.
+- **Plan model:** cuts over the spoken stream; chunks partition it, so coverage holds by construction. Chunks may span blocks only via an explicit merge (one range per block). The first chunk after a scene cue carries `sceneCue`.
+- **Edits** (`splitChunk`, `moveBoundary`, `mergeWithNext`, `rechunkFrom`, `retypeBlock`) return `EditResult` with a `ScriptEditError`, never throw, and snap to word starts.
+- **Stable ids:** a chunk keeps its id iff its ranges are unchanged; changed chunks get new ids, so takes never move to different text (§B4). `reconcileBlockIds` keeps block ids across re-parses (LCS on type + text), so an edit to one paragraph leaves other blocks, and chunk ranges in them, stable. **Task 4 note:** block/chunk ids are logical ids that recur across script/plan versions, so the DB primary keys must be composite (`script_id, id` / `chunk_plan_id, id`) or use a separate row id.
+- **AI proposals:** `applyBoundaryProposals` snaps each offset to a word start within 12 units or rejects it (`not_spoken`, `no_boundary_nearby`); paragraph breaks always remain cuts.
+- **`checkCoverage` / `assertCoverage`** independently check rules 2–4 (uncovered, covered twice, unknown block, invalid range, empty chunk, order, text/spokenText mismatch, wording changed, duplicate ids) for plans from the DB/API/AI.
+- **Types/constants** `BlockType`, `ChunkMode`, `ScriptBlock`, `ScriptChunk`, `ChunkPlan` live in `packages/contracts/src/script.ts` (JSON Schemas come with the Task 4 API).
+
+**Evidence (2026-09-24):** script-model 50 tests (E1 ×4, parser 13, text 4, segmentation 7, edits/ids/proposals 9, coverage 7, **6 fast-check properties × 1,000 runs**: parse slices, coverage in every mode, random edit sequences + id stability, AI proposals, block-id stability, spokenText rule). The properties found two real issues, both fixed: cutting inside `now—then` changed wording after rejoin (→ whitespace-only boundaries), and an over-strict test premise. Repo: `pnpm typecheck` 9/9 · `pnpm lint` 9/9 · `pnpm test` (contracts 86, db 28, web 23, script-model 50, ai 75) · `pnpm build` ✓ · `pnpm test:e2e` 2/2 · `pnpm test:int` 13 + 14.
 
 ### Task 4 — Project, script & session persistence
 
@@ -927,6 +939,7 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | H-19 | Same-MIME take stitching works in Chrome and Safari without ffmpeg.wasm | Task 9 | Open |
 | H-20 | TypeORM bundles cleanly in Nitro with `EntitySchema` + externals | Task 1 | **Validated (build)**: `@repo/*` inlined, `typeorm`/`pg` external and traced into `.output/server/node_modules`; `pg` passed to TypeORM as `driver`. The live-DB run is pending the Neon URLs |
 | H-22 | Supabase (session pooler, eu-west-1) keeps `pnpm test:int` under 60 s, and Neon keeps dev API calls responsive, from this machine | Task 1 | **Validated**: 45 s incl. build (Supabase transaction pooler works too); Neon cold start ≈ 3.4 s on first connect only |
+| H-26 | The `short`/`smart` word budgets (8 / 16, merge < 6 up to 12) give natural repeat-after chunks | Task 19 | Open |
 | H-21 | Nitro's experimental OpenAPI generator (`defineRouteMeta` + `$global` components) can meet the §B5.1 standard; else fall back to a hand-written typed document | Task 1 | **Refuted** (nitropack 2.13.4: no top-level tags, fixed `servers`) → fallback |
 
 **Decisions needed from the user:**
@@ -946,6 +959,8 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 0.3.0 | 2026-09-23 | Added §B10 code standards: zero TS/lint errors, named constants instead of string-literal comparisons, Record lookups instead of nested ternaries; wired into Task 0 and the D0 gate |
 | 0.3.1 | 2026-09-24 | Task 0 implemented; TypeScript pinned to 6.0.x; PostgreSQL/ffmpeg install moved to Tasks 1/9 (Homebrew dropped Intel); dependency register updated |
 | 0.3.2 | 2026-09-24 | Task 0 confirmed by user → DONE |
+| 0.10.0 | 2026-09-24 | Task 3 implemented (parser, four modes, cut-based plan model, stable ids, AI proposal snapping, coverage check, 6 × 1,000 property runs); §B5 rule 5 tightened to whitespace-only boundaries; `BlockType`/`ChunkMode`/script types in contracts; fast-check approved; H-26; Task 4 note on composite keys; Task 3 → AWAITING CONFIRMATION |
+| 0.9.1 | 2026-09-24 | Task 2 confirmed by user → DONE. Task 3 started |
 | 0.9.0 | 2026-09-24 | Task 2 implemented: JSON Schemas typed against TS types, emitted schema files, ajv validation (`@repo/contracts/validation`), Pydantic mirrors + UTF-16 helpers in `apps/ai`, shared fixtures (contracts, UTF-16, en grammar), drift tests both ways; web request bodies now validated by contract schemas; Task 2 → AWAITING CONFIRMATION |
 | 0.8.5 | 2026-09-24 | Task 1 confirmed by user ("start task 2") → DONE. The two Swagger manual checks (/api/docs screenshot, AI /docs) were not reported back. Task 2 started |
 | 0.8.4 | 2026-09-24 | Task 1 verified against live Neon + Supabase; H-22 validated; Task 1 → AWAITING CONFIRMATION |
