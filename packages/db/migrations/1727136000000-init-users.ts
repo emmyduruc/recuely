@@ -2,6 +2,10 @@ import { DEFAULT_MATCH_THRESHOLDS, DEFAULT_RATE, DEFAULT_THEME, Locale, Theme, U
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 import { qualifiedTable, quoteIdent, schemaOf, sqlStringList } from '../src/sql.ts';
 
+/** Children first, so drops respect foreign keys. */
+const APP_TABLES = ['devices', 'voice_favorites', 'user_settings', 'users'] as const;
+const MIGRATIONS_TABLE = 'migrations';
+
 /** Task 1: users, user_settings, voice_favorites, devices. Tables are schema-qualified (SPEC.md §C1.1). */
 export class InitUsers1727136000000 implements MigrationInterface {
   name = 'InitUsers1727136000000';
@@ -73,11 +77,18 @@ export class InitUsers1727136000000 implements MigrationInterface {
         CONSTRAINT "devices_echo_settle_ms_check" CHECK ("echo_settle_ms" IS NULL OR "echo_settle_ms" >= 0)
       )`);
     await queryRunner.query(`CREATE INDEX ${index('devices_user_id_idx')} ON ${devices} ("user_id")`);
+
+    // Supabase exposes the `public` schema through its REST Data API. RLS with no policies denies those roles;
+    // the app connects as the tables' owner, which bypasses RLS (SPEC.md §C1.1).
+    for (const table of [...APP_TABLES, MIGRATIONS_TABLE]) {
+      await queryRunner.query(`ALTER TABLE ${qualifiedTable(schema, table)} ENABLE ROW LEVEL SECURITY`);
+    }
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
     const schema = schemaOf(queryRunner);
-    for (const table of ['devices', 'voice_favorites', 'user_settings', 'users']) {
+    await queryRunner.query(`ALTER TABLE ${qualifiedTable(schema, MIGRATIONS_TABLE)} DISABLE ROW LEVEL SECURITY`);
+    for (const table of APP_TABLES) {
       await queryRunner.query(`DROP TABLE ${qualifiedTable(schema, table)}`);
     }
   }

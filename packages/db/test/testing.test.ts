@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   isStaleRunSchema,
   newRunSchemaName,
-  resolveTestDatabaseUrl,
+  databaseIdentity,
+  resolveTestDatabase,
   runSchemaCreatedAt,
   sameDatabase,
   STALE_RUN_SCHEMA_AGE_MS,
@@ -15,25 +16,47 @@ const TEST = 'postgresql://app:pw@ep-test-222.eu-central-1.aws.neon.tech/recuely
 
 describe('§C1.1 test database guard', () => {
   it('T1: a missing DATABASE_URL_TEST fails (no silent skip, no fallback)', () => {
-    expect(() => resolveTestDatabaseUrl({ DATABASE_URL: DEV })).toThrow(TestDatabaseConfigError);
-    expect(() => resolveTestDatabaseUrl({ DATABASE_URL_TEST: ' ' })).toThrow(/DATABASE_URL_TEST is not set/);
+    expect(() => resolveTestDatabase({ DATABASE_URL: DEV })).toThrow(TestDatabaseConfigError);
+    expect(() => resolveTestDatabase({ DATABASE_URL_TEST: ' ' })).toThrow(/DATABASE_URL_TEST is not set/);
   });
 
   it('T1: refuses a test URL that points at the dev database', () => {
-    expect(() => resolveTestDatabaseUrl({ DATABASE_URL: DEV, DATABASE_URL_TEST: DEV })).toThrow(/same database/);
+    expect(() => resolveTestDatabase({ DATABASE_URL: DEV, DATABASE_URL_TEST: DEV })).toThrow(/same database/);
   });
 
   it('T1: treats the Neon pooled and direct hosts of one endpoint as the same database', () => {
     expect(sameDatabase(DEV, DEV_POOLED)).toBe(true);
-    expect(() => resolveTestDatabaseUrl({ DATABASE_URL: DEV_POOLED, DATABASE_URL_TEST: DEV })).toThrow(
+    expect(() => resolveTestDatabase({ DATABASE_URL: DEV_POOLED, DATABASE_URL_TEST: DEV })).toThrow(
       TestDatabaseConfigError,
     );
   });
 
   it('T1: accepts a separate branch or a separate database on the same host', () => {
-    expect(resolveTestDatabaseUrl({ DATABASE_URL: DEV, DATABASE_URL_TEST: TEST })).toBe(TEST);
+    expect(resolveTestDatabase({ DATABASE_URL: DEV, DATABASE_URL_TEST: TEST }).url).toBe(TEST);
     const otherDb = DEV.replace('/recuely?', '/recuely_test?');
     expect(sameDatabase(DEV, otherDb)).toBe(false);
+  });
+});
+
+const SB_POOLER = 'aws-1-eu-west-1.pooler.supabase.com';
+const SB_DEV_TX = `postgresql://postgres.devref123:pw@${SB_POOLER}:6543/postgres?pgbouncer=true`;
+const SB_DEV_SESSION = `postgresql://postgres.devref123:pw@${SB_POOLER}:5432/postgres`;
+const SB_DEV_DIRECT = 'postgresql://postgres:pw@db.devref123.supabase.co:5432/postgres';
+const SB_TEST = `postgresql://postgres.testref456:pw@${SB_POOLER}:5432/postgres`;
+
+describe('§C1.1 guard on Supabase', () => {
+  it('T1: the transaction pooler, session pooler and direct host of one project are the same database', () => {
+    expect(sameDatabase(SB_DEV_TX, SB_DEV_SESSION)).toBe(true);
+    expect(sameDatabase(SB_DEV_TX, SB_DEV_DIRECT)).toBe(true);
+    expect(databaseIdentity(SB_DEV_TX)).toBe('supabase:devref123/postgres');
+    expect(() => resolveTestDatabase({ DATABASE_URL: SB_DEV_TX, DATABASE_URL_TEST: SB_DEV_SESSION })).toThrow(
+      /same database/,
+    );
+  });
+
+  it('T1: two projects behind the same regional pooler host are different databases', () => {
+    expect(sameDatabase(SB_DEV_TX, SB_TEST)).toBe(false);
+    expect(resolveTestDatabase({ DATABASE_URL: SB_DEV_TX, DATABASE_URL_TEST: SB_TEST }).url).toBe(SB_TEST);
   });
 });
 

@@ -1,16 +1,17 @@
 import type { TestProject } from 'vitest/node';
+import type { DatabaseConnection } from '../../src/data-source.ts';
 import {
   createRunSchema,
   dropRunSchema,
   loadRepoEnv,
   newRunSchemaName,
-  resolveTestDatabaseUrl,
+  resolveTestDatabase,
   sweepStaleRunSchemas,
 } from '../../src/testing/index.ts';
 
 declare module 'vitest' {
   export interface ProvidedContext {
-    testDatabaseUrl: string;
+    testDatabase: DatabaseConnection;
     testSchema: string;
   }
 }
@@ -18,15 +19,15 @@ declare module 'vitest' {
 /** SPEC.md §C1.1: fresh `it_*` schema per run, dropped on teardown whether tests pass or fail. */
 export default async function setup(project: TestProject): Promise<() => Promise<void>> {
   loadRepoEnv();
-  const url = resolveTestDatabaseUrl(process.env);
+  const db = resolveTestDatabase(process.env);
   const schema = newRunSchemaName();
-  await createRunSchema(url, schema);
-  project.provide('testDatabaseUrl', url);
+  await createRunSchema(db, schema);
+  project.provide('testDatabase', db);
   project.provide('testSchema', schema);
 
   return async () => {
-    await dropRunSchema(url, schema);
-    const swept = await sweepStaleRunSchemas(url);
+    await dropRunSchema(db, schema);
+    const swept = await sweepStaleRunSchemas(db);
     if (swept.length > 0) {
       console.log(`Swept stale test schemas: ${swept.join(', ')}`);
     }

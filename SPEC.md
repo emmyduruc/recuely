@@ -1,6 +1,6 @@
 # SPEC — Filming Assistant
 
-> Single source of truth for this project. Version **0.8.1** · Last updated 2026-09-24
+> Single source of truth for this project. Version **0.8.4** · Last updated 2026-09-24
 > Input brief: `product.md` (frozen). Repo rules for Claude Code: `CLAUDE.md`.
 > "Filming Assistant" is a placeholder name. Never use it in package names, identifiers, or branding.
 
@@ -144,7 +144,7 @@ Root scripts: `pnpm dev`, `pnpm build`, `pnpm typecheck`, `pnpm lint`, `pnpm tes
 | Frontend | Nuxt 4, Vue 3, TypeScript, Nuxt UI + Tailwind | Studio/preflight/teleprompter pages are client-only |
 | API | Nitro server routes in `apps/web/server/api` | No NestJS/GraphQL |
 | ORM | **TypeORM** (not Prisma) | Entities use `EntitySchema` (no decorators), because Nitro/esbuild doesn't emit decorator metadata. Migrations in `packages/db/migrations`. `typeorm` + `pg` marked external in the Nitro build. |
-| Database | **PostgreSQL 16+ on Neon** (hosted; no local install) | Connection comes only from `DATABASE_URL` (dev) and `DATABASE_URL_TEST` (integration tests), each a separate Neon branch or database. TLS required (`sslmode=require`). Any PostgreSQL URL works, so a local server stays possible. See §C1.1 |
+| Database | **Hosted PostgreSQL: Neon (dev) + Supabase (integration tests)**; no local install | `DATABASE_URL` → Neon project (the app's database). `DATABASE_URL_TEST` → a Supabase project used only by `pnpm test:int`. TLS always verified; each URL has its own optional CA setting (`DATABASE_URL_CA_CERT`, `DATABASE_URL_TEST_CA_CERT`), since Supabase uses its own CA and Neon a public one. Any PostgreSQL URL works. See §C1.1 |
 | Media files | Browser OPFS first (crash-safe), then upload to local disk storage (`STORAGE_DIR`) via the API | Large media never goes in DB rows. Storage sits behind a `Storage` interface so S3-compatible storage can be added later. |
 | AI service | FastAPI; candidates: faster-whisper (STT), Silero or in-browser VAD, Kokoro (TTS), Ollama (optional segmentation) | Candidates until measured (Tasks 7–9) |
 | Tests | Vitest, fast-check, Playwright, pytest, ruff | See Part C |
@@ -544,21 +544,26 @@ apps/web/i18n/locales/en.json   ← the only locale in R1; source of truth for k
 | **Unit** | Pure logic: engine transitions, segmentation, offsets, grammar, matcher | Vitest / pytest | `pnpm test` |
 | **Property** | Invariants hold for random inputs (text preservation, engine invariants) | fast-check | `pnpm test` |
 | **Contract** | TS and Python accept/reject the same fixtures; API responses match schemas | Vitest + ajv, pytest + Pydantic | `pnpm test` |
-| **Integration (DB)** | TypeORM entities, migrations, constraints, repositories against real PostgreSQL | Vitest + Neon test DB (`DATABASE_URL_TEST`, §C1.1) | `pnpm test:int` |
+| **Integration (DB)** | TypeORM entities, migrations, constraints, repositories against real PostgreSQL | Vitest + Supabase test project (`DATABASE_URL_TEST`, §C1.1) | `pnpm test:int` |
 | **Integration (API)** | Nitro routes end-to-end against the test DB | Vitest + `$fetch` against a built server | `pnpm test:int` |
 | **Synthetic audio** | VAD/STT/TTS on recorded WAV fixtures | pytest | `pnpm --filter ai test:audio` |
 | **E2E browser** | UI flows, a11y, permission errors, fake media devices | Playwright (Chromium full; WebKit/Firefox smoke) | `pnpm test:e2e` |
 | **Manual device** | Real audio/video quality, latency, leakage, routing | Checklist in C3; results in `docs/measurements/` | — |
 
-### C1.1 Integration test database (Neon)
+### C1.1 Integration test database (Supabase)
 
 - `pnpm test:int` reads `DATABASE_URL_TEST` from `.env` (gitignored). If it's missing, the run **fails** with a clear message. It never skips silently and never falls back to `DATABASE_URL`.
-- **Safety guard:** the run refuses to start if `DATABASE_URL_TEST` points at the same host + database as `DATABASE_URL`. Use a dedicated Neon branch (e.g. `test`) or database (e.g. `recuely_test`).
+- **Safety guard:** the run refuses to start if `DATABASE_URL_TEST` reaches the same database as `DATABASE_URL`. Identity is the Supabase **project ref** (from the pooler user `postgres.<ref>` or the direct host `db.<ref>.supabase.co`) plus database name, so the transaction pooler (6543), session pooler (5432) and direct host of one project all count as the same database. Other hosts compare host (Neon `-pooler` folded) + port + database. Dev (Neon) and tests (Supabase) are on different providers, so this holds by construction; the guard still protects against copy-paste mistakes.
 - **Isolated schema per run:** global setup creates a fresh schema `it_<timestamp>_<random>`, points the DataSource at it, and runs all migrations there. Tests never touch `public`, and two runs (local + CI) can't collide.
 - **Between tests:** each test file truncates every table (`TRUNCATE … RESTART IDENTITY CASCADE`) in `beforeEach`. Integration files run serially (`fileParallelism: false`).
 - **Server under test:** API tests run the built server (`.output/server/index.mjs`) with `DATABASE_URL` set to the test URL and a test-only `DB_SCHEMA` naming the run's schema. `DB_SCHEMA` is never set outside tests (default `public`). Migrations qualify every table with the DataSource schema instead of relying on `search_path`.
 - **Always cleared afterwards:** global teardown drops the run's schema (`DROP SCHEMA … CASCADE`), on success or failure. Teardown also removes any leftover `it_*` schema older than 1 hour from a crashed run. After `pnpm test:int` the test database holds no test data.
-- **Neon specifics:** use the **direct** (non-pooled) connection string for tests and migrations, since the PgBouncer pooler breaks session-level `search_path` and advisory locks. The app may use the pooled string. Connect timeout ≥ 15 s so Neon's scale-to-zero cold start doesn't flake tests.
+- **Supabase specifics:**
+  - Tests and migrations use the **session pooler** (`…pooler.supabase.com:5432`, user `postgres.<ref>`; IPv4). The app may use the transaction pooler (`:6543`). Nothing relies on session state (tables are schema-qualified), so both work.
+  - TLS is always verified. Supabase signs with its own CA: download it (Dashboard → Database → SSL → Download certificate) to `certs/supabase-ca.crt` (gitignored) and set `DATABASE_URL_TEST_CA_CERT=certs/supabase-ca.crt` (relative to the repo root). The API tests hand it to the server under test as `DATABASE_URL_CA_CERT`. Neon needs no CA setting. `sslmode`/`pgbouncer` URL parameters are stripped so they can't override this.
+  - Supabase exposes the `public` schema through its REST Data API, so every table (incl. `migrations`) gets **row-level security enabled with no policies**. That API's roles are denied; the app connects as the table owner, which bypasses RLS.
+  - Connect timeout ≥ 15 s so a paused Supabase project or a Neon scale-to-zero cold start doesn't flake anything.
+- **Neon (dev):** the pooled or direct string both work for the app; use the direct one for `db:migrate`.
 - CI doesn't run `test:int` yet. When it does, it'll use a `DATABASE_URL_TEST` repository secret.
 
 **A mocked AI response does not prove a real recording flow works.** Any task touching capture, playback, or routing needs manual device evidence.
@@ -614,7 +619,7 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | # | Task | Status | Depends on |
 |---|---|---|---|
 | 0 | Monorepo foundation (Turborepo, Nuxt, FastAPI, CI) | DONE | — |
-| 1 | User modelling & database (TypeORM + PostgreSQL) | IN PROGRESS | 0 |
+| 1 | User modelling & database (TypeORM + PostgreSQL) | AWAITING CONFIRMATION | 0 |
 | 2 | Shared contracts & fixtures | TODO | 0 |
 | 3 | Script model: parsing, segmentation, text preservation | TODO | 2 |
 | 4 | Project, script & session persistence (entities + API) | TODO | 1, 3 |
@@ -645,7 +650,7 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 **What:** A Turborepo + pnpm monorepo containing `apps/web` (Nuxt 4 shell), `apps/ai` (FastAPI skeleton), empty packages from §B1, shared config, and a CI workflow.
 **Why:** Every later task needs working build/test commands and package boundaries that enforce the architecture.
 **Scope:**
-- Prerequisites: Node 22 LTS (`.nvmrc`), `uv` (Python 3.12 pinned). PostgreSQL is hosted on Neon (no local install, §B2) and ffmpeg moved to Task 9, because Homebrew no longer supports Intel macOS (see Part E)
+- Prerequisites: Node 22 LTS (`.nvmrc`), `uv` (Python 3.12 pinned). PostgreSQL is hosted on Supabase (no local install, §B2) and ffmpeg moved to Task 9, because Homebrew no longer supports Intel macOS (see Part E)
 - `turbo.json`, `pnpm-workspace.yaml`, root scripts (§B1), `packages/config` presets
 - Nuxt 4 + Nuxt UI + Tailwind; `/api/health` returns `{ app: 'ok' }`
 - `apps/ai`: FastAPI `/v0/health` (all capabilities `unavailable`), `package.json` scripts wrapping `uv run`
@@ -682,29 +687,33 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
   - Shared component schemas (`User`, `UserSettings`, `UpdateSettingsRequest`, `VoiceFavorite`, `AddVoiceFavoriteRequest`, `Health`, `ApiError`), each with descriptions and examples
   - `/api/health` (now also reporting DB status), `/api/me`, `/api/me/settings` and `/api/me/voices` fully documented to the standard
 - The same standard applied to FastAPI's `/v0/health`: `openapi_tags`, route summary/description, and model field descriptions and examples
-- DataSource built only from `DATABASE_URL` (TLS on, connect timeout ≥ 15 s); a clear startup error when it's missing or unreachable
+- DataSource built only from `DATABASE_URL` (+ optional `DATABASE_URL_CA_CERT`; TLS verified, connect timeout ≥ 15 s; RLS on every table, §C1.1); a clear startup error when it's missing or unreachable
 - Integration-test DB lifecycle per §C1.1: required `DATABASE_URL_TEST`, same-DB guard, per-run schema, truncate between tests, drop on teardown, stale-schema sweep
-- `.env.example`: `DATABASE_URL`, `DATABASE_URL_TEST` (Neon direct connection strings, with placeholders and comments), `API_DOCS_ENABLED`
+- `.env.example`: `DATABASE_URL`, `DATABASE_URL_TEST` (Neon dev, Supabase test, with placeholders and comments), `DATABASE_URL_TEST_CA_CERT`, `API_DOCS_ENABLED`
 **Tests:**
 - Integration (DB): the §C1.1 guard refuses a missing `DATABASE_URL_TEST` or one equal to `DATABASE_URL`; migrations up/down; unique constraints (email, favorite triple); 1:1 settings cascade
 - Integration (API): `/api/me` returns the seeded user; PATCH settings persists valid values and rejects invalid ones with a `422` `ApiError`
 - **OpenAPI completeness test** (web + AI service, §B5.1)
 - Unit: repository helpers
 **Done when:**
-- [ ] Fresh DB → `pnpm db:migrate && pnpm db:seed` → the local user exists; running seed twice creates no duplicates
-- [ ] `pnpm test:int` green against the Neon test DB, and afterwards the test DB has no `it_*` schemas left (checked with a query, also after a deliberately failing run)
-- [ ] `pnpm build` works with TypeORM (proves the Nitro bundling setup)
-- [ ] The ERD for these four entities is added to §B4 if it changed
+- [x] Fresh DB → `pnpm db:migrate && pnpm db:seed` → the local user exists; running seed twice creates no duplicates
+- [x] `pnpm test:int` green against the Supabase test project, and afterwards the test DB has no `it_*` schemas left (checked with a query, also after a deliberately failing run)
+- [x] `pnpm build` works with TypeORM (proves the Nitro bundling setup)
+- [x] The ERD for these four entities is added to §B4 if it changed
 - [ ] `/api/docs` shows every Task 1 route grouped by tag, with descriptions, request/response schemas and examples, and "Try it out" works against the local DB (screenshot)
 - [ ] `/docs` on the AI service shows `/v0/health` under the Health tag, fully described
-- [ ] The completeness tests pass, and fail on a deliberately undocumented route and on a route missing its tag (demonstrated, then removed)
+- [x] The completeness tests pass, and fail on a deliberately undocumented route and on a route missing its tag (demonstrated, then removed)
 
 **Evidence so far (2026-09-24):**
 - `pnpm typecheck` 9/9 · `pnpm lint` 9/9 (0 warnings) · `pnpm test` 8/8 tasks: contracts 3, db 21, web 20, ai 6 (pytest) · `pnpm build` ✓ · `pnpm test:e2e` 2/2 (the Playwright Chromium shell had to be reinstalled; its cache was missing).
 - Built server without a DB: `/api/health` → `{"app":"ok","db":"unavailable"}`; `/api/me` → 503 `database_unavailable`; bad JSON → 400; invalid settings → 422 with `details`; docs 404 unless `API_DOCS_ENABLED=true`, then `/api/openapi.json` 200 and `/api/docs` 200 text/html.
 - `pnpm test:int` without `DATABASE_URL_TEST` fails in both suites with `TestDatabaseConfigError` (no skip). `db:migrate` without `DATABASE_URL` prints the fix and exits 1.
 - Completeness test demonstrated: a temporary `server/api/secret.get.ts` → "route file exists but is not documented"; removing `getMe`'s tag → "must have exactly one registered tag". Both reverted, 12/12 green. Permanent synthetic-bad-document cases are in `test/openapi.test.ts`.
-- **Pending (needs the Neon URLs in `.env`):** `db:migrate` + `db:seed` ×2, `pnpm test:int` (db + API suites), the leftover-schema check (`pnpm --filter @repo/db db:test-schemas`, also after a deliberately failing run), Swagger "Try it out" screenshot.
+- **Live databases (2026-09-24):** verified TLS to Neon (PostgreSQL 18.6, first connect 3.4 s: cold start) and Supabase (17.6, 0.4 s, own CA via `DATABASE_URL_TEST_CA_CERT`).
+- Neon dev: `db:migrate` → `Applied: InitUsers1727136000000`; again → `No pending migrations.`; `db:seed` → `Created local user 01a0d391-…`; again → `… already exists.`; query: 1 user (1 local), 1 settings row; RLS on for all 5 tables.
+- `pnpm test:int` (incl. build): db 13/13 + API 14/14, 45 s total (H-22 ✓). `db:test-schemas` → `No it_* schemas` after the green run and after a deliberately failing run (temporary failing file, removed).
+- `pnpm dev` loads the repo-root `.env`: `/api/health` → `{"app":"ok","db":"ok"}`, `/api/me` → seeded user, `/api/docs` and `/api/openapi.json` → 200.
+- **Manual checks for the user:** the two Swagger items below (screenshot of "Try it out" on `/api/docs`; `/docs` on the AI service).
 
 ### Task 2 — Shared contracts & fixtures
 
@@ -729,6 +738,7 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 
 **What:** Entities `Project`, `Script`, `ScriptBlock`, `ChunkPlan`, `ScriptChunk`, `Session`, `Take`, `Export` + migrations; the `Storage` interface with a local-disk implementation; Nitro routes from §B5 (projects, scripts, chunk plans, sessions, takes, exports).
 **Why:** Sessions, positions, and takes must survive reloads and crashes, and takes must be structurally protected from deletion.
+**Streaming rule:** take uploads are **streamed to disk**, never buffered in memory (h3's `readMultipartFormData` buffers the whole body, so it's not used). Either a raw request body piped to `Storage`, or a streaming multipart parser added to §B8 first. Upload size limit and a quota check apply. Playback/download routes serve files with HTTP `Range` support so players can seek.
 **Tests:** Integration (DB): partial unique index (one selected take per chunk); soft delete; takes keep their chunk link after a new chunk plan · Integration (API): create project → script → chunk plan (server rejects a plan that breaks coverage) → session → upload take (multipart, file on disk, row in DB) → select → delete without `confirm=true` is rejected
 **Done when:**
 - [ ] All routes are covered by API integration tests
@@ -885,7 +895,7 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 
 # PART E — ASSUMPTIONS & OPEN DECISIONS
 
-**Environment (updated 2026-09-24):** macOS 15.6.1, Intel i9-9980HK, 32 GB RAM, no Apple Silicon/CUDA → CPU-only inference; **~9 GB free disk**. Node 22.23.3 via nvm (Homebrew's `node@20` sits earlier on PATH, so shells must put `~/.nvm/versions/node/v22.23.3/bin` first); pnpm 10.15 via corepack; uv 0.12.18 (in `~/.local/share/uv-tool`, linked into `~/.local/bin`); Python 3.12.6 for the AI service; Ollama 0.34 (no models); Playwright headless Chromium installed. **Homebrew 6 has dropped Intel macOS support** (formulae would build from source and need newer Xcode CLT), so ffmpeg will come from a static build. **PostgreSQL is not installed locally: the database is hosted on Neon** (user decision, 2026-09-24). Missing: ffmpeg, docker. Git repo initialized, no commits.
+**Environment (updated 2026-09-24):** macOS 15.6.1, Intel i9-9980HK, 32 GB RAM, no Apple Silicon/CUDA → CPU-only inference; **~9 GB free disk**. Node 22.23.3 via nvm (Homebrew's `node@20` sits earlier on PATH, so shells must put `~/.nvm/versions/node/v22.23.3/bin` first); pnpm 10.15 via corepack; uv 0.12.18 (in `~/.local/share/uv-tool`, linked into `~/.local/bin`); Python 3.12.6 for the AI service; Ollama 0.34 (no models); Playwright headless Chromium installed. **Homebrew 6 has dropped Intel macOS support** (formulae would build from source and need newer Xcode CLT), so ffmpeg will come from a static build. **PostgreSQL is not installed locally: the app database is on Neon and the integration-test database on Supabase** (user decision, 2026-09-24). Missing: ffmpeg, docker. Git repo initialized, no commits.
 
 | ID | Hypothesis | Validated in | Status |
 |---|---|---|---|
@@ -901,14 +911,14 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | H-18 | A rolling recorder avoids clipping take starts | Task 9 | Open |
 | H-19 | Same-MIME take stitching works in Chrome and Safari without ffmpeg.wasm | Task 9 | Open |
 | H-20 | TypeORM bundles cleanly in Nitro with `EntitySchema` + externals | Task 1 | **Validated (build)**: `@repo/*` inlined, `typeorm`/`pg` external and traced into `.output/server/node_modules`; `pg` passed to TypeORM as `driver`. The live-DB run is pending the Neon URLs |
-| H-22 | Neon (direct connection, cold start) keeps `pnpm test:int` under 60 s and dev API calls responsive from this machine | Task 1 | Open |
+| H-22 | Supabase (session pooler, eu-west-1) keeps `pnpm test:int` under 60 s, and Neon keeps dev API calls responsive, from this machine | Task 1 | **Validated**: 45 s incl. build (Supabase transaction pooler works too); Neon cold start ≈ 3.4 s on first connect only |
 | H-21 | Nitro's experimental OpenAPI generator (`defineRouteMeta` + `$global` components) can meet the §B5.1 standard; else fall back to a hand-written typed document | Task 1 | **Refuted** (nitropack 2.13.4: no top-level tags, fixed `servers`) → fallback |
 
 **Decisions needed from the user:**
 1. Test devices and browsers actually available (sets the device matrix).
 2. Disk: free ≥ 15 GB, or name an external folder for models and media, before Tasks 7–9.
 3. Git remote, and permission to commit.
-4. Neon connection strings: the user puts `DATABASE_URL` (dev branch) and `DATABASE_URL_TEST` (test branch/database) in `.env` before Task 1's integration tests. Storing scripts in a hosted DB the user chose and configured is the user's opt-in under §A6.8. Media stays on local disk (`STORAGE_DIR`).
+4. Databases: the user puts `DATABASE_URL` (Neon), `DATABASE_URL_TEST` (Supabase, session pooler) and `DATABASE_URL_TEST_CA_CERT` in `.env` before Task 1's integration tests. Storing scripts in hosted DBs the user chose and configured is the user's opt-in under §A6.8. Media stays on local disk (`STORAGE_DIR`). Other Neon platform features (Auth, buckets, functions, deploy) are **not** used in R1 (§A8); adopting any needs a spec change.
 
 ---
 
@@ -921,6 +931,9 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 0.3.0 | 2026-09-23 | Added §B10 code standards: zero TS/lint errors, named constants instead of string-literal comparisons, Record lookups instead of nested ternaries; wired into Task 0 and the D0 gate |
 | 0.3.1 | 2026-09-24 | Task 0 implemented; TypeScript pinned to 6.0.x; PostgreSQL/ffmpeg install moved to Tasks 1/9 (Homebrew dropped Intel); dependency register updated |
 | 0.3.2 | 2026-09-24 | Task 0 confirmed by user → DONE |
+| 0.8.4 | 2026-09-24 | Task 1 verified against live Neon + Supabase; H-22 validated; Task 1 → AWAITING CONFIRMATION |
+| 0.8.3 | 2026-09-24 | Clarified by user: **Neon for `DATABASE_URL`, Supabase for `DATABASE_URL_TEST`**. CA setting is per connection (`DATABASE_URL_CA_CERT`, `DATABASE_URL_TEST_CA_CERT`); Neon platform features beyond Postgres stay out of R1 |
+| 0.8.2 | 2026-09-24 | Database host is **Supabase** (user decision; replaces Neon); tests use a separate Supabase project via the session pooler; guard identifies Supabase projects by ref; `DATABASE_CA_CERT` for verified TLS; `sslmode`/`pgbouncer` URL params stripped; RLS enabled on all tables (Supabase Data API); Task 4 streaming-upload rule |
 | 0.8.1 | 2026-09-24 | Task 1 started. ajv approved for Task 1 (OpenAPI 3.1 validation); `DELETE /api/me/voices/:id` added; H-21 refuted → hand-written OpenAPI document with a runtime `API_DOCS_ENABLED` gate; test-only `DB_SCHEMA` for the server under test |
 | 0.8.0 | 2026-09-24 | **R1 is English only** (user decision). v0.7.0 reverted; §B11 reduced to `en.json` only (snake_case keys, typed `MessageKey`, `Locale.En`, no switcher), kept so languages can be rolled out later; German removed from Tasks 11/21; other languages listed as out of scope in §A8 |
 | 0.7.0 | 2026-09-24 | *(Draft, superseded by 0.8.0 before implementation.)* English **and German** in R1 for everything spoken, not just the UI: new §B12 (script `language`, per-language segmentation, voices, STT, grammar, normalizers, thresholds); de command grammar; language-keyed settings and `VoiceFavorite.language` (Task 1), `Script.language` (Task 4); German TTS engine candidate (Piper) and a one-engine-per-language exception; multilingual STT; tasks 2–3, 6–8, 10, 12, 15–16, 19 and scenarios E1/E2/E4 cover both languages; H-23–H-25 |

@@ -3,13 +3,13 @@ import { existsSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { HealthStatus } from '@repo/contracts';
-import { createDataSource, seedLocalUser } from '@repo/db';
+import { createDataSource, type DatabaseConnection, seedLocalUser } from '@repo/db';
 import {
   createRunSchema,
   dropRunSchema,
   loadRepoEnv,
   newRunSchemaName,
-  resolveTestDatabaseUrl,
+  resolveTestDatabase,
   sweepStaleRunSchemas,
 } from '@repo/db/testing';
 import type { TestProject } from 'vitest/node';
@@ -17,7 +17,7 @@ import type { TestProject } from 'vitest/node';
 declare module 'vitest' {
   export interface ProvidedContext {
     baseUrl: string;
-    testDatabaseUrl: string;
+    testDatabase: DatabaseConnection;
     testSchema: string;
   }
 }
@@ -62,22 +62,22 @@ async function waitUntilReady(baseUrl: string, server: ChildProcess): Promise<vo
 /** SPEC.md §C1.1: per-run schema, seeded, served by the built app; dropped on teardown pass or fail. */
 export default async function setup(project: TestProject): Promise<() => Promise<void>> {
   loadRepoEnv();
-  const url = resolveTestDatabaseUrl(process.env);
+  const db = resolveTestDatabase(process.env);
   if (!existsSync(SERVER_ENTRY)) {
     throw new Error('apps/web/.output is missing. Run `pnpm build` first (turbo does this for `pnpm test:int`).');
   }
   const schema = newRunSchemaName();
-  await createRunSchema(url, schema);
+  await createRunSchema(db, schema);
 
   let server: ChildProcess | undefined;
   const teardown = async (): Promise<void> => {
     server?.kill();
-    await dropRunSchema(url, schema);
-    await sweepStaleRunSchemas(url);
+    await dropRunSchema(db, schema);
+    await sweepStaleRunSchemas(db);
   };
 
   try {
-    const ds = createDataSource({ url, schema });
+    const ds = createDataSource({ ...db, schema });
     await ds.initialize();
     await seedLocalUser(ds);
     await ds.destroy();
@@ -89,7 +89,9 @@ export default async function setup(project: TestProject): Promise<() => Promise
         ...process.env,
         HOST: '127.0.0.1',
         PORT: String(port),
-        DATABASE_URL: url,
+        DATABASE_URL: db.url,
+        // The server reads the CA that belongs to DATABASE_URL; here that's the test project's.
+        DATABASE_URL_CA_CERT: process.env.DATABASE_URL_TEST_CA_CERT ?? '',
         DB_SCHEMA: schema,
         API_DOCS_ENABLED: 'true',
       },
@@ -98,7 +100,7 @@ export default async function setup(project: TestProject): Promise<() => Promise
     await waitUntilReady(baseUrl, server);
 
     project.provide('baseUrl', baseUrl);
-    project.provide('testDatabaseUrl', url);
+    project.provide('testDatabase', db);
     project.provide('testSchema', schema);
   } catch (error) {
     await teardown();

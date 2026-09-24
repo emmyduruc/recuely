@@ -46,7 +46,7 @@ pnpm dev          # turbo: web + ai
 pnpm typecheck
 pnpm lint
 pnpm test         # unit + property + contract
-pnpm test:int     # DB + API integration (needs DATABASE_URL_TEST → Neon test branch; schema dropped after each run)
+pnpm test:int     # DB + API integration (DATABASE_URL = Neon dev; DATABASE_URL_TEST = Supabase test project; schema dropped after each run)
 pnpm test:e2e     # Playwright
 pnpm build
 pnpm db:migrate

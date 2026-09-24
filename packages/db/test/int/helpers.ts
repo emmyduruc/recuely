@@ -9,7 +9,7 @@ export function useTestDataSource(): () => DataSource {
   const schema = inject('testSchema');
 
   beforeAll(async () => {
-    ds = createDataSource({ url: inject('testDatabaseUrl'), schema });
+    ds = createDataSource({ ...inject('testDatabase'), schema });
     await ds.initialize();
   });
 

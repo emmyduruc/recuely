@@ -6,6 +6,7 @@ coverage/
 .output/
 .data/
 .env
+certs/
 .env.*
 !.env.example
 # python
