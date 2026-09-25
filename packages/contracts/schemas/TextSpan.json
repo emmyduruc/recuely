@@ -20,5 +20,11 @@
     "charStart",
     "charEnd"
   ],
-  "additionalProperties": true
+  "additionalProperties": true,
+  "examples": [
+    {
+      "charStart": 40,
+      "charEnd": 58
+    }
+  ]
 }

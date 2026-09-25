@@ -1,7 +1,7 @@
 import { readdirSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { Ajv2020 } from 'ajv/dist/2020.js';
-import { HttpMethod, type OpenApiDocument, type SchemaObject } from '../../server/openapi/types';
+import { HttpMethod, JSON_MEDIA_TYPE, type OpenApiDocument, type SchemaObject } from '../../server/openapi/types';
 import oasSchema from './oas-3.1-schema.json' with { type: 'json' };
 
 // SPEC.md §B5.1 completeness checks. Returns human-readable violations; an empty list means compliant.
@@ -11,7 +11,7 @@ export interface RouteFile {
   method: HttpMethod;
 }
 
-const ERROR_STATUSES = new Set(['400', '404', '409', '422', '500', '503']);
+const ERROR_STATUSES = new Set(['400', '404', '409', '413', '415', '416', '422', '500', '503', '507']);
 const SUCCESS_STATUS = /^2\d\d$/;
 const OPERATION_ID = /^[a-z][a-zA-Z0-9]*$/;
 const SUMMARY_MAX = 60;
@@ -69,6 +69,9 @@ function checkSchemaRefs(schema: SchemaObject, at: string, known: ReadonlySet<st
   if (typeof schema.additionalProperties === 'object') {
     checkSchemaRefs(schema.additionalProperties, `${at}{}`, known, out);
   }
+  (schema.anyOf ?? []).forEach((option, index) => {
+    checkSchemaRefs(option, `${at}|${String(index)}`, known, out);
+  });
 }
 
 function hasRefSchema(schema: SchemaObject): boolean {
@@ -126,21 +129,30 @@ export function checkCompleteness(doc: OpenApiDocument, routes: readonly RouteFi
           out.push(`${at}: parameter ${param.name} needs a description and an example (rule 5)`);
         }
       }
+      const jsonBody = op.requestBody?.content[JSON_MEDIA_TYPE];
       if (op.requestBody !== undefined) {
-        const media = op.requestBody.content['application/json'];
-        if (!op.requestBody.required || media.schema.$ref === undefined || media.example === undefined) {
+        const binary = Object.entries(op.requestBody.content).filter(([type]) => type !== JSON_MEDIA_TYPE);
+        const jsonOk = jsonBody === undefined || (jsonBody.schema.$ref !== undefined && jsonBody.example !== undefined);
+        const binaryOk = binary.every(([, media]) => (media.schema.description ?? '').trim().length > 0);
+        if (!op.requestBody.required || !jsonOk || !binaryOk) {
           out.push(`${at}: requestBody needs required, a $ref schema and an example (rule 6)`);
         }
-        checkSchemaRefs(media.schema, `${at} requestBody`, schemaRefs, out);
+        if (jsonBody !== undefined) {
+          checkSchemaRefs(jsonBody.schema, `${at} requestBody`, schemaRefs, out);
+        }
       }
       const statuses = Object.keys(op.responses);
       if (!statuses.some((status) => SUCCESS_STATUS.test(status))) {
         out.push(`${at}: no success response (rule 7)`);
       }
       for (const [status, response] of Object.entries(op.responses)) {
-        const media = response.content?.['application/json'];
+        const media = response.content?.[JSON_MEDIA_TYPE];
         if (SUCCESS_STATUS.test(status) && media !== undefined && (!hasRefSchema(media.schema) || media.example === undefined)) {
           out.push(`${at} ${status}: success response needs a $ref schema and an example (rule 7)`);
+        }
+        const binary = Object.entries(response.content ?? {}).filter(([type]) => type !== JSON_MEDIA_TYPE);
+        if (binary.some(([, body]) => (body.schema.description ?? '').trim().length === 0)) {
+          out.push(`${at} ${status}: binary response schema needs a description (rule 7)`);
         }
         if (ERROR_STATUSES.has(status) && media?.schema.$ref !== API_ERROR_REF) {
           out.push(`${at} ${status}: error response must reference ApiError (rule 7)`);
@@ -149,7 +161,7 @@ export function checkCompleteness(doc: OpenApiDocument, routes: readonly RouteFi
           checkSchemaRefs(media.schema, `${at} ${status}`, schemaRefs, out);
         }
       }
-      if (op.requestBody !== undefined && !statuses.includes('422')) {
+      if (jsonBody !== undefined && !statuses.includes('422')) {
         out.push(`${at}: an operation with a body must document 422 (rule 7)`);
       }
     }

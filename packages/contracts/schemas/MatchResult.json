@@ -47,5 +47,16 @@
     "decision",
     "reasons"
   ],
-  "additionalProperties": true
+  "additionalProperties": true,
+  "examples": [
+    {
+      "coverage": 0.93,
+      "similarity": 0.88,
+      "missingSpans": [],
+      "decision": "advance",
+      "reasons": [
+        "coverage 0.93 ≥ 0.80"
+      ]
+    }
+  ]
 }

@@ -14,6 +14,7 @@ import {
   type UpdateTakeRequest,
 } from '@repo/contracts';
 import { type DataSource, type EntityManager, IsNull, Not } from 'typeorm';
+import { DeviceEntity } from '../entities/device.ts';
 import {
   ChunkPlanEntity,
   type ChunkPlanRow,
@@ -402,4 +403,10 @@ export async function findExport(ds: DataSource, userId: string, id: string): Pr
     .innerJoin(SessionEntity.options.name, 'session', 'session.id = export.sessionId')
     .where('export.id = :id AND session.userId = :userId', { id, userId })
     .getOne();
+}
+
+// ── Devices (read-only here; routes arrive in Task 14) ──────────────────────────────────────────────────
+
+export async function deviceBelongsTo(ds: DataSource, userId: string, deviceId: string): Promise<boolean> {
+  return ds.getRepository(DeviceEntity).existsBy({ id: deviceId, userId });
 }

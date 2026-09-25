@@ -175,6 +175,7 @@ const textSpan = objectSchema<TextSpan>()({
   },
   required: ['charStart', 'charEnd'],
   additionalProperties: true,
+  examples: [{ charStart: 40, charEnd: 58 }],
 });
 
 const matchResult = objectSchema<MatchResult>()({
@@ -189,6 +190,7 @@ const matchResult = objectSchema<MatchResult>()({
   },
   required: ['coverage', 'similarity', 'missingSpans', 'decision', 'reasons'],
   additionalProperties: true,
+  examples: [{ coverage: 0.93, similarity: 0.88, missingSpans: [], decision: MatchDecision.Advance, reasons: ['coverage 0.93 ≥ 0.80'] }],
 });
 
 const commandEvent = objectSchema<CommandEvent>()({

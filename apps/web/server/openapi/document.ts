@@ -1,4 +1,6 @@
+import { CONTRACT_COMPONENTS } from './contract-schemas';
 import { PATHS } from './paths';
+import { RECORDING_PATHS } from './recording-paths';
 import { SCHEMAS } from './schemas';
 import { TAGS } from './tags';
 import type { OpenApiDocument } from './types';
@@ -11,13 +13,13 @@ export const openApiDocument: OpenApiDocument = {
   openapi: '3.1.0',
   info: {
     title: 'Recording Companion API',
-    description: 'Local API for the user, settings, scripts, sessions and takes.',
+    description: 'Local API for the user, settings, projects, scripts, chunk plans, sessions, takes and exports.',
     version: '0.1.0',
   },
   servers: [{ url: '/', description: 'This server' }],
   tags: TAGS,
-  paths: PATHS,
-  components: { schemas: SCHEMAS },
+  paths: { ...PATHS, ...RECORDING_PATHS },
+  components: { schemas: { ...SCHEMAS, ...CONTRACT_COMPONENTS } },
 };
 
 const TRUE_VALUES = new Set(['true', '1']);

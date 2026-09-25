@@ -122,7 +122,7 @@ export function readStorageConfig(env: Readonly<Partial<Record<string, string>>>
 
 let storage: { config: StorageConfig; instance: LocalDiskStorage } | undefined;
 
-export function useStorage(): { config: StorageConfig; instance: Storage } {
+export function useMediaStorage(): { config: StorageConfig; instance: Storage } {
   storage ??= (() => {
     const config = readStorageConfig(process.env);
     return { config, instance: new LocalDiskStorage(config.root) };

@@ -8,7 +8,11 @@ export interface SchemaObject {
   type?: JsonType | readonly JsonType[];
   description?: string;
   format?: 'uuid' | 'date-time' | 'email' | 'uri';
-  enum?: readonly (string | null)[];
+  enum?: readonly (string | number | null)[];
+  pattern?: string;
+  anyOf?: readonly SchemaObject[];
+  /** For binary bodies, e.g. `video/webm`. */
+  contentMediaType?: string;
   properties?: Readonly<Record<string, SchemaObject>>;
   required?: readonly string[];
   additionalProperties?: boolean | SchemaObject;
@@ -19,23 +23,27 @@ export interface SchemaObject {
   minLength?: number;
   maxLength?: number;
   maxItems?: number;
+  minItems?: number;
   minProperties?: number;
   examples?: readonly unknown[];
 }
 
+/** JSON bodies need an example (rule 6/7); binary bodies (media) have a schema only. */
 export interface MediaTypeObject {
   schema: SchemaObject;
-  example: unknown;
+  example?: unknown;
 }
+
+export const JSON_MEDIA_TYPE = 'application/json';
 
 export interface ResponseObject {
   description: string;
-  content?: Readonly<Record<'application/json', MediaTypeObject>>;
+  content?: Readonly<Record<string, MediaTypeObject>>;
 }
 
 export interface ParameterObject {
   name: string;
-  in: 'path' | 'query';
+  in: 'path' | 'query' | 'header';
   required: boolean;
   description: string;
   schema: SchemaObject;
@@ -45,7 +53,7 @@ export interface ParameterObject {
 export interface RequestBodyObject {
   required: boolean;
   description: string;
-  content: Readonly<Record<'application/json', MediaTypeObject>>;
+  content: Readonly<Record<string, MediaTypeObject>>;
 }
 
 export interface OperationObject {

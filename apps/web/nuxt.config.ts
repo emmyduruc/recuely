@@ -23,6 +23,6 @@ export default defineNuxtConfig({
     typescript: { tsConfig: { compilerOptions: strictCompilerOptions } },
     // Workspace packages ship TS source, so they are bundled; TypeORM and pg stay external
     // and are traced into .output/server/node_modules (SPEC.md §B2, H-20).
-    externals: { inline: ['@repo/contracts', '@repo/db'], external: ['typeorm', 'pg'] },
+    externals: { inline: ['@repo/contracts', '@repo/db', '@repo/script-model'], external: ['typeorm', 'pg'] },
   },
 });

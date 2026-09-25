@@ -33,17 +33,17 @@ function body(description: string, schema: SchemaName, example: unknown): Reques
   return { required: true, description, content: { 'application/json': { schema: ref(schema), example } } };
 }
 
-function error(description: string, example: ApiError): ResponseObject {
+export function error(description: string, example: ApiError): ResponseObject {
   return json(description, 'ApiError', example);
 }
 
 /** Errors every database-backed operation can return. */
-const DB_ERRORS = {
+export const DB_ERRORS = {
   500: error('The local user is missing (run `pnpm db:seed`) or an unexpected error occurred.', exampleServerError),
   503: error('The database is not configured or unreachable.', exampleUnavailableError),
 } as const;
 
-const BODY_ERRORS = {
+export const BODY_ERRORS = {
   400: error('The body is not valid JSON.', exampleBadJsonError),
   422: error('The body failed validation; `details` lists each problem.', exampleValidationError),
 } as const;

@@ -1,6 +1,6 @@
 # SPEC — Filming Assistant
 
-> Single source of truth for this project. Version **0.11.0** · Last updated 2026-09-24
+> Single source of truth for this project. Version **0.12.0** · Last updated 2026-09-24
 > Input brief: `product.md` (frozen). Repo rules for Claude Code: `CLAUDE.md`.
 > "Filming Assistant" is a placeholder name. Never use it in package names, identifiers, or branding.
 
@@ -215,6 +215,19 @@ users 1 ──── * devices              (user_id FK, CASCADE; index on user_
 - `users`: unique index on `lower(email)` (so email is case-insensitive unique; NULLs allowed); partial unique index on `is_local WHERE is_local` (at most one local user); CHECK `locale IN (Locale values)`; CHECK non-blank `display_name`.
 - `user_settings`: CHECK `theme IN (Theme values)` (`dark` default), CHECK `default_rate BETWEEN 0.5 AND 2`; `match_thresholds` defaults to `{"coverage":0.8,"similarity":0.7}`.
 - Fixed value sets in CHECKs are generated from the `packages/contracts` constants, so adding a value needs a migration.
+
+**Task 4 tables** (migration `InitRecording1727222400000`):
+
+```
+users 1 ── * projects 1 ── * scripts 1 ── * script_blocks        PK (script_id, id)
+                               scripts 1 ── * chunk_plans 1 ── * script_chunks   PK (chunk_plan_id, id)
+projects 1 ── * sessions (→ chunk_plan, → (chunk_plan_id, current_chunk_id) chunk, → device SET NULL)
+sessions 1 ── * takes (→ (chunk_plan_id, chunk_id) chunk)      sessions 1 ── * exports
+```
+- All parent FKs are `ON DELETE RESTRICT`; nothing cascades into takes.
+- `scripts`/`chunk_plans`: `UNIQUE (parent, version)`, versions from 1; `scripts.source_text` holds the pasted original.
+- `takes`: `UNIQUE (session_id, chunk_id, ordinal)`; partial unique `(session_id, chunk_id) WHERE selected`; CHECK `NOT selected OR deleted_at IS NULL`; **`BEFORE DELETE` trigger `takes_forbid_delete` raises `restrict_violation`**.
+- Value-set CHECKs (block type, chunk mode, session state, take status/kind, export status/kind, source kind) come from the contracts constants. RLS is on for every table.
 
 DB invariants enforced by constraints + tests:
 - A take row is never hard-deleted by application code paths reachable from the session flow.
@@ -626,7 +639,7 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 1 | User modelling & database (TypeORM + PostgreSQL) | DONE | 0 |
 | 2 | Shared contracts & fixtures | DONE | 0 |
 | 3 | Script model: parsing, segmentation, text preservation | DONE | 2 |
-| 4 | Project, script & session persistence (entities + API) | IN PROGRESS | 1, 3 |
+| 4 | Project, script & session persistence (entities + API) | AWAITING CONFIRMATION | 1, 3 |
 | 5 | Session engine (state machine) | TODO | 2 |
 | 6 | Command grammar & transcript matcher | TODO | 2 |
 | 7 | Spike: TTS (Kokoro timings & latency, browser boundary events) | TODO | 0 |
@@ -775,9 +788,19 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 - Pasted scripts keep their original text in `scripts.source_text` (B4's `original_asset_key` is for file imports, Task 22).
 **Tests:** Integration (DB): partial unique index (one selected take per chunk); soft delete; takes keep their chunk link after a new chunk plan · Integration (API): create project → script → chunk plan (server rejects a plan that breaks coverage) → session → upload take (multipart, file on disk, row in DB) → select → delete without `confirm=true` is rejected
 **Done when:**
-- [ ] All routes are covered by API integration tests
-- [ ] Uploading 3 takes for one chunk and selecting one leaves exactly one selected and all 3 recoverable
-- [ ] No code path hard-deletes a take (grep + test)
+- [x] All routes are covered by API integration tests
+- [x] Uploading 3 takes for one chunk and selecting one leaves exactly one selected and all 3 recoverable
+- [x] No code path hard-deletes a take (grep + test)
+
+**How it's built:**
+- `packages/db`: 8 entities + migration `InitRecording1727222400000` (§B4 Task 4 tables), repositories scoped to the owner/user (another user's id is "not found"), atomic conditional updates for autosave (`seq`) and media attach (write-once), ordinal allocation with retry, `parseInt8` for bigint.
+- `packages/contracts`: `SessionState`, `TakeStatus`, `TakeKind`, `MediaType`, `ExportStatus`, `ExportKind`, `SourceKind`; 18 new contract schemas (requests + resources, each with a validated example and fixtures); `Storage` interface (no delete) + `StorageError`; ajv now checks `uuid`/`date-time`/`email` formats; a take's `kind` must match its MIME type.
+- `packages/script-model`: `buildBlocks` (client types + ranges → blocks, text from the source) and `chunksFromRanges` (ranges → chunks, text rebuilt), property-tested against `segment` (1,000 runs).
+- `apps/web`: 22 new routes; local-disk `Storage` (`STORAGE_DIR`, temp file + atomic no-overwrite link, `MAX_UPLOAD_BYTES`, `MIN_FREE_BYTES`, byte ranges); OpenAPI components for Task 4 are **generated from the contract schemas** (single source); completeness checker extended to binary bodies and 413/415/416/507.
+
+**Evidence (2026-09-25):** `pnpm typecheck` 9/9 · `pnpm lint` 9/9 · `pnpm test`: contracts 164, db 36 (incl. the no-take-delete scan: 6 patterns over 40+ source files, plus a self-test that it catches offenders), script-model 54, web 30, ai 75 · `pnpm build` ✓ · `pnpm test:e2e` 2/2 · `pnpm test:int`: db 26 (trigger rejects raw `DELETE`, one-selected index, deleted-can't-be-selected CHECK, stale autosave, plan FK, concurrent ordinals, no re-linking), API 23 (every Task 4 route; 3 takes/one selected/all recoverable; write-once media, 413 with and without Content-Length leaving no file, 415, 206/416 ranges; confirm-gated soft delete + restore; coverage and id-reuse rejections; every response validated against its contract).
+**Known:** an early 413 while the client is still streaming makes nitropack's graceful-shutdown hook log `Cannot set properties of null (setting '_isIdle')` (upstream; the server keeps serving). **Environment:** one db run failed on DNS (`ENOTFOUND` for the Supabase pooler) while the machine slept; the stale `it_*` schema it left was swept by the next run.
+**Manual check for the user:** `/api/docs` shows the Projects/Scripts/Chunk Plans/Sessions/Takes/Exports tags with their operations.
 
 ### Task 5 — Session engine
 
@@ -966,6 +989,7 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 0.3.0 | 2026-09-23 | Added §B10 code standards: zero TS/lint errors, named constants instead of string-literal comparisons, Record lookups instead of nested ternaries; wired into Task 0 and the D0 gate |
 | 0.3.1 | 2026-09-24 | Task 0 implemented; TypeScript pinned to 6.0.x; PostgreSQL/ffmpeg install moved to Tasks 1/9 (Homebrew dropped Intel); dependency register updated |
 | 0.3.2 | 2026-09-24 | Task 0 confirmed by user → DONE |
+| 0.12.0 | 2026-09-25 | Task 4 implemented (8 tables, trigger-protected takes, streamed write-once media with ranges, 22 routes, OpenAPI from contract schemas, storage settings in `.env.example`); Task 4 → AWAITING CONFIRMATION |
 | 0.11.0 | 2026-09-24 | Task 4 API decided with user: two-step take upload (JSON create + streamed raw `PUT …/media`, no multipart), immutable chunk-plan versions (`PATCH /api/chunk-plans/:id` dropped); route table updated (GET plan/session/takes, media GET/PUT, restore, script list); design decisions recorded under Task 4 |
 | 0.10.1 | 2026-09-24 | Task 3 confirmed by user → DONE. Task 4 started |
 | 0.10.0 | 2026-09-24 | Task 3 implemented (parser, four modes, cut-based plan model, stable ids, AI proposal snapping, coverage check, 6 × 1,000 property runs); §B5 rule 5 tightened to whitespace-only boundaries; `BlockType`/`ChunkMode`/script types in contracts; fast-check approved; H-26; Task 4 note on composite keys; Task 3 → AWAITING CONFIRMATION |
