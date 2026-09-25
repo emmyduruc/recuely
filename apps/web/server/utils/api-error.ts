@@ -19,13 +19,22 @@ export const HttpStatus = {
   Ok: 200,
   Created: 201,
   NoContent: 204,
+  PartialContent: 206,
   BadRequest: 400,
   NotFound: 404,
   Conflict: 409,
+  PayloadTooLarge: 413,
+  UnsupportedMediaType: 415,
+  RangeNotSatisfiable: 416,
   UnprocessableEntity: 422,
   InternalServerError: 500,
   ServiceUnavailable: 503,
+  InsufficientStorage: 507,
 } as const;
+
+export function unprocessable(code: ApiErrorCode, message: string, details?: ApiErrorDetail[]): ApiException {
+  return new ApiException(HttpStatus.UnprocessableEntity, code, message, details);
+}
 
 export function validationFailed(details: ApiErrorDetail[]): ApiException {
   return new ApiException(

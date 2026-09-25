@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CreateChunkPlanRequest.json",
+  "title": "CreateChunkPlanRequest",
+  "type": "object",
+  "description": "POST /api/scripts/:id/chunk-plans body. Without `chunks` the server segments the script in `mode`. With `chunks`, the ranges must cover the spoken text exactly once; an id from an earlier plan may be reused only with identical ranges.",
+  "properties": {
+    "mode": {
+      "type": "string",
+      "enum": [
+        "short",
+        "sentence",
+        "paragraph",
+        "smart"
+      ],
+      "description": "Segmentation mode."
+    },
+    "chunks": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5000,
+      "description": "Chunks as ranges.",
+      "items": {
+        "type": "object",
+        "description": "A chunk: optional id and its ranges.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Reuse an id from an earlier plan (identical ranges only), or omit for a new id."
+          },
+          "ranges": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "description": "A range of one spoken block (UTF-16).",
+              "properties": {
+                "blockId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Spoken block id."
+                },
+                "start": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "First UTF-16 unit."
+                },
+                "end": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "UTF-16 unit after the range."
+                }
+              },
+              "required": [
+                "blockId",
+                "start",
+                "end"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Ranges in order."
+          }
+        },
+        "required": [
+          "ranges"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "mode"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "mode": "sentence"
+    }
+  ]
+}

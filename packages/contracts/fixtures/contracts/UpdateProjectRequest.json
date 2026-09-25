@@ -1,0 +1,31 @@
+{
+  "type": "UpdateProjectRequest",
+  "valid": [
+    {
+      "name": "restore",
+      "value": {
+        "archived": false
+      }
+    },
+    {
+      "name": "rename",
+      "value": {
+        "title": "New name"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "empty body",
+      "path": "(root)",
+      "value": {}
+    },
+    {
+      "name": "archived not boolean",
+      "path": "archived",
+      "value": {
+        "archived": "no"
+      }
+    }
+  ]
+}

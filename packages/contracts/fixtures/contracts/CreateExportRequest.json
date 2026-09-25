@@ -1,0 +1,31 @@
+{
+  "type": "CreateExportRequest",
+  "valid": [
+    {
+      "name": "per take",
+      "value": {
+        "kind": "per_take"
+      }
+    },
+    {
+      "name": "stitched",
+      "value": {
+        "kind": "stitched"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "unknown kind",
+      "path": "kind",
+      "value": {
+        "kind": "zip"
+      }
+    },
+    {
+      "name": "missing kind",
+      "path": "kind",
+      "value": {}
+    }
+  ]
+}

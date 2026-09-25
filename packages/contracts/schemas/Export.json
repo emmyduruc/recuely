@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Export.json",
+  "title": "Export",
+  "type": "object",
+  "description": "An export of a session (files are produced in Task 17).",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Export id."
+    },
+    "sessionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Session."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "running",
+        "done",
+        "failed"
+      ],
+      "description": "Progress."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "per_take",
+        "stitched"
+      ],
+      "description": "Per-take files or one stitched file."
+    },
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Why it failed, or null."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When requested."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When last changed."
+    }
+  },
+  "required": [
+    "id",
+    "sessionId",
+    "status",
+    "kind",
+    "error",
+    "createdAt",
+    "updatedAt"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "0192a1b2-c3d4-7e5f-8a6b-000000000006",
+      "sessionId": "0192a1b2-c3d4-7e5f-8a6b-000000000004",
+      "status": "pending",
+      "kind": "per_take",
+      "error": null,
+      "createdAt": "2026-09-24T09:30:00.000Z",
+      "updatedAt": "2026-09-24T09:30:00.000Z"
+    }
+  ]
+}

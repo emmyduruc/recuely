@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "UpdateTakeRequest.json",
+  "title": "UpdateTakeRequest",
+  "type": "object",
+  "description": "PATCH /api/takes/:id body. Selecting a take unselects the other takes of its chunk.",
+  "properties": {
+    "selected": {
+      "type": "boolean",
+      "description": "Choose (or unchoose) this take."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "interrupted",
+        "unusable"
+      ],
+      "description": "Mark the take."
+    },
+    "durationMs": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Duration in ms."
+    },
+    "timing": {
+      "type": "object",
+      "description": "Capture timing metadata."
+    },
+    "transcript": {
+      "type": "object",
+      "description": "STT transcript."
+    },
+    "match": {
+      "$ref": "MatchResult.json",
+      "description": "Transcript match result."
+    }
+  },
+  "required": [],
+  "minProperties": 1,
+  "additionalProperties": false,
+  "examples": [
+    {
+      "selected": true
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CreateTakeRequest.json",
+  "title": "CreateTakeRequest",
+  "type": "object",
+  "description": "POST /api/sessions/:id/takes body. Creates the take row before the media upload.",
+  "properties": {
+    "chunkId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Chunk in the session's current plan."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "audio",
+        "video"
+      ],
+      "description": "Audio or video; must match the MIME type."
+    },
+    "mimeType": {
+      "type": "string",
+      "pattern": "^(video\\/webm|video\\/mp4|audio\\/webm|audio\\/mp4|audio\\/ogg|audio\\/wav)(;.*)?$",
+      "description": "Container MIME type of the upload."
+    },
+    "durationMs": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Duration in ms, if known."
+    },
+    "timing": {
+      "type": "object",
+      "description": "Capture timing metadata."
+    }
+  },
+  "required": [
+    "chunkId",
+    "kind",
+    "mimeType"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "chunkId": "0192a1b2-c3d4-7e5f-8a6b-00000000000c",
+      "kind": "video",
+      "mimeType": "video/webm;codecs=vp9,opus"
+    }
+  ]
+}

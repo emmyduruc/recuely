@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ScriptChunk.json",
+  "title": "ScriptChunk",
+  "type": "object",
+  "description": "One chunk: ranges over spoken blocks; text is rebuilt by the server from the ranges.",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Chunk id; kept by later plan versions only while the ranges are identical."
+    },
+    "order": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Position in the plan."
+    },
+    "ranges": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "description": "A range of one spoken block (UTF-16).",
+        "properties": {
+          "blockId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Spoken block id."
+          },
+          "start": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "First UTF-16 unit."
+          },
+          "end": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "UTF-16 unit after the range."
+          }
+        },
+        "required": [
+          "blockId",
+          "start",
+          "end"
+        ],
+        "additionalProperties": false
+      },
+      "description": "One range per spoken block."
+    },
+    "text": {
+      "type": "string",
+      "description": "The covered text, verbatim (ranges joined by a space)."
+    },
+    "spokenText": {
+      "type": "string",
+      "description": "What is read: whitespace collapsed, emphasis markers removed."
+    },
+    "sceneCue": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "blockId",
+            "text"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "blockId": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Scene cue block."
+            },
+            "text": {
+              "type": "string",
+              "description": "Cue text."
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The scene cue this chunk follows, or null."
+    }
+  },
+  "required": [
+    "id",
+    "order",
+    "ranges",
+    "text",
+    "spokenText",
+    "sceneCue"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "0192a1b2-c3d4-7e5f-8a6b-00000000000c",
+      "order": 0,
+      "ranges": [
+        {
+          "blockId": "0192a1b2-c3d4-7e5f-8a6b-00000000000b",
+          "start": 0,
+          "end": 23
+        }
+      ],
+      "text": "Welcome back, everyone.",
+      "spokenText": "Welcome back, everyone.",
+      "sceneCue": null
+    }
+  ]
+}

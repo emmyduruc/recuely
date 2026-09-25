@@ -20,9 +20,32 @@ import {
   type UpdateSettingsRequest,
   UserLimits,
 } from '../user.ts';
+import type {
+  ChunkPlanResource,
+  CreateChunkPlanRequest,
+  CreateExportRequest,
+  CreateProjectRequest,
+  CreateScriptRequest,
+  CreateSessionRequest,
+  CreateTakeRequest,
+  Export,
+  Project,
+  Script,
+  ScriptSummary,
+  Session,
+  Take,
+  UpdateProjectRequest,
+  UpdateSessionRequest,
+  UpdateTakeRequest,
+} from '../recording.ts';
+import type { ScriptBlock, ScriptChunk } from '../script.ts';
+import { EMAIL_PATTERN, nonNegativeInt, ref, text, unit } from './helpers.ts';
 import { JSON_SCHEMA_DIALECT, type JsonSchema, nullable, objectSchema } from './json-schema.ts';
+import { RECORDING_SCHEMAS } from './recording.ts';
 
+export * from './helpers.ts';
 export * from './json-schema.ts';
+export { MEDIA_TYPE_PATTERN } from './recording.ts';
 
 /** Every contract with a schema. Payloads are shared with Python; API bodies are web-only. */
 export const ContractType = {
@@ -36,6 +59,24 @@ export const ContractType = {
   UpdateMeRequest: 'UpdateMeRequest',
   UpdateSettingsRequest: 'UpdateSettingsRequest',
   AddVoiceFavoriteRequest: 'AddVoiceFavoriteRequest',
+  Project: 'Project',
+  CreateProjectRequest: 'CreateProjectRequest',
+  UpdateProjectRequest: 'UpdateProjectRequest',
+  ScriptBlock: 'ScriptBlock',
+  ScriptChunk: 'ScriptChunk',
+  ScriptSummary: 'ScriptSummary',
+  Script: 'Script',
+  CreateScriptRequest: 'CreateScriptRequest',
+  ChunkPlan: 'ChunkPlan',
+  CreateChunkPlanRequest: 'CreateChunkPlanRequest',
+  Session: 'Session',
+  CreateSessionRequest: 'CreateSessionRequest',
+  UpdateSessionRequest: 'UpdateSessionRequest',
+  Take: 'Take',
+  CreateTakeRequest: 'CreateTakeRequest',
+  UpdateTakeRequest: 'UpdateTakeRequest',
+  Export: 'Export',
+  CreateExportRequest: 'CreateExportRequest',
 } as const;
 export type ContractType = (typeof ContractType)[keyof typeof ContractType];
 
@@ -51,19 +92,26 @@ export interface ContractTypes {
   [ContractType.UpdateMeRequest]: UpdateMeRequest;
   [ContractType.UpdateSettingsRequest]: UpdateSettingsRequest;
   [ContractType.AddVoiceFavoriteRequest]: AddVoiceFavoriteRequest;
+  [ContractType.Project]: Project;
+  [ContractType.CreateProjectRequest]: CreateProjectRequest;
+  [ContractType.UpdateProjectRequest]: UpdateProjectRequest;
+  [ContractType.ScriptBlock]: ScriptBlock;
+  [ContractType.ScriptChunk]: ScriptChunk;
+  [ContractType.ScriptSummary]: ScriptSummary;
+  [ContractType.Script]: Script;
+  [ContractType.CreateScriptRequest]: CreateScriptRequest;
+  [ContractType.ChunkPlan]: ChunkPlanResource;
+  [ContractType.CreateChunkPlanRequest]: CreateChunkPlanRequest;
+  [ContractType.Session]: Session;
+  [ContractType.CreateSessionRequest]: CreateSessionRequest;
+  [ContractType.UpdateSessionRequest]: UpdateSessionRequest;
+  [ContractType.Take]: Take;
+  [ContractType.CreateTakeRequest]: CreateTakeRequest;
+  [ContractType.UpdateTakeRequest]: UpdateTakeRequest;
+  [ContractType.Export]: Export;
+  [ContractType.CreateExportRequest]: CreateExportRequest;
 }
 
-const ref = (type: ContractType): JsonSchema => ({ $ref: `${type}.json` });
-const nonNegativeInt = (description: string): JsonSchema => ({ type: 'integer', minimum: 0, description });
-const unit = (description: string): JsonSchema => ({ type: 'number', minimum: 0, maximum: 1, description });
-/** Non-blank text; surrounding whitespace is trimmed by the consumer. */
-const text = (max: number, description: string): JsonSchema => ({
-  type: 'string',
-  minLength: 1,
-  maxLength: max,
-  pattern: '\\S',
-  description,
-});
 /** Lower-case words, optionally ending in the `{target}` placeholder. */
 const grammarPhrases = (intent: Intent): JsonSchema => ({
   type: 'array',
@@ -71,7 +119,6 @@ const grammarPhrases = (intent: Intent): JsonSchema => ({
   description: `Phrases for ${intent}.`,
   items: { type: 'string', pattern: '^[a-z]+( [a-z]+)*( \\{target\\})?$' },
 });
-const EMAIL_PATTERN = '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$';
 
 const envelope = objectSchema<Envelope>()({
   type: 'object',
@@ -262,6 +309,7 @@ const DEFINITIONS: Record<ContractType, JsonSchema> = {
   [ContractType.UpdateMeRequest]: updateMe,
   [ContractType.UpdateSettingsRequest]: updateSettings,
   [ContractType.AddVoiceFavoriteRequest]: addVoiceFavorite,
+  ...RECORDING_SCHEMAS,
 };
 
 /** Published schemas: `$id` is `<Type>.json`, so `$ref`s resolve between files and inside ajv alike. */

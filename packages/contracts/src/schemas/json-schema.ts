@@ -29,6 +29,11 @@ export interface JsonSchema {
   propertyNames?: JsonSchema;
   minProperties?: number;
   $defs?: Readonly<Record<string, JsonSchema>>;
+  anyOf?: readonly JsonSchema[];
+  /** Validated by ajv (see validation.ts) and carried into the OpenAPI document. */
+  format?: 'uuid' | 'date-time' | 'email';
+  /** Example values; validated against the schema by the contract tests and shown in Swagger UI. */
+  examples?: readonly unknown[];
 }
 
 /** Keys of T that are not optional. */

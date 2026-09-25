@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "UpdateSessionRequest.json",
+  "title": "UpdateSessionRequest",
+  "type": "object",
+  "description": "PATCH /api/sessions/:id body (autosave). `seq` must be greater than the stored one.",
+  "properties": {
+    "seq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Engine sequence number; stale saves are rejected with 409."
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "preparing",
+        "ready",
+        "assistant_speaking",
+        "settle",
+        "waiting_for_speech",
+        "creator_speaking",
+        "evaluating",
+        "review_or_advance",
+        "paused",
+        "recovering",
+        "error",
+        "completed"
+      ],
+      "description": "Engine state."
+    },
+    "currentChunkId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid",
+      "description": "Current chunk (must be in the plan)."
+    },
+    "chunkPlanId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Switch to another plan version of the same project."
+    },
+    "settings": {
+      "type": "object",
+      "description": "Session settings (replaces the stored object)."
+    }
+  },
+  "required": [
+    "seq"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "seq": 13,
+      "state": "paused",
+      "currentChunkId": "0192a1b2-c3d4-7e5f-8a6b-00000000000c"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # SPEC — Filming Assistant
 
-> Single source of truth for this project. Version **0.10.0** · Last updated 2026-09-24
+> Single source of truth for this project. Version **0.11.0** · Last updated 2026-09-24
 > Input brief: `product.md` (frozen). Repo rules for Claude Code: `CLAUDE.md`.
 > "Filming Assistant" is a placeholder name. Never use it in package names, identifiers, or branding.
 
@@ -272,12 +272,13 @@ interface CommandEvent { intent: Intent; args?: Record<string,string>; source: '
 |---|---|---|
 | Nitro | `GET /api/health` | App + DB + AI-service health |
 | Nitro | `GET/PATCH /api/me`, `GET/PATCH /api/me/settings`, `GET/POST /api/me/voices`, `DELETE /api/me/voices/:id` | Local user, settings, favorites |
-| Nitro | `GET/POST /api/projects`, `GET/PATCH/DELETE /api/projects/:id` | Projects (delete = archive) |
-| Nitro | `POST /api/projects/:id/scripts`, `GET /api/scripts/:id` | Script versions + blocks |
-| Nitro | `POST /api/scripts/:id/chunk-plans`, `PATCH /api/chunk-plans/:id` | Chunking (the invariant is checked server-side too) |
-| Nitro | `POST /api/sessions`, `PATCH /api/sessions/:id` | Session snapshot autosave |
-| Nitro | `POST /api/sessions/:id/takes` (multipart), `PATCH /api/takes/:id`, `DELETE /api/takes/:id?confirm=true` | Takes: upload, select, soft delete |
-| Nitro | `POST /api/sessions/:id/exports`, `GET /api/exports/:id` | Exports |
+| Nitro | `GET/POST /api/projects`, `GET/PATCH/DELETE /api/projects/:id` | Projects (delete = archive; PATCH `archived:false` restores) |
+| Nitro | `POST/GET /api/projects/:id/scripts`, `GET /api/scripts/:id` | Script versions (immutable) + blocks |
+| Nitro | `POST /api/scripts/:id/chunk-plans`, `GET /api/chunk-plans/:id` | Chunk plans are **immutable versions**; an edit is a new version. The server rebuilds chunk text from ranges and checks coverage |
+| Nitro | `POST /api/sessions`, `GET/PATCH /api/sessions/:id` | Session snapshot autosave (`seq` must increase, else 409) |
+| Nitro | `POST/GET /api/sessions/:id/takes`, `PATCH /api/takes/:id`, `DELETE /api/takes/:id?confirm=true`, `POST /api/takes/:id/restore` | Takes: create (JSON metadata), select, mark, soft delete, restore |
+| Nitro | `PUT /api/takes/:id/media`, `GET /api/takes/:id/media` | Media: raw body **streamed to disk** once (never overwritten); download with HTTP `Range` |
+| Nitro | `POST /api/sessions/:id/exports`, `GET /api/exports/:id` | Exports (entity + routes in Task 4; producing files in Task 17) |
 | AI | `GET /v0/health` | Status of each capability + model versions |
 | AI | `GET /v0/tts/voices`, `POST /v0/tts`, `GET /v0/tts/audio/:key` | Voices, synthesis, cached audio |
 | AI | `POST /v0/stt` | Per-take transcription (echoes sessionId/chunkId/seq) |
@@ -624,8 +625,8 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 0 | Monorepo foundation (Turborepo, Nuxt, FastAPI, CI) | DONE | — |
 | 1 | User modelling & database (TypeORM + PostgreSQL) | DONE | 0 |
 | 2 | Shared contracts & fixtures | DONE | 0 |
-| 3 | Script model: parsing, segmentation, text preservation | AWAITING CONFIRMATION | 2 |
-| 4 | Project, script & session persistence (entities + API) | TODO | 1, 3 |
+| 3 | Script model: parsing, segmentation, text preservation | DONE | 2 |
+| 4 | Project, script & session persistence (entities + API) | IN PROGRESS | 1, 3 |
 | 5 | Session engine (state machine) | TODO | 2 |
 | 6 | Command grammar & transcript matcher | TODO | 2 |
 | 7 | Spike: TTS (Kokoro timings & latency, browser boundary events) | TODO | 0 |
@@ -765,7 +766,13 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 
 **What:** Entities `Project`, `Script`, `ScriptBlock`, `ChunkPlan`, `ScriptChunk`, `Session`, `Take`, `Export` + migrations; the `Storage` interface with a local-disk implementation; Nitro routes from §B5 (projects, scripts, chunk plans, sessions, takes, exports).
 **Why:** Sessions, positions, and takes must survive reloads and crashes, and takes must be structurally protected from deletion.
-**Streaming rule:** take uploads are **streamed to disk**, never buffered in memory (h3's `readMultipartFormData` buffers the whole body, so it's not used). Either a raw request body piped to `Storage`, or a streaming multipart parser added to §B8 first. Upload size limit and a quota check apply. Playback/download routes serve files with HTTP `Range` support so players can seek.
+**Streaming rule:** take uploads are **streamed to disk**, never buffered in memory. Upload is two steps (user decision): `POST /api/sessions/:id/takes` (JSON metadata) creates the take row first, then `PUT /api/takes/:id/media` streams the raw body to `Storage` (temp file, then an atomic no-overwrite link; a second upload is a 409). `MAX_UPLOAD_BYTES` (default 2 GiB) → 413; free disk below the upload + `MIN_FREE_BYTES` (default 1 GiB) → 507. `GET /api/takes/:id/media` supports single `Range` requests (206/416).
+**Design decisions (Task 4):**
+- Chunk plans are immutable versions (user decision); `PATCH /api/chunk-plans/:id` is dropped. A client may reuse a chunk id from an earlier plan of the same script **only with identical ranges**, otherwise 422, so an id never points at different text.
+- `script_blocks` PK `(script_id, id)`, `script_chunks` PK `(chunk_plan_id, id)` (Task 3 note). A take stores `chunk_plan_id` + `chunk_id` (composite FK), so it stays linked to that exact text, and to unchanged chunks in newer plans by id.
+- Takes are protected structurally: a `BEFORE DELETE` trigger on `takes` raises, FKs to takes' parents are `RESTRICT`, the `Storage` interface has no delete, a deleted take can't be selected (CHECK), and removal is `deleted_at` with `confirm=true` plus a restore route.
+- The server never trusts client text: scripts send block types + source ranges (text = `sourceText.slice`), plans send chunk ranges; the server rebuilds text with `@repo/script-model` and runs `assertCoverage` (422 `coverage_violation`).
+- Pasted scripts keep their original text in `scripts.source_text` (B4's `original_asset_key` is for file imports, Task 22).
 **Tests:** Integration (DB): partial unique index (one selected take per chunk); soft delete; takes keep their chunk link after a new chunk plan · Integration (API): create project → script → chunk plan (server rejects a plan that breaks coverage) → session → upload take (multipart, file on disk, row in DB) → select → delete without `confirm=true` is rejected
 **Done when:**
 - [ ] All routes are covered by API integration tests
@@ -959,6 +966,8 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 0.3.0 | 2026-09-23 | Added §B10 code standards: zero TS/lint errors, named constants instead of string-literal comparisons, Record lookups instead of nested ternaries; wired into Task 0 and the D0 gate |
 | 0.3.1 | 2026-09-24 | Task 0 implemented; TypeScript pinned to 6.0.x; PostgreSQL/ffmpeg install moved to Tasks 1/9 (Homebrew dropped Intel); dependency register updated |
 | 0.3.2 | 2026-09-24 | Task 0 confirmed by user → DONE |
+| 0.11.0 | 2026-09-24 | Task 4 API decided with user: two-step take upload (JSON create + streamed raw `PUT …/media`, no multipart), immutable chunk-plan versions (`PATCH /api/chunk-plans/:id` dropped); route table updated (GET plan/session/takes, media GET/PUT, restore, script list); design decisions recorded under Task 4 |
+| 0.10.1 | 2026-09-24 | Task 3 confirmed by user → DONE. Task 4 started |
 | 0.10.0 | 2026-09-24 | Task 3 implemented (parser, four modes, cut-based plan model, stable ids, AI proposal snapping, coverage check, 6 × 1,000 property runs); §B5 rule 5 tightened to whitespace-only boundaries; `BlockType`/`ChunkMode`/script types in contracts; fast-check approved; H-26; Task 4 note on composite keys; Task 3 → AWAITING CONFIRMATION |
 | 0.9.1 | 2026-09-24 | Task 2 confirmed by user → DONE. Task 3 started |
 | 0.9.0 | 2026-09-24 | Task 2 implemented: JSON Schemas typed against TS types, emitted schema files, ajv validation (`@repo/contracts/validation`), Pydantic mirrors + UTF-16 helpers in `apps/ai`, shared fixtures (contracts, UTF-16, en grammar), drift tests both ways; web request bodies now validated by contract schemas; Task 2 → AWAITING CONFIRMATION |

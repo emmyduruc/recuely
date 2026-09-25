@@ -1,0 +1,32 @@
+{
+  "type": "CreateProjectRequest",
+  "valid": [
+    {
+      "name": "title",
+      "value": {
+        "title": "Product launch"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "blank title",
+      "path": "title",
+      "value": {
+        "title": "   "
+      }
+    },
+    {
+      "name": "missing title",
+      "path": "title",
+      "value": {}
+    },
+    {
+      "name": "too long",
+      "path": "title",
+      "value": {
+        "title": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    }
+  ]
+}

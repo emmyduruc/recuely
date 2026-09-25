@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Take.json",
+  "title": "Take",
+  "type": "object",
+  "description": "A recorded take. Takes are never hard-deleted; `deletedAt` marks a soft delete.",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Take id."
+    },
+    "sessionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Session."
+    },
+    "chunkPlanId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Plan version the take was recorded against."
+    },
+    "chunkId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Chunk the take belongs to."
+    },
+    "ordinal": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "1, 2, … per session and chunk."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "recording",
+        "complete",
+        "interrupted",
+        "unusable"
+      ],
+      "description": "Recording state."
+    },
+    "selected": {
+      "type": "boolean",
+      "description": "The chosen take for this chunk (at most one)."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "audio",
+        "video"
+      ],
+      "description": "Audio or video."
+    },
+    "mimeType": {
+      "type": "string",
+      "pattern": "^(video\\/webm|video\\/mp4|audio\\/webm|audio\\/mp4|audio\\/ogg|audio\\/wav)(;.*)?$",
+      "description": "Container MIME type, optionally with codecs."
+    },
+    "bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Uploaded size in bytes (0 until uploaded)."
+    },
+    "durationMs": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "description": "Duration in ms, or null."
+    },
+    "mediaUrl": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Download URL, or null until the media is uploaded."
+    },
+    "timing": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Capture timing metadata."
+    },
+    "transcript": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "STT transcript."
+    },
+    "match": {
+      "anyOf": [
+        {
+          "$ref": "MatchResult.json"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Transcript match result."
+    },
+    "deletedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "description": "Soft-delete time, or null."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When created."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When last changed."
+    }
+  },
+  "required": [
+    "id",
+    "sessionId",
+    "chunkPlanId",
+    "chunkId",
+    "ordinal",
+    "status",
+    "selected",
+    "kind",
+    "mimeType",
+    "bytes",
+    "durationMs",
+    "mediaUrl",
+    "timing",
+    "transcript",
+    "match",
+    "deletedAt",
+    "createdAt",
+    "updatedAt"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "0192a1b2-c3d4-7e5f-8a6b-000000000005",
+      "sessionId": "0192a1b2-c3d4-7e5f-8a6b-000000000004",
+      "chunkPlanId": "0192a1b2-c3d4-7e5f-8a6b-000000000003",
+      "chunkId": "0192a1b2-c3d4-7e5f-8a6b-00000000000c",
+      "ordinal": 1,
+      "status": "complete",
+      "selected": true,
+      "kind": "video",
+      "mimeType": "video/webm;codecs=vp9,opus",
+      "bytes": 1048576,
+      "durationMs": 3200,
+      "mediaUrl": "/api/takes/0192a1b2-c3d4-7e5f-8a6b-000000000005/media",
+      "timing": null,
+      "transcript": null,
+      "match": null,
+      "deletedAt": null,
+      "createdAt": "2026-09-24T09:30:00.000Z",
+      "updatedAt": "2026-09-24T09:30:00.000Z"
+    }
+  ]
+}

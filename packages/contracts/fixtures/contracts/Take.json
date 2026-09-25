@@ -1,0 +1,125 @@
+{
+  "type": "Take",
+  "valid": [
+    {
+      "name": "take",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000005",
+        "sessionId": "0192a1b2-c3d4-7e5f-8a6b-000000000004",
+        "chunkPlanId": "0192a1b2-c3d4-7e5f-8a6b-000000000003",
+        "chunkId": "0192a1b2-c3d4-7e5f-8a6b-00000000000c",
+        "ordinal": 1,
+        "status": "complete",
+        "selected": true,
+        "kind": "video",
+        "mimeType": "video/webm;codecs=vp9,opus",
+        "bytes": 1048576,
+        "durationMs": 3200,
+        "mediaUrl": "/api/takes/0192a1b2-c3d4-7e5f-8a6b-000000000005/media",
+        "timing": null,
+        "transcript": null,
+        "match": null,
+        "deletedAt": null,
+        "createdAt": "2026-09-24T09:30:00.000Z",
+        "updatedAt": "2026-09-24T09:30:00.000Z"
+      }
+    },
+    {
+      "name": "not uploaded yet",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000005",
+        "sessionId": "0192a1b2-c3d4-7e5f-8a6b-000000000004",
+        "chunkPlanId": "0192a1b2-c3d4-7e5f-8a6b-000000000003",
+        "chunkId": "0192a1b2-c3d4-7e5f-8a6b-00000000000c",
+        "ordinal": 1,
+        "status": "recording",
+        "selected": false,
+        "kind": "video",
+        "mimeType": "video/webm;codecs=vp9,opus",
+        "bytes": 0,
+        "durationMs": null,
+        "mediaUrl": null,
+        "timing": null,
+        "transcript": null,
+        "match": null,
+        "deletedAt": null,
+        "createdAt": "2026-09-24T09:30:00.000Z",
+        "updatedAt": "2026-09-24T09:30:00.000Z"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "video take with audio type",
+      "path": "mimeType",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000005",
+        "sessionId": "0192a1b2-c3d4-7e5f-8a6b-000000000004",
+        "chunkPlanId": "0192a1b2-c3d4-7e5f-8a6b-000000000003",
+        "chunkId": "0192a1b2-c3d4-7e5f-8a6b-00000000000c",
+        "ordinal": 1,
+        "status": "complete",
+        "selected": true,
+        "kind": "video",
+        "mimeType": "audio/webm",
+        "bytes": 1048576,
+        "durationMs": 3200,
+        "mediaUrl": "/api/takes/0192a1b2-c3d4-7e5f-8a6b-000000000005/media",
+        "timing": null,
+        "transcript": null,
+        "match": null,
+        "deletedAt": null,
+        "createdAt": "2026-09-24T09:30:00.000Z",
+        "updatedAt": "2026-09-24T09:30:00.000Z"
+      }
+    },
+    {
+      "name": "unknown status",
+      "path": "status",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000005",
+        "sessionId": "0192a1b2-c3d4-7e5f-8a6b-000000000004",
+        "chunkPlanId": "0192a1b2-c3d4-7e5f-8a6b-000000000003",
+        "chunkId": "0192a1b2-c3d4-7e5f-8a6b-00000000000c",
+        "ordinal": 1,
+        "status": "deleted",
+        "selected": true,
+        "kind": "video",
+        "mimeType": "video/webm;codecs=vp9,opus",
+        "bytes": 1048576,
+        "durationMs": 3200,
+        "mediaUrl": "/api/takes/0192a1b2-c3d4-7e5f-8a6b-000000000005/media",
+        "timing": null,
+        "transcript": null,
+        "match": null,
+        "deletedAt": null,
+        "createdAt": "2026-09-24T09:30:00.000Z",
+        "updatedAt": "2026-09-24T09:30:00.000Z"
+      }
+    },
+    {
+      "name": "ordinal 0",
+      "path": "ordinal",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000005",
+        "sessionId": "0192a1b2-c3d4-7e5f-8a6b-000000000004",
+        "chunkPlanId": "0192a1b2-c3d4-7e5f-8a6b-000000000003",
+        "chunkId": "0192a1b2-c3d4-7e5f-8a6b-00000000000c",
+        "ordinal": 0,
+        "status": "complete",
+        "selected": true,
+        "kind": "video",
+        "mimeType": "video/webm;codecs=vp9,opus",
+        "bytes": 1048576,
+        "durationMs": 3200,
+        "mediaUrl": "/api/takes/0192a1b2-c3d4-7e5f-8a6b-000000000005/media",
+        "timing": null,
+        "transcript": null,
+        "match": null,
+        "deletedAt": null,
+        "createdAt": "2026-09-24T09:30:00.000Z",
+        "updatedAt": "2026-09-24T09:30:00.000Z"
+      }
+    }
+  ]
+}

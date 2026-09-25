@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ScriptSummary.json",
+  "title": "ScriptSummary",
+  "type": "object",
+  "description": "One script version, without its blocks.",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Script id."
+    },
+    "projectId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Owning project."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Version within the project (1, 2, …)."
+    },
+    "sourceKind": {
+      "type": "string",
+      "enum": [
+        "paste"
+      ],
+      "description": "Where the script came from."
+    },
+    "blockCount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of blocks."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this version was saved."
+    }
+  },
+  "required": [
+    "id",
+    "projectId",
+    "version",
+    "sourceKind",
+    "blockCount",
+    "createdAt"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "0192a1b2-c3d4-7e5f-8a6b-000000000002",
+      "projectId": "0192a1b2-c3d4-7e5f-8a6b-000000000001",
+      "version": 1,
+      "sourceKind": "paste",
+      "blockCount": 2,
+      "createdAt": "2026-09-24T09:30:00.000Z"
+    }
+  ]
+}

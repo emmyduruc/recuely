@@ -3,6 +3,8 @@ import {
   ApiErrorCode,
   type CommandAliases,
   ContractType,
+  type CreateProjectRequest,
+  type UpdateProjectRequest,
   type ContractTypes,
   type UpdateMeRequest,
   type UpdateSettingsRequest,
@@ -31,7 +33,7 @@ function isJsonObject(value: unknown): value is Record<string, unknown> {
 }
 
 /** Schema-validates a JSON object body; issues become `ApiError.details` (`(root)` → `(body)`). */
-function parseBody<K extends ContractType>(type: K, body: unknown): ContractTypes[K] {
+export function parseBody<K extends ContractType>(type: K, body: unknown): ContractTypes[K] {
   if (!isJsonObject(body)) {
     throw validationFailed([{ field: BODY_FIELD, issue: 'must be a JSON object' }]);
   }
@@ -71,4 +73,20 @@ export function parseUpdateSettings(input: unknown): UpdateSettingsRequest {
 export function parseAddVoiceFavorite(input: unknown): AddVoiceFavoriteRequest {
   const body = parseBody(ContractType.AddVoiceFavoriteRequest, input);
   return { provider: body.provider.trim(), voiceId: body.voiceId.trim(), label: body.label.trim() };
+}
+
+export function parseCreateProject(input: unknown): CreateProjectRequest {
+  return { title: parseBody(ContractType.CreateProjectRequest, input).title.trim() };
+}
+
+export function parseUpdateProject(input: unknown): UpdateProjectRequest {
+  const body = parseBody(ContractType.UpdateProjectRequest, input);
+  return { ...body, ...(body.title === undefined ? {} : { title: body.title.trim() }) };
+}
+
+const TRUE_QUERY_VALUES = new Set(['true', '1']);
+
+/** `?flag=true` / `?flag=1` → true; absent or anything else → false. */
+export function queryFlag(value: unknown): boolean {
+  return typeof value === 'string' && TRUE_QUERY_VALUES.has(value.toLowerCase());
 }

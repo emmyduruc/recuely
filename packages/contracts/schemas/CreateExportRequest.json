@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CreateExportRequest.json",
+  "title": "CreateExportRequest",
+  "type": "object",
+  "description": "POST /api/sessions/:id/exports body.",
+  "properties": {
+    "kind": {
+      "type": "string",
+      "enum": [
+        "per_take",
+        "stitched"
+      ],
+      "description": "Per-take files or one stitched file."
+    }
+  },
+  "required": [
+    "kind"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "kind": "per_take"
+    }
+  ]
+}

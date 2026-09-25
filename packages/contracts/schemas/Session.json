@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Session.json",
+  "title": "Session",
+  "type": "object",
+  "description": "A recording session snapshot (SPEC.md §B6). Not an event log.",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Session id."
+    },
+    "projectId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Project."
+    },
+    "chunkPlanId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Plan the session currently reads."
+    },
+    "deviceId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid",
+      "description": "Calibrated device, or null."
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "preparing",
+        "ready",
+        "assistant_speaking",
+        "settle",
+        "waiting_for_speech",
+        "creator_speaking",
+        "evaluating",
+        "review_or_advance",
+        "paused",
+        "recovering",
+        "error",
+        "completed"
+      ],
+      "description": "Engine state at the last autosave."
+    },
+    "currentChunkId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid",
+      "description": "Current chunk, or null."
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Engine sequence number of the last autosave."
+    },
+    "settings": {
+      "type": "object",
+      "description": "Session settings (mode, arrangement, …)."
+    },
+    "completedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "description": "When completed, or null."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When started."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last autosave."
+    }
+  },
+  "required": [
+    "id",
+    "projectId",
+    "chunkPlanId",
+    "deviceId",
+    "state",
+    "currentChunkId",
+    "seq",
+    "settings",
+    "completedAt",
+    "createdAt",
+    "updatedAt"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "0192a1b2-c3d4-7e5f-8a6b-000000000004",
+      "projectId": "0192a1b2-c3d4-7e5f-8a6b-000000000001",
+      "chunkPlanId": "0192a1b2-c3d4-7e5f-8a6b-000000000003",
+      "deviceId": null,
+      "state": "ready",
+      "currentChunkId": "0192a1b2-c3d4-7e5f-8a6b-00000000000c",
+      "seq": 12,
+      "settings": {
+        "mode": "auto"
+      },
+      "completedAt": null,
+      "createdAt": "2026-09-24T09:30:00.000Z",
+      "updatedAt": "2026-09-24T09:30:00.000Z"
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "type": "ChunkPlan",
+  "valid": [
+    {
+      "name": "plan",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000003",
+        "scriptId": "0192a1b2-c3d4-7e5f-8a6b-000000000002",
+        "version": 1,
+        "mode": "sentence",
+        "chunks": [
+          {
+            "id": "0192a1b2-c3d4-7e5f-8a6b-00000000000c",
+            "order": 0,
+            "ranges": [
+              {
+                "blockId": "0192a1b2-c3d4-7e5f-8a6b-00000000000b",
+                "start": 0,
+                "end": 23
+              }
+            ],
+            "text": "Welcome back, everyone.",
+            "spokenText": "Welcome back, everyone.",
+            "sceneCue": null
+          }
+        ],
+        "createdAt": "2026-09-24T09:30:00.000Z"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "unknown mode",
+      "path": "mode",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000003",
+        "scriptId": "0192a1b2-c3d4-7e5f-8a6b-000000000002",
+        "version": 1,
+        "mode": "auto",
+        "chunks": [
+          {
+            "id": "0192a1b2-c3d4-7e5f-8a6b-00000000000c",
+            "order": 0,
+            "ranges": [
+              {
+                "blockId": "0192a1b2-c3d4-7e5f-8a6b-00000000000b",
+                "start": 0,
+                "end": 23
+              }
+            ],
+            "text": "Welcome back, everyone.",
+            "spokenText": "Welcome back, everyone.",
+            "sceneCue": null
+          }
+        ],
+        "createdAt": "2026-09-24T09:30:00.000Z"
+      }
+    },
+    {
+      "name": "chunk without ranges",
+      "path": "chunks[0].ranges",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000003",
+        "scriptId": "0192a1b2-c3d4-7e5f-8a6b-000000000002",
+        "version": 1,
+        "mode": "sentence",
+        "chunks": [
+          {
+            "id": "0192a1b2-c3d4-7e5f-8a6b-00000000000c",
+            "order": 0,
+            "ranges": [],
+            "text": "Welcome back, everyone.",
+            "spokenText": "Welcome back, everyone.",
+            "sceneCue": null
+          }
+        ],
+        "createdAt": "2026-09-24T09:30:00.000Z"
+      }
+    }
+  ]
+}

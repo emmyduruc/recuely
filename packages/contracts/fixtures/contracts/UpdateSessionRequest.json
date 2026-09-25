@@ -1,0 +1,45 @@
+{
+  "type": "UpdateSessionRequest",
+  "valid": [
+    {
+      "name": "autosave",
+      "value": {
+        "seq": 13,
+        "state": "paused",
+        "currentChunkId": "0192a1b2-c3d4-7e5f-8a6b-00000000000c"
+      }
+    },
+    {
+      "name": "clear current chunk",
+      "value": {
+        "seq": 14,
+        "currentChunkId": null
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "missing seq",
+      "path": "seq",
+      "value": {
+        "state": "paused"
+      }
+    },
+    {
+      "name": "unknown state",
+      "path": "state",
+      "value": {
+        "seq": 1,
+        "state": "running"
+      }
+    },
+    {
+      "name": "unknown field",
+      "path": "foo",
+      "value": {
+        "seq": 1,
+        "foo": 1
+      }
+    }
+  ]
+}

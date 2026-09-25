@@ -5,6 +5,8 @@ export const PgErrorCode = {
   UniqueViolation: '23505',
   ForeignKeyViolation: '23503',
   CheckViolation: '23514',
+  /** Raised by the `takes_forbid_delete` trigger. */
+  RestrictViolation: '23001',
 } as const;
 export type PgErrorCode = (typeof PgErrorCode)[keyof typeof PgErrorCode];
 

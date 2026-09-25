@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CreateScriptRequest.json",
+  "title": "CreateScriptRequest",
+  "type": "object",
+  "description": "POST /api/projects/:id/scripts body. Without `blocks` the server parses `sourceText`; with `blocks` (from the review UI) each block must be a non-empty, in-order, non-overlapping range of `sourceText`.",
+  "properties": {
+    "sourceKind": {
+      "type": "string",
+      "enum": [
+        "paste"
+      ],
+      "description": "Where the script came from."
+    },
+    "sourceText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200000,
+      "pattern": "\\S",
+      "description": "The original text."
+    },
+    "blocks": {
+      "type": "array",
+      "maxItems": 5000,
+      "description": "Block types and ranges; the server derives each text.",
+      "items": {
+        "type": "object",
+        "description": "A block: type and source range.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "spoken",
+              "heading",
+              "note",
+              "scene_cue"
+            ],
+            "description": "Block type."
+          },
+          "start": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "First UTF-16 unit in sourceText."
+          },
+          "end": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "UTF-16 unit after the block."
+          },
+          "table": {
+            "type": "object",
+            "description": "Table provenance.",
+            "properties": {
+              "index": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Table number in the source."
+              },
+              "row": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Row (0 is the header row when there is one)."
+              },
+              "column": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Column."
+              },
+              "header": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The column's header text, if any."
+              }
+            },
+            "required": [
+              "index",
+              "row",
+              "column",
+              "header"
+            ],
+            "additionalProperties": false
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Parser metadata.",
+            "properties": {
+              "marker": {
+                "type": "string",
+                "description": "Markup removed from around the text."
+              },
+              "tableHeader": {
+                "type": "boolean",
+                "description": "The block is a table header cell."
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "type",
+          "start",
+          "end"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "sourceKind",
+    "sourceText"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "sourceKind": "paste",
+      "sourceText": "# Intro\n\nWelcome back, everyone."
+    }
+  ]
+}

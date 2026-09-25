@@ -1,0 +1,61 @@
+{
+  "type": "Project",
+  "valid": [
+    {
+      "name": "active project",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000001",
+        "title": "Product launch",
+        "archivedAt": null,
+        "createdAt": "2026-09-24T09:30:00.000Z",
+        "updatedAt": "2026-09-24T09:30:00.000Z"
+      }
+    },
+    {
+      "name": "archived project",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000001",
+        "title": "Product launch",
+        "archivedAt": "2026-09-25T08:00:00.000Z",
+        "createdAt": "2026-09-24T09:30:00.000Z",
+        "updatedAt": "2026-09-24T09:30:00.000Z"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "id not a uuid",
+      "path": "id",
+      "value": {
+        "id": "p-1",
+        "title": "Product launch",
+        "archivedAt": null,
+        "createdAt": "2026-09-24T09:30:00.000Z",
+        "updatedAt": "2026-09-24T09:30:00.000Z"
+      }
+    },
+    {
+      "name": "bad timestamp",
+      "path": "createdAt",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000001",
+        "title": "Product launch",
+        "archivedAt": null,
+        "createdAt": "yesterday",
+        "updatedAt": "2026-09-24T09:30:00.000Z"
+      }
+    },
+    {
+      "name": "unknown field",
+      "path": "owner",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000001",
+        "title": "Product launch",
+        "archivedAt": null,
+        "createdAt": "2026-09-24T09:30:00.000Z",
+        "updatedAt": "2026-09-24T09:30:00.000Z",
+        "owner": "x"
+      }
+    }
+  ]
+}

@@ -1,4 +1,12 @@
-import { BlockType, type ChunkMode, type ChunkPlan, type ChunkRange, type ScriptBlock, type ScriptChunk } from '@repo/contracts';
+import {
+  BlockType,
+  type ChunkInput,
+  type ChunkMode,
+  type ChunkPlan,
+  type ChunkRange,
+  type ScriptBlock,
+  type ScriptChunk,
+} from '@repo/contracts';
 import { type EditResult, fail, type IdFactory, ok, ScriptEditError } from './result.ts';
 import { DEFAULT_TUNING, type SegmentationTuning, segmentText } from './segment.ts';
 import { isCutPosition, snapToCut, spokenTextOf, trimRange } from './text.ts';
@@ -341,4 +349,26 @@ export function isLegalCut(blocks: readonly ScriptBlock[], position: BlockPositi
   const stream = streamOf(blocks);
   const streamPosition = toStream(stream, position);
   return streamPosition !== null && isStreamCut(stream, streamPosition);
+}
+
+/**
+ * Builds chunks from client-sent ranges: text, spoken text and scene cue are always derived from the blocks,
+ * never taken from the client. Run `checkCoverage` on the result before saving (SPEC.md Task 4).
+ */
+export function chunksFromRanges(blocks: readonly ScriptBlock[], inputs: readonly ChunkInput[], newId: IdFactory): ScriptChunk[] {
+  const stream = streamOf(blocks);
+  return inputs.map((input, order) => {
+    const text = textOf(stream, input.ranges);
+    const first = input.ranges[0];
+    const cue = first === undefined ? undefined : stream.sceneCues.get(first.blockId);
+    return {
+      id: input.id ?? newId(),
+      order,
+      ranges: input.ranges.map((range) => ({ blockId: range.blockId, start: range.start, end: range.end })),
+      text,
+      spokenText: spokenTextOf(text),
+      sceneCue:
+        cue !== undefined && first !== undefined && isFirstChunkOfBlock(stream, first) ? { blockId: cue.id, text: cue.text } : null,
+    };
+  });
 }

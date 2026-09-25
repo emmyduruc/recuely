@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Project.json",
+  "title": "Project",
+  "type": "object",
+  "description": "A project owns scripts and recording sessions.",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID v7."
+    },
+    "title": {
+      "type": "string",
+      "description": "Project title."
+    },
+    "archivedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "description": "When archived, or null."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When created."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When last changed."
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "archivedAt",
+    "createdAt",
+    "updatedAt"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "0192a1b2-c3d4-7e5f-8a6b-000000000001",
+      "title": "Product launch",
+      "archivedAt": null,
+      "createdAt": "2026-09-24T09:30:00.000Z",
+      "updatedAt": "2026-09-24T09:30:00.000Z"
+    }
+  ]
+}

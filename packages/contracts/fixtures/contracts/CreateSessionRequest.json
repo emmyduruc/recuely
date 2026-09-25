@@ -1,0 +1,32 @@
+{
+  "type": "CreateSessionRequest",
+  "valid": [
+    {
+      "name": "plan only",
+      "value": {
+        "chunkPlanId": "0192a1b2-c3d4-7e5f-8a6b-0000000000ff"
+      }
+    },
+    {
+      "name": "with device",
+      "value": {
+        "chunkPlanId": "0192a1b2-c3d4-7e5f-8a6b-0000000000ff",
+        "deviceId": "0192a1b2-c3d4-7e5f-8a6b-0000000000ff"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "missing plan",
+      "path": "chunkPlanId",
+      "value": {}
+    },
+    {
+      "name": "plan id not a uuid",
+      "path": "chunkPlanId",
+      "value": {
+        "chunkPlanId": "p1"
+      }
+    }
+  ]
+}

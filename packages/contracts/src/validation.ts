@@ -1,6 +1,14 @@
 import { Ajv2020, type ErrorObject, type ValidateFunction } from 'ajv/dist/2020.js';
 import { type TextSpan, TimingSource, type TtsResult, type WordTiming } from './payloads.ts';
-import { type ContractType, type ContractTypes, SCHEMAS } from './schemas/index.ts';
+import { TakeKind } from './recording.ts';
+import {
+  type ContractType,
+  type ContractTypes,
+  DATE_TIME_PATTERN,
+  EMAIL_PATTERN,
+  SCHEMAS,
+  UUID_PATTERN,
+} from './schemas/index.ts';
 
 // Schema validation plus the few cross-field rules JSON Schema can't express. The Python mirrors in
 // apps/ai/app/contracts.py enforce the same rules; the shared fixtures prove both agree (SPEC.md Task 2).
@@ -15,7 +23,16 @@ export type ContractResult<T> = { ok: true; value: T } | { ok: false; issues: Co
 
 const ROOT = '(root)';
 
-const ajv = new Ajv2020({ allErrors: true, strict: true, allowUnionTypes: true });
+const ajv = new Ajv2020({
+  allErrors: true,
+  strict: true,
+  allowUnionTypes: true,
+  formats: {
+    uuid: new RegExp(UUID_PATTERN),
+    'date-time': new RegExp(DATE_TIME_PATTERN),
+    email: new RegExp(EMAIL_PATTERN),
+  },
+});
 for (const schema of Object.values(SCHEMAS)) {
   ajv.addSchema(schema);
 }
@@ -112,6 +129,17 @@ function wordTimingIssues(timing: WordTiming, path: string): ContractIssue[] {
 
 type Refinement<T> = (value: T) => ContractIssue[];
 
+const MEDIA_PREFIX: Record<TakeKind, string> = {
+  [TakeKind.Audio]: 'audio/',
+  [TakeKind.Video]: 'video/',
+};
+
+function mediaKindIssues(take: { kind: TakeKind; mimeType: string }): ContractIssue[] {
+  return take.mimeType.startsWith(MEDIA_PREFIX[take.kind])
+    ? []
+    : [{ path: 'mimeType', issue: `must be a ${take.kind} type for a ${take.kind} take` }];
+}
+
 const REFINE: { [K in ContractType]?: Refinement<ContractTypes[K]> } = {
   WordTiming: (timing) => wordTimingIssues(timing, ROOT),
   TextSpan: (span) => spanIssues(span, ROOT),
@@ -127,6 +155,8 @@ const REFINE: { [K in ContractType]?: Refinement<ContractTypes[K]> } = {
     return issues;
   },
   MatchResult: (result) => result.missingSpans.flatMap((span, index) => spanIssues(span, `missingSpans[${String(index)}]`)),
+  CreateTakeRequest: mediaKindIssues,
+  Take: mediaKindIssues,
 };
 
 function refine<K extends ContractType>(type: K, value: ContractTypes[K]): ContractIssue[] {

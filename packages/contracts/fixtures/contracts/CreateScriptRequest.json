@@ -1,0 +1,73 @@
+{
+  "type": "CreateScriptRequest",
+  "valid": [
+    {
+      "name": "server parses",
+      "value": {
+        "sourceKind": "paste",
+        "sourceText": "# Intro\n\nWelcome back, everyone."
+      }
+    },
+    {
+      "name": "with retyped blocks",
+      "value": {
+        "sourceKind": "paste",
+        "sourceText": "# Intro\n\nHello.",
+        "blocks": [
+          {
+            "type": "spoken",
+            "start": 2,
+            "end": 7,
+            "metadata": {
+              "marker": "# "
+            }
+          },
+          {
+            "type": "spoken",
+            "start": 9,
+            "end": 15
+          }
+        ]
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "blank source",
+      "path": "sourceText",
+      "value": {
+        "sourceKind": "paste",
+        "sourceText": "  \n"
+      }
+    },
+    {
+      "name": "unknown block type",
+      "path": "blocks[0].type",
+      "value": {
+        "sourceKind": "paste",
+        "sourceText": "Hi",
+        "blocks": [
+          {
+            "type": "dialogue",
+            "start": 0,
+            "end": 2
+          }
+        ]
+      }
+    },
+    {
+      "name": "block without end",
+      "path": "blocks[0].end",
+      "value": {
+        "sourceKind": "paste",
+        "sourceText": "Hi",
+        "blocks": [
+          {
+            "type": "spoken",
+            "start": 0
+          }
+        ]
+      }
+    }
+  ]
+}

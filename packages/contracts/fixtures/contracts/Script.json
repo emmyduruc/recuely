@@ -1,0 +1,107 @@
+{
+  "type": "Script",
+  "valid": [
+    {
+      "name": "script",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000002",
+        "projectId": "0192a1b2-c3d4-7e5f-8a6b-000000000001",
+        "version": 1,
+        "sourceKind": "paste",
+        "sourceText": "# Intro\n\nWelcome back, everyone.",
+        "blocks": [
+          {
+            "id": "0192a1b2-c3d4-7e5f-8a6b-00000000000a",
+            "order": 0,
+            "type": "heading",
+            "text": "Intro",
+            "source": {
+              "start": 2,
+              "end": 7
+            },
+            "metadata": {
+              "marker": "# "
+            }
+          },
+          {
+            "id": "0192a1b2-c3d4-7e5f-8a6b-00000000000b",
+            "order": 1,
+            "type": "spoken",
+            "text": "Welcome back, everyone.",
+            "source": {
+              "start": 9,
+              "end": 32
+            },
+            "metadata": {}
+          }
+        ],
+        "createdAt": "2026-09-24T09:30:00.000Z"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "block missing id",
+      "path": "blocks[0].id",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000002",
+        "projectId": "0192a1b2-c3d4-7e5f-8a6b-000000000001",
+        "version": 1,
+        "sourceKind": "paste",
+        "sourceText": "# Intro\n\nWelcome back, everyone.",
+        "blocks": [
+          {
+            "order": 0,
+            "type": "heading",
+            "text": "Intro",
+            "source": {
+              "start": 2,
+              "end": 7
+            },
+            "metadata": {
+              "marker": "# "
+            }
+          }
+        ],
+        "createdAt": "2026-09-24T09:30:00.000Z"
+      }
+    },
+    {
+      "name": "missing sourceText",
+      "path": "sourceText",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000002",
+        "projectId": "0192a1b2-c3d4-7e5f-8a6b-000000000001",
+        "version": 1,
+        "sourceKind": "paste",
+        "blocks": [
+          {
+            "id": "0192a1b2-c3d4-7e5f-8a6b-00000000000a",
+            "order": 0,
+            "type": "heading",
+            "text": "Intro",
+            "source": {
+              "start": 2,
+              "end": 7
+            },
+            "metadata": {
+              "marker": "# "
+            }
+          },
+          {
+            "id": "0192a1b2-c3d4-7e5f-8a6b-00000000000b",
+            "order": 1,
+            "type": "spoken",
+            "text": "Welcome back, everyone.",
+            "source": {
+              "start": 9,
+              "end": 32
+            },
+            "metadata": {}
+          }
+        ],
+        "createdAt": "2026-09-24T09:30:00.000Z"
+      }
+    }
+  ]
+}

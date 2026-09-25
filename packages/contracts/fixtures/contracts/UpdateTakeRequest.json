@@ -1,0 +1,51 @@
+{
+  "type": "UpdateTakeRequest",
+  "valid": [
+    {
+      "name": "select",
+      "value": {
+        "selected": true
+      }
+    },
+    {
+      "name": "mark unusable with match",
+      "value": {
+        "status": "unusable",
+        "match": {
+          "coverage": 0.9,
+          "similarity": 0.8,
+          "missingSpans": [],
+          "decision": "advance",
+          "reasons": []
+        }
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "empty body",
+      "path": "(root)",
+      "value": {}
+    },
+    {
+      "name": "cannot set recording",
+      "path": "status",
+      "value": {
+        "status": "recording"
+      }
+    },
+    {
+      "name": "invalid match",
+      "path": "match.coverage",
+      "value": {
+        "match": {
+          "coverage": 2,
+          "similarity": 0.8,
+          "missingSpans": [],
+          "decision": "advance",
+          "reasons": []
+        }
+      }
+    }
+  ]
+}

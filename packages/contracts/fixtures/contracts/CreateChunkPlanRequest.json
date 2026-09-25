@@ -1,0 +1,72 @@
+{
+  "type": "CreateChunkPlanRequest",
+  "valid": [
+    {
+      "name": "server segments",
+      "value": {
+        "mode": "sentence"
+      }
+    },
+    {
+      "name": "client chunks",
+      "value": {
+        "mode": "smart",
+        "chunks": [
+          {
+            "id": "0192a1b2-c3d4-7e5f-8a6b-0000000000ff",
+            "ranges": [
+              {
+                "blockId": "0192a1b2-c3d4-7e5f-8a6b-0000000000ff",
+                "start": 0,
+                "end": 5
+              }
+            ]
+          },
+          {
+            "ranges": [
+              {
+                "blockId": "0192a1b2-c3d4-7e5f-8a6b-0000000000ff",
+                "start": 6,
+                "end": 12
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "missing mode",
+      "path": "mode",
+      "value": {}
+    },
+    {
+      "name": "empty chunk list",
+      "path": "chunks",
+      "value": {
+        "mode": "short",
+        "chunks": []
+      }
+    },
+    {
+      "name": "bad chunk id",
+      "path": "chunks[0].id",
+      "value": {
+        "mode": "short",
+        "chunks": [
+          {
+            "id": "c1",
+            "ranges": [
+              {
+                "blockId": "0192a1b2-c3d4-7e5f-8a6b-0000000000ff",
+                "start": 0,
+                "end": 1
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

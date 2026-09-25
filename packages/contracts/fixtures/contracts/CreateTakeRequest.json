@@ -1,0 +1,50 @@
+{
+  "type": "CreateTakeRequest",
+  "valid": [
+    {
+      "name": "video",
+      "value": {
+        "chunkId": "0192a1b2-c3d4-7e5f-8a6b-00000000000c",
+        "kind": "video",
+        "mimeType": "video/webm;codecs=vp9,opus"
+      }
+    },
+    {
+      "name": "audio",
+      "value": {
+        "chunkId": "0192a1b2-c3d4-7e5f-8a6b-0000000000ff",
+        "kind": "audio",
+        "mimeType": "audio/mp4",
+        "durationMs": 2100
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "kind and type disagree",
+      "path": "mimeType",
+      "value": {
+        "chunkId": "0192a1b2-c3d4-7e5f-8a6b-0000000000ff",
+        "kind": "audio",
+        "mimeType": "video/webm"
+      }
+    },
+    {
+      "name": "unsupported type",
+      "path": "mimeType",
+      "value": {
+        "chunkId": "0192a1b2-c3d4-7e5f-8a6b-0000000000ff",
+        "kind": "video",
+        "mimeType": "video/avi"
+      }
+    },
+    {
+      "name": "missing chunk",
+      "path": "chunkId",
+      "value": {
+        "kind": "video",
+        "mimeType": "video/webm"
+      }
+    }
+  ]
+}

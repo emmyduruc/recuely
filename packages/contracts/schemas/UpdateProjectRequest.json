@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "UpdateProjectRequest.json",
+  "title": "UpdateProjectRequest",
+  "type": "object",
+  "description": "PATCH /api/projects/:id body. At least one field.",
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "\\S",
+      "description": "New title."
+    },
+    "archived": {
+      "type": "boolean",
+      "description": "`false` restores an archived project; `true` archives it."
+    }
+  },
+  "required": [],
+  "minProperties": 1,
+  "additionalProperties": false,
+  "examples": [
+    {
+      "archived": false
+    }
+  ]
+}

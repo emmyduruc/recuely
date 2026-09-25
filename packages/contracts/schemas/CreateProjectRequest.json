@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CreateProjectRequest.json",
+  "title": "CreateProjectRequest",
+  "type": "object",
+  "description": "POST /api/projects body.",
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "\\S",
+      "description": "Project title."
+    }
+  },
+  "required": [
+    "title"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "title": "Product launch"
+    }
+  ]
+}

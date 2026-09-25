@@ -1,0 +1,85 @@
+{
+  "type": "ScriptBlock",
+  "valid": [
+    {
+      "name": "spoken block",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-00000000000b",
+        "order": 1,
+        "type": "spoken",
+        "text": "Welcome back, everyone.",
+        "source": {
+          "start": 9,
+          "end": 32
+        },
+        "metadata": {}
+      }
+    },
+    {
+      "name": "table cell",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-00000000000b",
+        "order": 1,
+        "type": "spoken",
+        "text": "Welcome back, everyone.",
+        "source": {
+          "start": 9,
+          "end": 32,
+          "table": {
+            "index": 0,
+            "row": 1,
+            "column": 2,
+            "header": "Line"
+          }
+        },
+        "metadata": {}
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "unknown type",
+      "path": "type",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-00000000000b",
+        "order": 1,
+        "type": "dialogue",
+        "text": "Welcome back, everyone.",
+        "source": {
+          "start": 9,
+          "end": 32
+        },
+        "metadata": {}
+      }
+    },
+    {
+      "name": "negative start",
+      "path": "source.start",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-00000000000b",
+        "order": 1,
+        "type": "spoken",
+        "text": "Welcome back, everyone.",
+        "source": {
+          "start": -1,
+          "end": 3
+        },
+        "metadata": {}
+      }
+    },
+    {
+      "name": "missing metadata",
+      "path": "metadata",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-00000000000b",
+        "order": 1,
+        "type": "spoken",
+        "text": "Welcome back, everyone.",
+        "source": {
+          "start": 9,
+          "end": 32
+        }
+      }
+    }
+  ]
+}

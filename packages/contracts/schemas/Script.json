@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Script.json",
+  "title": "Script",
+  "type": "object",
+  "description": "An immutable script version with its original text and blocks.",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Script id."
+    },
+    "projectId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Owning project."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Version within the project."
+    },
+    "sourceKind": {
+      "type": "string",
+      "enum": [
+        "paste"
+      ],
+      "description": "Where the script came from."
+    },
+    "sourceText": {
+      "type": "string",
+      "description": "The original pasted text, unchanged."
+    },
+    "blocks": {
+      "type": "array",
+      "items": {
+        "$ref": "ScriptBlock.json"
+      },
+      "description": "Blocks in order."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this version was saved."
+    }
+  },
+  "required": [
+    "id",
+    "projectId",
+    "version",
+    "sourceKind",
+    "sourceText",
+    "blocks",
+    "createdAt"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "0192a1b2-c3d4-7e5f-8a6b-000000000002",
+      "projectId": "0192a1b2-c3d4-7e5f-8a6b-000000000001",
+      "version": 1,
+      "sourceKind": "paste",
+      "sourceText": "# Intro\n\nWelcome back, everyone.",
+      "blocks": [
+        {
+          "id": "0192a1b2-c3d4-7e5f-8a6b-00000000000a",
+          "order": 0,
+          "type": "heading",
+          "text": "Intro",
+          "source": {
+            "start": 2,
+            "end": 7
+          },
+          "metadata": {
+            "marker": "# "
+          }
+        },
+        {
+          "id": "0192a1b2-c3d4-7e5f-8a6b-00000000000b",
+          "order": 1,
+          "type": "spoken",
+          "text": "Welcome back, everyone.",
+          "source": {
+            "start": 9,
+            "end": 32
+          },
+          "metadata": {}
+        }
+      ],
+      "createdAt": "2026-09-24T09:30:00.000Z"
+    }
+  ]
+}

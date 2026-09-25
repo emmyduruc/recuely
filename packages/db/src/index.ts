@@ -2,6 +2,8 @@ export * from './data-source.ts';
 export * from './entities/index.ts';
 export * from './pg-error.ts';
 export * from './repositories/mappers.ts';
+export * from './repositories/recording.ts';
+export * from './repositories/recording-mappers.ts';
 export * from './repositories/user-repository.ts';
 export * from './seed.ts';
 export * from './sql.ts';

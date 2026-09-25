@@ -1,5 +1,53 @@
-import { type BlockType, type ScriptBlock } from '@repo/contracts';
-import { type EditResult, fail, ok, ScriptEditError } from './result.ts';
+import { type BlockType, type ScriptBlock, type ScriptBlockInput } from '@repo/contracts';
+import { type EditResult, fail, type IdFactory, ok, ScriptEditError } from './result.ts';
+
+export const BlockInputIssue = {
+  OutOfRange: 'out_of_range',
+  Overlap: 'overlap',
+  Blank: 'blank',
+} as const;
+export type BlockInputIssue = (typeof BlockInputIssue)[keyof typeof BlockInputIssue];
+
+export type BuildBlocksResult =
+  | { ok: true; value: ScriptBlock[] }
+  | { ok: false; issues: { index: number; issue: BlockInputIssue }[] };
+
+/**
+ * Builds blocks from client-sent types and ranges (the review UI keeps the user's re-typing). Each range must lie
+ * inside `source`, follow the previous one without overlap and contain non-whitespace; the text is always
+ * `source.slice(start, end)`, never taken from the client.
+ */
+export function buildBlocks(source: string, inputs: readonly ScriptBlockInput[], newId: IdFactory): BuildBlocksResult {
+  const issues: { index: number; issue: BlockInputIssue }[] = [];
+  let previousEnd = 0;
+  inputs.forEach((input, index) => {
+    if (input.start < 0 || input.end > source.length || input.start >= input.end) {
+      issues.push({ index, issue: BlockInputIssue.OutOfRange });
+      return;
+    }
+    if (input.start < previousEnd) {
+      issues.push({ index, issue: BlockInputIssue.Overlap });
+    }
+    if (source.slice(input.start, input.end).trim().length === 0) {
+      issues.push({ index, issue: BlockInputIssue.Blank });
+    }
+    previousEnd = input.end;
+  });
+  if (issues.length > 0) {
+    return { ok: false, issues };
+  }
+  return {
+    ok: true,
+    value: inputs.map((input, order) => ({
+      id: newId(),
+      order,
+      type: input.type,
+      text: source.slice(input.start, input.end),
+      source: { start: input.start, end: input.end, ...(input.table === undefined ? {} : { table: input.table }) },
+      metadata: input.metadata ?? {},
+    })),
+  };
+}
 
 /** The user re-types a block (e.g. marks a note or table cell as spoken). Text and id are unchanged. */
 export function retypeBlock(blocks: readonly ScriptBlock[], blockId: string, type: BlockType): EditResult<ScriptBlock[]> {

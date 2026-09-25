@@ -1,0 +1,63 @@
+{
+  "type": "Session",
+  "valid": [
+    {
+      "name": "session",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000004",
+        "projectId": "0192a1b2-c3d4-7e5f-8a6b-000000000001",
+        "chunkPlanId": "0192a1b2-c3d4-7e5f-8a6b-000000000003",
+        "deviceId": null,
+        "state": "ready",
+        "currentChunkId": "0192a1b2-c3d4-7e5f-8a6b-00000000000c",
+        "seq": 12,
+        "settings": {
+          "mode": "auto"
+        },
+        "completedAt": null,
+        "createdAt": "2026-09-24T09:30:00.000Z",
+        "updatedAt": "2026-09-24T09:30:00.000Z"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "unknown state",
+      "path": "state",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000004",
+        "projectId": "0192a1b2-c3d4-7e5f-8a6b-000000000001",
+        "chunkPlanId": "0192a1b2-c3d4-7e5f-8a6b-000000000003",
+        "deviceId": null,
+        "state": "running",
+        "currentChunkId": "0192a1b2-c3d4-7e5f-8a6b-00000000000c",
+        "seq": 12,
+        "settings": {
+          "mode": "auto"
+        },
+        "completedAt": null,
+        "createdAt": "2026-09-24T09:30:00.000Z",
+        "updatedAt": "2026-09-24T09:30:00.000Z"
+      }
+    },
+    {
+      "name": "negative seq",
+      "path": "seq",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000004",
+        "projectId": "0192a1b2-c3d4-7e5f-8a6b-000000000001",
+        "chunkPlanId": "0192a1b2-c3d4-7e5f-8a6b-000000000003",
+        "deviceId": null,
+        "state": "ready",
+        "currentChunkId": "0192a1b2-c3d4-7e5f-8a6b-00000000000c",
+        "seq": -1,
+        "settings": {
+          "mode": "auto"
+        },
+        "completedAt": null,
+        "createdAt": "2026-09-24T09:30:00.000Z",
+        "updatedAt": "2026-09-24T09:30:00.000Z"
+      }
+    }
+  ]
+}

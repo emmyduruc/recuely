@@ -33,13 +33,19 @@ async function expectPgError(action: Promise<unknown>, code: PgErrorCode): Promi
 }
 
 describe('Task 1 schema', () => {
-  it('T1: migrations go down and up again cleanly', async () => {
+  it('T1/T4: every migration goes down and up again cleanly', async () => {
+    const all = [
+      'chunk_plans', 'devices', 'exports', 'migrations', 'projects', 'script_blocks', 'script_chunks', 'scripts',
+      'sessions', 'takes', 'user_settings', 'users', 'voice_favorites',
+    ];
+    expect(await tableNames()).toEqual(all);
+    await ds().undoLastMigration({ transaction: 'each' });
     expect(await tableNames()).toEqual(['devices', 'migrations', 'user_settings', 'users', 'voice_favorites']);
     await ds().undoLastMigration({ transaction: 'each' });
     expect(await tableNames()).toEqual(['migrations']);
     const applied = await ds().runMigrations({ transaction: 'each' });
-    expect(applied.map((m) => m.name)).toEqual(['InitUsers1727136000000']);
-    expect(await tableNames()).toEqual(['devices', 'migrations', 'user_settings', 'users', 'voice_favorites']);
+    expect(applied.map((m) => m.name)).toEqual(['InitUsers1727136000000', 'InitRecording1727222400000']);
+    expect(await tableNames()).toEqual(all);
   });
 
   it('T1: email is unique, case-insensitively; many users may have no email', async () => {

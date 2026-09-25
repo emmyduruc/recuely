@@ -1,0 +1,56 @@
+{
+  "type": "Export",
+  "valid": [
+    {
+      "name": "pending export",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000006",
+        "sessionId": "0192a1b2-c3d4-7e5f-8a6b-000000000004",
+        "status": "pending",
+        "kind": "per_take",
+        "error": null,
+        "createdAt": "2026-09-24T09:30:00.000Z",
+        "updatedAt": "2026-09-24T09:30:00.000Z"
+      }
+    },
+    {
+      "name": "failed export",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000006",
+        "sessionId": "0192a1b2-c3d4-7e5f-8a6b-000000000004",
+        "status": "failed",
+        "kind": "per_take",
+        "error": "Codec not supported",
+        "createdAt": "2026-09-24T09:30:00.000Z",
+        "updatedAt": "2026-09-24T09:30:00.000Z"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "unknown kind",
+      "path": "kind",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000006",
+        "sessionId": "0192a1b2-c3d4-7e5f-8a6b-000000000004",
+        "status": "pending",
+        "kind": "zip",
+        "error": null,
+        "createdAt": "2026-09-24T09:30:00.000Z",
+        "updatedAt": "2026-09-24T09:30:00.000Z"
+      }
+    },
+    {
+      "name": "missing error",
+      "path": "error",
+      "value": {
+        "id": "0192a1b2-c3d4-7e5f-8a6b-000000000006",
+        "sessionId": "0192a1b2-c3d4-7e5f-8a6b-000000000004",
+        "status": "pending",
+        "kind": "per_take",
+        "createdAt": "2026-09-24T09:30:00.000Z",
+        "updatedAt": "2026-09-24T09:30:00.000Z"
+      }
+    }
+  ]
+}

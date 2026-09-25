@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ChunkPlan.json",
+  "title": "ChunkPlan",
+  "type": "object",
+  "description": "An immutable chunk plan version over a script.",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Plan id."
+    },
+    "scriptId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Script the plan chunks."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Version within the script."
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "short",
+        "sentence",
+        "paragraph",
+        "smart"
+      ],
+      "description": "Segmentation mode the plan started from."
+    },
+    "chunks": {
+      "type": "array",
+      "items": {
+        "$ref": "ScriptChunk.json"
+      },
+      "description": "Chunks in reading order."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When saved."
+    }
+  },
+  "required": [
+    "id",
+    "scriptId",
+    "version",
+    "mode",
+    "chunks",
+    "createdAt"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "0192a1b2-c3d4-7e5f-8a6b-000000000003",
+      "scriptId": "0192a1b2-c3d4-7e5f-8a6b-000000000002",
+      "version": 1,
+      "mode": "sentence",
+      "chunks": [
+        {
+          "id": "0192a1b2-c3d4-7e5f-8a6b-00000000000c",
+          "order": 0,
+          "ranges": [
+            {
+              "blockId": "0192a1b2-c3d4-7e5f-8a6b-00000000000b",
+              "start": 0,
+              "end": 23
+            }
+          ],
+          "text": "Welcome back, everyone.",
+          "spokenText": "Welcome back, everyone.",
+          "sceneCue": null
+        }
+      ],
+      "createdAt": "2026-09-24T09:30:00.000Z"
+    }
+  ]
+}

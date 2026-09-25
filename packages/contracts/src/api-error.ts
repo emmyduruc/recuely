@@ -6,6 +6,16 @@ export const ApiErrorCode = {
   LocalUserMissing: 'local_user_missing',
   DatabaseUnavailable: 'database_unavailable',
   Internal: 'internal_error',
+  /** A chunk plan or script would not preserve the spoken text (SPEC.md §B5 rules 2–4). */
+  CoverageViolation: 'coverage_violation',
+  /** A destructive action was sent without `confirm=true`. */
+  ConfirmationRequired: 'confirmation_required',
+  /** A session autosave carried a `seq` not greater than the stored one. */
+  StaleUpdate: 'stale_update',
+  PayloadTooLarge: 'payload_too_large',
+  InsufficientStorage: 'insufficient_storage',
+  UnsupportedMediaType: 'unsupported_media_type',
+  RangeNotSatisfiable: 'range_not_satisfiable',
 } as const;
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
 

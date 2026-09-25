@@ -1,9 +1,10 @@
-export { reconcileBlockIds, retypeBlock } from './blocks.ts';
+export { BlockInputIssue, buildBlocks, type BuildBlocksResult, reconcileBlockIds, retypeBlock } from './blocks.ts';
 export { assertCoverage, checkCoverage, CoverageError, type CoverageIssue, CoverageIssueCode } from './coverage.ts';
 export { parseScript, type ParseOptions, splitLines } from './parse.ts';
 export {
   applyBoundaryProposals,
   type BlockPosition,
+  chunksFromRanges,
   isLegalCut,
   MAX_SNAP_DISTANCE,
   mergeWithNext,

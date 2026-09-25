@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ScriptBlock.json",
+  "title": "ScriptBlock",
+  "type": "object",
+  "description": "One block of a script. `text` is exactly `sourceText.slice(source.start, source.end)`.",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Block id; stable across script versions while its type and text are unchanged."
+    },
+    "order": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Position in the script."
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "spoken",
+        "heading",
+        "note",
+        "scene_cue"
+      ],
+      "description": "Only `spoken` blocks are read and chunked."
+    },
+    "text": {
+      "type": "string",
+      "description": "The block text, verbatim."
+    },
+    "source": {
+      "type": "object",
+      "description": "Source range and table provenance.",
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "First UTF-16 unit."
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "UTF-16 unit after the block."
+        },
+        "table": {
+          "type": "object",
+          "description": "Table provenance.",
+          "properties": {
+            "index": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Table number in the source."
+            },
+            "row": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Row (0 is the header row when there is one)."
+            },
+            "column": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Column."
+            },
+            "header": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The column's header text, if any."
+            }
+          },
+          "required": [
+            "index",
+            "row",
+            "column",
+            "header"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "additionalProperties": false
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Parser metadata.",
+      "properties": {
+        "marker": {
+          "type": "string",
+          "description": "Markup removed from around the text."
+        },
+        "tableHeader": {
+          "type": "boolean",
+          "description": "The block is a table header cell."
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "id",
+    "order",
+    "type",
+    "text",
+    "source",
+    "metadata"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "0192a1b2-c3d4-7e5f-8a6b-00000000000b",
+      "order": 1,
+      "type": "spoken",
+      "text": "Welcome back, everyone.",
+      "source": {
+        "start": 9,
+        "end": 32
+      },
+      "metadata": {}
+    }
+  ]
+}

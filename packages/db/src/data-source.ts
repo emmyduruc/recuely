@@ -139,6 +139,8 @@ export function createDataSource(config: DatabaseConfig): DataSource {
     synchronize: false,
     migrationsRun: false,
     installExtensions: false,
+    // `seq` and `bytes` are bigint; values stay far below 2^53, so numbers are safe and simpler.
+    parseInt8: true,
     logging: false,
   });
 }
