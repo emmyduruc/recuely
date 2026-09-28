@@ -26,3 +26,6 @@ storage/
 test-results/
 playwright-report/
 .DS_Store
+
+# Task 9 spike: local HTTPS CA + keys
+spikes/capture/certs/

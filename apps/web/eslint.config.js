@@ -1,4 +1,10 @@
-import { createConfig } from '@repo/config/eslint';
+import { createConfig, noNestedTernaryInTemplate, noStringLiteralCompare } from '@repo/config/eslint';
+
+// §B11: text is translated only through the typed `useT()` wrapper, so every key is checked.
+const untypedI18n = [
+  { selector: "CallExpression[callee.name='useI18n']", message: 'Use useT() (typed MessageKey), not useI18n(). See SPEC.md §B11.' },
+  { selector: "Identifier[name='$t']", message: 'Use useT() (typed MessageKey), not $t. See SPEC.md §B11.' },
+];
 
 export default [
   ...createConfig({ tsconfigRootDir: import.meta.dirname, vue: true }),
@@ -15,6 +21,20 @@ export default [
         },
       ],
     },
+  },
+  {
+    files: ['app/**/*.{ts,vue}'],
+    ignores: ['app/composables/useT.ts'],
+    rules: { 'no-restricted-syntax': ['error', ...noStringLiteralCompare, ...untypedI18n] },
+  },
+  {
+    files: ['app/**/*.vue'],
+    rules: { 'vue/no-restricted-syntax': ['error', ...noStringLiteralCompare, noNestedTernaryInTemplate, ...untypedI18n] },
+  },
+  {
+    // Nuxt names pages and layouts by file, so single-word names are expected there.
+    files: ['app/pages/**/*.vue', 'app/layouts/**/*.vue', 'app/app.vue'],
+    rules: { 'vue/multi-word-component-names': 'off' },
   },
   {
     // TypeORM is reached only through @repo/db, so there is one resolved copy (SPEC.md §B3).

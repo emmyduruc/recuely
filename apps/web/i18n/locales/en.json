@@ -1,0 +1,73 @@
+{
+  "app": {
+    "name": "Recording companion",
+    "skip_to_content": "Skip to content"
+  },
+  "nav": {
+    "primary": "Main",
+    "projects": "Projects",
+    "design": "Design system"
+  },
+  "theme": {
+    "switch_to_light": "Switch to light theme",
+    "switch_to_dark": "Switch to dark theme"
+  },
+  "projects": {
+    "title": "Projects",
+    "empty_title": "No projects yet",
+    "empty_hint": "Projects you create will appear here."
+  },
+  "studio": {
+    "status": {
+      "idle": "Ready",
+      "preparing": "Getting ready…",
+      "ready": "Ready to start",
+      "reading_line": "Reading line {current}/{total}",
+      "settle": "Get ready…",
+      "your_turn": "Your turn",
+      "recording_take": "Recording take {take_number}",
+      "checking": "Checking…",
+      "choose_next": "Next · Repeat · Retake",
+      "paused": "Paused",
+      "recovering": "Reconnecting…",
+      "error": "Something went wrong",
+      "completed": "All lines recorded"
+    },
+    "capture": {
+      "off": "Mic and camera off",
+      "listening": "Listening",
+      "recording": "Recording"
+    },
+    "decision": {
+      "group": "After this take",
+      "next": "Next",
+      "repeat": "Repeat",
+      "retake": "Retake"
+    }
+  },
+  "design": {
+    "title": "Design system",
+    "intro": "Tokens and status components, for development only.",
+    "colors": "Colors",
+    "typography": "Typography",
+    "ui_scale": "UI scale",
+    "prompter_scale": "Teleprompter scale",
+    "sample_text": "Take a breath and say the line.",
+    "statuses": "Session statuses",
+    "capture": "Capture indicator",
+    "decisions": "Decision bar",
+    "last_choice": "Last choice: {action}",
+    "highlight": "Highlight tiers",
+    "sample_chunk": "Take a breath, look into the lens, and say the first line like you mean it.",
+    "tier": {
+      "word_provider": "Word highlight (provider timings)",
+      "word_approx": "Word highlight (approximate timings)",
+      "chunk": "Chunk highlight (no word timings)"
+    },
+    "reading": {
+      "spoken": "Spoken",
+      "current": "Current",
+      "upcoming": "Upcoming"
+    }
+  }
+}

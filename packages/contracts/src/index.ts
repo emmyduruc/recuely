@@ -10,5 +10,6 @@ export * from './schemas/index.ts';
 export * from './script.ts';
 export * from './storage.ts';
 export * from './theme.ts';
+export * from './ui.ts';
 export * from './user.ts';
 export * from './values.ts';

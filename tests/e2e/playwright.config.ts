@@ -10,7 +10,7 @@ export default defineConfig({
   use: { baseURL: `http://localhost:${String(PORT)}` },
   webServer: {
     command: 'node ../../apps/web/.output/server/index.mjs',
-    env: { PORT: String(PORT) },
+    env: { PORT: String(PORT), NUXT_PUBLIC_DESIGN_PAGE_ENABLED: 'true' },
     url: `http://localhost:${String(PORT)}/api/health`,
     reuseExistingServer: !process.env.CI,
   },

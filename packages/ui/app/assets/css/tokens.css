@@ -1,0 +1,106 @@
+/*
+ * Design tokens (SPEC.md §B9). The only file allowed to contain raw hex colors.
+ * Studio dark is the default; `.light` switches to the light theme (the class is set by color mode).
+ * Every text/background pair used by the components is checked for WCAG 2.2 AA contrast
+ * (packages/ui/test/contrast.test.ts).
+ */
+:root,
+.dark {
+  color-scheme: dark;
+
+  --rc-canvas: #0e1116;
+  --rc-surface-1: #161a21;
+  --rc-surface-2: #1e232c;
+  --rc-border: #2e3541;
+  --rc-border-strong: #737d8f;
+
+  --rc-text: #eef1f5;
+  --rc-text-muted: #aeb6c2;
+  --rc-text-subtle: #8a94a3;
+
+  --rc-accent: #7fa8ff;
+  --rc-on-accent: #0e1116;
+  --rc-success: #4cc38a;
+  --rc-warning: #f0b44c;
+  --rc-error: #ff7a7a;
+  --rc-live: #ff6b6b;
+  --rc-live-solid: #d4202f;
+  --rc-on-live: #ffffff;
+  --rc-listening: #3fc9d3;
+  --rc-assistant: #b99aff;
+  --rc-focus: #7fa8ff;
+
+  --rc-hl-current-bg: #ffd166;
+  --rc-hl-current-fg: #0e1116;
+  --rc-hl-spoken: #8a94a3;
+  --rc-hl-upcoming: #eef1f5;
+}
+
+.light {
+  color-scheme: light;
+
+  --rc-canvas: #f6f7f9;
+  --rc-surface-1: #ffffff;
+  --rc-surface-2: #eceff3;
+  --rc-border: #d3d8e0;
+  --rc-border-strong: #7a8494;
+
+  --rc-text: #12161c;
+  --rc-text-muted: #444d5a;
+  --rc-text-subtle: #5a6472;
+
+  --rc-accent: #1d5bd0;
+  --rc-on-accent: #ffffff;
+  --rc-success: #17774a;
+  --rc-warning: #875600;
+  --rc-error: #c02626;
+  --rc-live: #c0102b;
+  --rc-live-solid: #c0102b;
+  --rc-on-live: #ffffff;
+  --rc-listening: #0a6f78;
+  --rc-assistant: #6a3cc4;
+  --rc-focus: #1d5bd0;
+
+  --rc-hl-current-bg: #ffe08a;
+  --rc-hl-current-fg: #12161c;
+  --rc-hl-spoken: #5a6472;
+  --rc-hl-upcoming: #12161c;
+}
+
+:root {
+  /* Radii: 6 / 10 / 16 / full */
+  --rc-radius-sm: 6px;
+  --rc-radius-md: 10px;
+  --rc-radius-lg: 16px;
+  --rc-radius-full: 9999px;
+
+  /* Motion: 120 / 200 / 320 ms; reduced motion makes every change instant */
+  --rc-motion-fast: 120ms;
+  --rc-motion-base: 200ms;
+  --rc-motion-slow: 320ms;
+
+  /* Teleprompter type scale: 2.5 → 6.5 rem */
+  --rc-prompter-1: 2.5rem;
+  --rc-prompter-2: 3.25rem;
+  --rc-prompter-3: 4rem;
+  --rc-prompter-4: 5rem;
+  --rc-prompter-5: 6.5rem;
+
+  /* Touch targets ≥ 44 px (§B9 accessibility) */
+  --rc-target-min: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --rc-motion-fast: 0ms;
+    --rc-motion-base: 0ms;
+    --rc-motion-slow: 0ms;
+  }
+}
+
+/* The user's reduced-motion setting (UserSettings.reduced_motion) sets this attribute on <html>. */
+:root[data-reduced-motion] {
+  --rc-motion-fast: 0ms;
+  --rc-motion-base: 0ms;
+  --rc-motion-slow: 0ms;
+}

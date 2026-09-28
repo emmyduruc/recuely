@@ -2,12 +2,26 @@
   "name": "@repo/ui",
   "private": true,
   "type": "module",
+  "main": "./nuxt.config.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./nuxt.config": "./nuxt.config.ts",
+    "./tokens.css": "./app/assets/css/tokens.css",
+    "./theme.css": "./app/assets/css/theme.css"
   },
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json",
+    "typecheck": "vue-tsc -p tsconfig.json --noEmit",
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "@repo/contracts": "workspace:*",
+    "vue": "3.5.43"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.4",
+    "@vitejs/plugin-vue": "6.0.9",
+    "fast-check": "4.10.2",
+    "vue-tsc": "3.3.11"
   }
 }

@@ -24,7 +24,7 @@ export const noStringLiteralCompare = [
 ];
 
 // R4 — no nested ternaries (templates need an explicit selector).
-const noNestedTernaryInTemplate = {
+export const noNestedTernaryInTemplate = {
   selector: 'ConditionalExpression > ConditionalExpression',
   message: 'Nested ternaries are not allowed; use a Record lookup. See SPEC.md §B10 R4.',
 };
@@ -90,7 +90,11 @@ export function createConfig({ tsconfigRootDir, vue = false, restrictedImports =
             files: ['**/*.vue'],
             languageOptions: { globals: { ...globals.browser } },
             rules: {
+              // Nuxt auto-imports; vue-tsc reports anything truly undefined (typescript-eslint guidance).
+              'no-undef': 'off',
               'vue/no-restricted-syntax': ['error', ...noStringLiteralCompare, noNestedTernaryInTemplate],
+              // R5 — no hard-coded user-facing text; copy comes from the locale files (SPEC.md §B11).
+              'vue/no-bare-strings-in-template': 'error',
             },
           },
         ]

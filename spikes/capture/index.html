@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Capture lab</title>
+    <style>
+      :root { color-scheme: light dark; --live: #d93636; --ok: #1f8a4c; --warn: #b7791f; font: 16px/1.5 system-ui, sans-serif; }
+      body { margin: 0 auto; max-width: 46rem; padding: 1rem 1rem 6rem; }
+      h1 { font-size: 1.4rem; margin: 0 0 0.25rem; }
+      h2 { font-size: 1.1rem; margin: 1.75rem 0 0.5rem; }
+      section { border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent); }
+      button, select, input { font: inherit; min-height: 44px; padding: 0.4rem 0.9rem; margin: 0.2rem 0.3rem 0.2rem 0; }
+      pre { white-space: pre-wrap; word-break: break-word; font-size: 0.8rem; background: color-mix(in srgb, currentColor 7%, transparent); padding: 0.6rem; border-radius: 8px; max-height: 16rem; overflow: auto; }
+      .hint { font-size: 0.9rem; opacity: 0.8; }
+      #indicator { position: fixed; top: 0.5rem; right: 0.5rem; padding: 0.35rem 0.7rem; border-radius: 999px; font-weight: 600; background: color-mix(in srgb, currentColor 10%, transparent); }
+      #indicator.live { background: var(--live); color: #fff; }
+      #cue { display: inline-block; width: 1.4rem; height: 1.4rem; border-radius: 50%; background: #888; vertical-align: middle; }
+      #cue.go { background: var(--ok); }
+      #bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 0.6rem 1rem; background: Canvas; border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent); }
+      video { max-width: 100%; max-height: 10rem; }
+      a { overflow-wrap: anywhere; }
+    </style>
+  </head>
+  <body>
+    <div id="indicator" role="status" aria-live="polite">○ Mic &amp; camera off</div>
+    <h1>Capture lab (SPEC.md Task 9)</h1>
+    <p class="hint">Throwaway test page. Nothing leaves your network: results go only to the Mac running this page, and only when you tap <b>Send results</b>. Run the sections in order; each one takes under a minute. The mic and camera turn on only when you tap a button, and the badge at the top right shows when they're live.</p>
+    <p><label>Device name <input id="device" placeholder="e.g. iphone-safari" /></label></p>
+
+    <section>
+      <h2>A. Capabilities</h2>
+      <p class="hint">Runs automatically.</p>
+      <pre id="out-a">…</pre>
+    </section>
+
+    <section>
+      <h2>B. Permission &amp; track lifecycle</h2>
+      <p class="hint">Tap <b>Allow</b> and accept the prompt. Check that the badge turns red, then tap <b>Stop</b> and check that it turns off.</p>
+      <button id="b-start">Allow mic + camera</button> <button id="b-stop">Stop</button>
+      <pre id="out-b"></pre>
+    </section>
+
+    <section>
+      <h2>C. Echo tail (speaker)</h2>
+      <p class="hint">Use the <b>built-in speaker</b> at your normal volume, with no headphones. Stay quiet: the page plays a short phrase 6 times (3 with echo cancellation on, 3 with it off) and measures what the mic still hears after it ends.</p>
+      <button id="c-run">Run echo test</button>
+      <pre id="out-c"></pre>
+    </section>
+
+    <section>
+      <h2>D. Take start clipping</h2>
+      <p class="hint">10 short takes. When the dot turns <b>green</b>, say <b>"Paper"</b> once, clearly. The recorder starts when your voice is detected; the page measures how much of the "P" it lost.</p>
+      <button id="d-run">Run 10 takes</button> <span id="cue" aria-hidden="true"></span> <span id="cue-text"></span>
+      <pre id="out-d"></pre>
+    </section>
+
+    <section>
+      <h2>E. Recording formats &amp; sizes</h2>
+      <p class="hint">Records 3 s of video in each format this browser supports. Download a file or two and open them in your system player (Photos, Files or QuickTime) to check they play.</p>
+      <button id="e-run">Record formats</button>
+      <div id="links-e"></div>
+      <pre id="out-e"></pre>
+    </section>
+
+    <section>
+      <h2>F. Joining two takes</h2>
+      <p class="hint">Records two 2 s takes (wave at the camera), then tries two ways to join them. Download both results and check they play for about 4 s.</p>
+      <button id="f-run">Record and join</button>
+      <div id="links-f"></div>
+      <pre id="out-f"></pre>
+    </section>
+
+    <section>
+      <h2>G. Audio output</h2>
+      <p class="hint">Lists outputs and plays the phrase on one. If you have Bluetooth earbuds, connect them first. Then say where you heard it.</p>
+      <button id="g-list">List outputs</button> <select id="g-sink"></select> <button id="g-play">Play</button>
+      <select id="g-heard"><option value="">Where did you hear it?</option><option>built-in speaker</option><option>earpiece (quiet, top of phone)</option><option>Bluetooth earbuds</option><option>wired headphones</option><option>did not hear it</option></select>
+      <button id="g-save">Save answer</button>
+      <pre id="out-g"></pre>
+    </section>
+
+    <section>
+      <h2>H. Background tab &amp; lock screen</h2>
+      <p class="hint">Tap <b>Start</b>. Then switch to another app or tab for about 5 s, come back, lock the screen for about 5 s, unlock, and tap <b>Finish</b>.</p>
+      <button id="h-start">Start</button> <button id="h-finish">Finish</button>
+      <pre id="out-h"></pre>
+    </section>
+
+    <div id="bar"><button id="send">Send results to the Mac</button> <button id="copy">Copy results</button> <span id="sent"></span></div>
+    <script src="lab.js"></script>
+  </body>
+</html>

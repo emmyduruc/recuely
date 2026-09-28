@@ -1,2 +1,7 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+@import "@repo/ui/tokens.css";
+@import "@repo/ui/theme.css";
+
+/* The shared components live in the UI layer, outside this app. */
+@source "../../../../../packages/ui/app";

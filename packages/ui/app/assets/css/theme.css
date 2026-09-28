@@ -1,0 +1,81 @@
+/*
+ * Maps the design tokens (tokens.css) to Tailwind utilities and to Nuxt UI's theme variables.
+ * Imported by the app's main.css after tailwindcss and @nuxt/ui. No raw colors here (SPEC.md §B9).
+ */
+@theme inline {
+  --color-canvas: var(--rc-canvas);
+  --color-surface-1: var(--rc-surface-1);
+  --color-surface-2: var(--rc-surface-2);
+  --color-line: var(--rc-border);
+  --color-line-strong: var(--rc-border-strong);
+  --color-ink: var(--rc-text);
+  --color-ink-muted: var(--rc-text-muted);
+  --color-ink-subtle: var(--rc-text-subtle);
+  --color-accent: var(--rc-accent);
+  --color-on-accent: var(--rc-on-accent);
+  --color-success: var(--rc-success);
+  --color-warning: var(--rc-warning);
+  --color-error: var(--rc-error);
+  --color-live: var(--rc-live);
+  --color-live-solid: var(--rc-live-solid);
+  --color-on-live: var(--rc-on-live);
+  --color-listening: var(--rc-listening);
+  --color-assistant: var(--rc-assistant);
+  --color-focus: var(--rc-focus);
+  --color-hl-current-bg: var(--rc-hl-current-bg);
+  --color-hl-current-fg: var(--rc-hl-current-fg);
+  --color-hl-spoken: var(--rc-hl-spoken);
+  --color-hl-upcoming: var(--rc-hl-upcoming);
+
+  --radius-sm: var(--rc-radius-sm);
+  --radius-md: var(--rc-radius-md);
+  --radius-lg: var(--rc-radius-lg);
+
+  --text-prompter-1: var(--rc-prompter-1);
+  --text-prompter-2: var(--rc-prompter-2);
+  --text-prompter-3: var(--rc-prompter-3);
+  --text-prompter-4: var(--rc-prompter-4);
+  --text-prompter-5: var(--rc-prompter-5);
+
+  --spacing-target: var(--rc-target-min);
+}
+
+/* Unlayered, so it wins over Nuxt UI's `@layer theme` defaults in both color modes. */
+:root {
+  --ui-primary: var(--rc-accent);
+  --ui-secondary: var(--rc-assistant);
+  --ui-success: var(--rc-success);
+  --ui-info: var(--rc-listening);
+  --ui-warning: var(--rc-warning);
+  --ui-error: var(--rc-error);
+
+  --ui-bg: var(--rc-canvas);
+  --ui-bg-muted: var(--rc-surface-1);
+  --ui-bg-elevated: var(--rc-surface-1);
+  --ui-bg-accented: var(--rc-surface-2);
+  --ui-bg-inverted: var(--rc-text);
+
+  --ui-text: var(--rc-text);
+  --ui-text-highlighted: var(--rc-text);
+  --ui-text-toned: var(--rc-text-muted);
+  --ui-text-muted: var(--rc-text-muted);
+  --ui-text-dimmed: var(--rc-text-subtle);
+  --ui-text-inverted: var(--rc-canvas);
+
+  --ui-border: var(--rc-border);
+  --ui-border-muted: var(--rc-border);
+  --ui-border-accented: var(--rc-border-strong);
+  --ui-border-inverted: var(--rc-text);
+
+  --ui-radius: var(--rc-radius-sm);
+}
+
+body {
+  background: var(--rc-canvas);
+  color: var(--rc-text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--rc-focus);
+  outline-offset: 2px;
+}

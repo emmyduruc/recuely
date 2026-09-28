@@ -1,6 +1,6 @@
 # SPEC — Filming Assistant
 
-> Single source of truth for this project. Version **0.16.0** · Last updated 2026-09-24
+> Single source of truth for this project. Version **0.17.1** · Last updated 2026-09-28
 > Input brief: `product.md` (frozen). Repo rules for Claude Code: `CLAUDE.md`.
 > "Filming Assistant" is a placeholder name. Never use it in package names, identifiers, or branding.
 
@@ -67,7 +67,7 @@ Honesty rules: never claim control over Bluetooth routing; "system default outpu
 5. Segmentation never paraphrases or drops words; original text and offsets are kept.
 6. Language-model output only **proposes**; deterministic code decides. Model output never directly changes UI, assets, or navigation.
 7. Stale async results (wrong `sessionId`/`chunkId`/`seq`) are discarded.
-8. No cloud upload of scripts or audio without opt-in. No analytics that capture scripts or audio.
+8. No cloud upload of scripts or audio without opt-in. No analytics that capture scripts or audio. **Cloud speech (OpenAI, §B12) is off until the user explicitly opts in** (a consent step naming what is sent: chunk text for TTS, take audio for STT). Without consent, or offline, the local fallback is used.
 9. Color is never the only indicator of recording state.
 10. No claims beyond the tested device/browser matrix.
 
@@ -85,7 +85,7 @@ Honesty rules: never claim control over Bluetooth routing; "system default outpu
 
 ## A8. Out of scope for R1
 
-Voice cloning, AI avatars, a non-linear editor, social posting, Notion/Google Docs OAuth, browser extension, native mobile/background listening, billing, hosted AI, cloud storage, OCR for image-only PDFs, barge-in during speaker playback, **languages other than English** (UI and voice). R1 is English only; §B11 keeps the UI ready for more languages, which will be rolled out later with their own spec change if R1 works. **Login/auth** is also out of R1: the `User` model exists (Task 1), but R1 runs as a single local user.
+Voice cloning, AI avatars, a non-linear editor, social posting, Notion/Google Docs OAuth, browser extension, native mobile/background listening, billing, hosted AI other than OpenAI speech (§B12), cloud storage, OCR for image-only PDFs, barge-in during speaker playback, **languages other than English** (UI and voice). R1 is English only; §B11 keeps the UI ready for more languages, which will be rolled out later with their own spec change if R1 works. **Login/auth** is also out of R1: the `User` model exists (Task 1), but R1 runs as a single local user.
 
 ---
 
@@ -153,7 +153,7 @@ Root scripts: `pnpm dev`, `pnpm build`, `pnpm typecheck`, `pnpm lint`, `pnpm tes
 | Tests | Vitest, fast-check, Playwright, pytest, ruff | See Part C |
 | UI state | Vue composables; Pinia only if needed | Session truth lives in the engine, not in Pinia |
 
-**Forbidden without a spec change:** React/Next/extra SPA, NestJS, GraphQL, Redis, message brokers, Kubernetes, event sourcing, LangChain/LlamaIndex/agent frameworks, XState or other state-machine libraries, Prisma or Drizzle, duplicate TTS/STT/UI/animation/video SDKs, paid APIs, content-capturing analytics.
+**Forbidden without a spec change:** React/Next/extra SPA, NestJS, GraphQL, Redis, message brokers, Kubernetes, event sourcing, LangChain/LlamaIndex/agent frameworks, XState or other state-machine libraries, Prisma or Drizzle, duplicate TTS/STT/UI/animation/video SDKs, paid APIs other than OpenAI speech (§B12), content-capturing analytics.
 **Dependency rule:** every new dependency is added to the table in §B8, justified by a task's acceptance criterion.
 
 ## B3. Component boundaries
@@ -181,8 +181,8 @@ Rules:
 
 | Interface | Primary | Fallback |
 |---|---|---|
-| TTS | AI service / Kokoro (audio + per-phoneme durations → word start times; chunk highlight when the word mapping doesn't add up) | Browser `speechSynthesis` (chunk highlight; word highlight only if boundary events are confirmed) |
-| STT | AI service / faster-whisper `base.en` int8, greedy, **no chunk-text prompt**, only on VAD-detected speech (Task 8) | Browser Web Speech: **opt-in only**, since it may send audio to the vendor's cloud. Otherwise manual advance. |
+| TTS | **OpenAI TTS via Nitro** (after opt-in, §B12); word timings derived by aligning the generated audio, else chunk highlight | Offline / no consent: local AI service (Kokoro, word start times from durations) → browser `speechSynthesis` (chunk highlight; word highlight only if boundary events are confirmed) |
+| STT | **OpenAI STT via Nitro** (after opt-in, §B12), no chunk-text prompt, only on VAD-detected speech | Offline / no consent: local AI service (faster-whisper `base.en` int8, greedy, Task 8) → manual advance. (Browser Web Speech is not used: it sends audio to a third party with no opt-in control.) |
 | VAD | **Silero** (Task 8; an energy VAD misses speech in noise). Browser (onnxruntime-web) vs AI-service placement decided in Task 13 | none → manual advance |
 | Segmenter | Deterministic rules | Ollama proposals (boundaries only, validated) |
 
@@ -435,7 +435,9 @@ States: `idle, preparing, ready, assistant_speaking, settle, waiting_for_speech,
 | typeorm, pg (+ @types/pg, dev) | ORM + driver (+ driver types; `pg` is passed to TypeORM explicitly so the Nitro build traces it) | raw `pg` | MIT | Task 1 | Approved (user) |
 | (none) Nitro built-in OpenAPI + Swagger UI | API docs | — | MIT (Nitro) | §B5.1, Task 1 | Approved (user). No new package; Swagger UI assets load from Nitro's configured CDN in dev |
 | vitest, @playwright/test | Tests | node:test | MIT/Apache-2.0 | Task 0 | Approved (Task 0) |
-| @nuxtjs/i18n (vue-i18n transitively) | UI text from `en.json` with typed keys, so later languages only add a file | hand-rolled `Record<MessageKey, string>` | MIT | §B11, Task 11 | Proposed |
+| @nuxtjs/i18n 10.6.0 (vue-i18n transitively) | UI text from `en.json` with typed keys, so later languages only add a file | hand-rolled `Record<MessageKey, string>` | MIT | §B11, Task 11 | Approved (Task 11) |
+| @iconify-json/lucide 1.2.137 | Nuxt UI's icon set bundled and served by our own server (`fallbackToApi: false`), so no icon request goes to a third party (§A6.8, offline) | Iconify public API (network call per icon) | ISC | Task 11 | Approved (Task 11) |
+| @vitejs/plugin-vue 6.0.9 (dev, packages/ui) | Compiles SFCs for the props-only component unit tests (rendered with `vue/server-renderer`, so no DOM library) | @nuxt/test-utils + happy-dom | MIT | Task 11 | Approved (Task 11); already in the tree via Nuxt |
 | fast-check | Property tests | hand-written loops | MIT | Task 3/5 | Approved (fixed stack in CLAUDE.md; first used in Task 3) |
 | typescript 6.0.x (pinned) | Types | — | Apache-2.0 | §B10 R1 | Approved (Task 0). TS 7 blocked: typescript-eslint supports < 6.1 |
 | vue-tsc | Vue typecheck (`nuxt typecheck`) | — | MIT | §B10 R1 | Approved (Task 0) |
@@ -558,6 +560,21 @@ apps/web/i18n/locales/en.json   ← the only locale in R1; source of truth for k
 
 **Adding a language later** (new spec version) covers: a locale file plus the parity check, a switcher, and, for voice, per-language TTS/STT/grammar/segmentation/matching. The v0.7.0 change-log entry lists what a full German rollout touched.
 
+## B12. Cloud speech (OpenAI) with a local fallback (user decision, v0.17.0)
+
+**Why:** the user prefers hosted models to running speech locally. Tasks 7–8 remain valid and become the **offline fallback**.
+
+**Shape**
+- **Server-side only.** The browser never talks to OpenAI and never sees the key. Nitro routes proxy TTS and STT: `POST /api/speech/tts` (chunk text, voice, rate → cached audio + timings) and `POST /api/speech/stt` (take audio → transcript + word timestamps). `OPENAI_API_KEY` lives only in the server environment (`.env`), is never logged, and never reaches responses or the client bundle.
+- **Providers behind the existing interfaces** (§B3): `TTSProvider` / `STTProvider` get an OpenAI implementation (Nitro) and a local one (AI service). A `Record<SpeechProvider, …>` selects the provider per request. Default: OpenAI when the user has opted in and the network is up; otherwise local.
+- **Consent (§A6.8).** A one-time opt-in names exactly what is sent (chunk text for TTS; take audio for STT), to whom (OpenAI), and that it's needed for cloud voices and transcription. It's stored in `UserSettings`, shown in preflight and in the privacy statement (Task 21), and can be revoked. Until then, everything stays local.
+- **Word highlighting (§A6.4).** OpenAI TTS returns audio only. Timings are **derived** by transcribing the generated audio with word timestamps and aligning those words to the chunk (Task 6 aligner). `TtsResult.timingSource` gets a new value, `aligned`. If the alignment doesn't cover every chunk word, the chunk falls back to `chunk` highlighting. Nothing is interpolated.
+- **Caching.** TTS audio is cached by (text, voice, rate, model) on local storage (`Storage`), so repeats and re-takes cost nothing and start instantly (§B7 target ≤ 150 ms).
+- **No dependency needed:** plain `fetch` to the REST API (no `openai` SDK) unless the spike shows a real need.
+- **Timeouts and failure:** the §B7 TTS 4 s / STT 5 s timeouts apply; on timeout, quota or network errors a request falls back to local, and the session engine's existing failure paths apply (`TTS_FAILED`, `EVAL_FAILED`).
+
+**Open until the Task 10a spike:** exact models (e.g. `gpt-4o-mini-tts` / `tts-1` for TTS; `whisper-1` for STT, since it offers word timestamps), latency, cost per session, and alignment accuracy (H-28–H-30).
+
 ---
 
 # PART C — HOW WE TEST
@@ -651,10 +668,11 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 5 | Session engine (state machine) | DONE | 2 |
 | 6 | Command grammar & transcript matcher | DONE | 2 |
 | 7 | Spike: TTS (Kokoro timings & latency, browser boundary events) | DONE | 0 |
-| 8 | Spike: STT & VAD on the dev CPU | AWAITING CONFIRMATION | 0 |
-| 9 | Spike: browser capture, echo/settle, pre-roll, MIME, stitching | TODO | 0 |
-| 10 | AI service v0 (health, TTS, STT) | TODO | 7, 8 |
-| 11 | Design system & app shell | TODO | 0 |
+| 8 | Spike: STT & VAD on the dev CPU | DONE | 0 |
+| 9 | Spike: browser capture, echo/settle, pre-roll, MIME, stitching | IN PROGRESS | 0 |
+| 10a | Spike: OpenAI speech (latency, cost, derived word timings, STT on the Task 8 fixtures) | TODO | 8 |
+| 10 | Speech providers v0: OpenAI via Nitro + local AI service fallback | TODO | 7, 8, 10a |
+| 11 | Design system & app shell | AWAITING CONFIRMATION | 0 |
 | 12 | Script import & review UI | TODO | 4, 11 |
 | 13 | Media adapters & effect runner | TODO | 5, 9, 10 |
 | 14 | Preflight UI | TODO | 13 |
@@ -868,14 +886,24 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 - [ ] The first device-matrix pass is recorded; a capture strategy is recommended
 - [ ] H-12, H-13, H-18, H-19 updated
 
-### Task 10 — AI service v0
+### Task 10a — Spike: OpenAI speech *(timebox 1 day; throwaway code)*
 
-**What:** `/v0/health`, `/v0/tts/voices`, `/v0/tts` (+ timings or derived, cached by text hash/voice/rate), `/v0/stt` (echoes sessionId/chunkId/seq); timeouts, cancellation on client disconnect, per-capability health. Every route is documented in `/docs` to the §B5.1 standard (tags TTS, STT, Health).
-**Why:** Gives the web app real, versioned voice and transcription providers.
+**What:** Against the OpenAI API with the user's key: TTS latency to first byte / full audio for short, medium and long chunks; STT latency and decisions on the Task 8 fixtures (through the Task 6 matcher, as in `spikes/stt/score.ts`); word-timestamp alignment of TTS audio (start-time error against the audio, fraction of chunks fully aligned); cost per 60-s script and per 45-min session; data-retention terms to state in the privacy notice.
+**Tests:** scripted measurements → `docs/measurements/openai-speech-<date>.md`
+**Done when:**
+- [ ] Models chosen with numbers; H-28, H-29, H-30 updated
+- [ ] The privacy statement's facts (what is sent, retention) are written down with sources
+
+### Task 10 — Speech providers v0 (OpenAI via Nitro + local fallback)
+
+**What:** Nitro `POST /api/speech/tts` and `POST /api/speech/stt` (OpenAI; key server-side; cached TTS; derived word timings with `timingSource: aligned`; consent check), and the local AI service `/v0/health`, `/v0/tts/voices`, `/v0/tts` (Kokoro + timings), `/v0/stt` (faster-whisper) as the fallback; provider selection (consent + reachability); timeouts, cancellation on client disconnect, per-capability health. Every route documented to §B5.1 (web `/api/docs`; AI service `/docs`).
+**Why:** Gives the web app real voice and transcription providers, in the cloud by default after consent and local otherwise.
 **Tests:** Contract (responses validate against the shared fixtures) · Synthetic audio (STT on fixtures; TTS returns audio + timings) · Unit (cache key, timeout, cancellation)
 **Done when:**
-- [ ] `pnpm --filter ai test` green; the health endpoint reflects real model status
-- [ ] A second identical TTS request is served from cache
+- [ ] `pnpm --filter ai test` green; the health endpoints reflect real provider status (OpenAI reachable / key present; local models loaded)
+- [ ] A second identical TTS request is served from cache (both providers)
+- [ ] Without consent, no request reaches OpenAI (test)
+- [ ] The key never appears in responses, logs or the client bundle (test)
 
 ### Task 11 — Design system & app shell
 
@@ -883,10 +911,21 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 **Why:** Clear, calm, unmistakable recording status is part of the product, and later UI tasks build on these pieces. Doing i18n now means no later task hard-codes text, so more languages can be added later without rework.
 **Tests:** Unit (component rendering; `chunk` tier renders no word-level markers; **locale test**) · E2E (contrast test on token pairs; reduced-motion check; raw-hex lint; shell + `/_design` with zero missing-key warnings)
 **Done when:**
-- [ ] Screenshots of `/_design` at 360, 768, 1280, and 1728 widths
-- [ ] Every status shows icon + text
-- [ ] The locale test and R5 lint fail on deliberate bad samples (a camelCase key, an empty value, a bare string in a template), then the samples are removed
-- [ ] From Task 11 on, every UI task adds its keys to `en.json`
+- [x] Screenshots of `/_design` at 360, 768, 1280, and 1728 widths: `docs/screenshots/task-11/design-<width>.png` (written by the E2E run)
+- [x] Every status shows icon + text (unit: `STUDIO_STATUS` covers every `SessionState`; E2E on `/_design`)
+- [x] The locale test and R5 lint fail on deliberate bad samples (a camelCase key, an empty value, a bare string in a template), then the samples are removed
+- [x] From Task 11 on, every UI task adds its keys to `en.json`
+
+**Implementation notes (Task 11):**
+- **`packages/ui` is a Nuxt layer** (`apps/web` extends it): `app/assets/css/tokens.css` (the only file with raw hex; dark in `:root, .dark`, light in `.light`, radii, motion, teleprompter scale, 44 px target), `theme.css` (Tailwind `@theme inline` utilities such as `bg-canvas`, `text-ink-muted`, `text-live`, `text-prompter-3`, plus Nuxt UI's `--ui-*` variables mapped to the tokens, unlayered so they win in both modes), and `app/components/` StatusPill, CaptureIndicator, DecisionBar, ChunkText. The components are **props-only and text-agnostic**: they take already-translated strings, so i18n stays in the app.
+- **Contracts:** `HighlightTier`, `ReadingState`, `StatusTone`, `CaptureState`, `DecisionAction` (a subset of `Intent`) in `packages/contracts/src/ui.ts`.
+- **ChunkText:** word segments come from `chunkSegments()` (property test: they always concatenate to the exact chunk text). Invalid spans (overlapping, out of order, out of range) fall back to `chunk` instead of guessing. `word-provider` gets a full highlight, `word-approx` an underline, `chunk` no word markers. Only the current chunk has `aria-current`.
+- **i18n:** `@nuxtjs/i18n` (`no_prefix`, `en` only, no browser detection). `MessageKey` = every dotted leaf path of `en.json`. `useT()` is the one typed wrapper, and lint forbids `useI18n()`/`$t` elsewhere in `app/`. A missing key logs `console.error`, and the E2E run fails on any console error or warning. `vue/no-bare-strings-in-template` (R5) is on in the shared config.
+- **Status language:** `app/utils/studio-status.ts`: `Record<SessionState, {icon, tone, label}>`, `Record<CaptureState, MessageKey>`, `Record<DecisionAction, MessageKey>`.
+- **Theme:** color mode is dark by default; the shell's theme switch toggles light/dark. Reduced motion (OS setting, or `data-reduced-motion` on `<html>` for the Task 18 setting) zeroes the motion tokens; animations use `motion-safe:`.
+- **`/_design`** is on in `nuxt dev` and otherwise 404 unless `NUXT_PUBLIC_DESIGN_PAGE_ENABLED=true` (the E2E server sets it).
+- **Deviation (tighter than specified):** the **contrast check** and the **raw-hex lint** run as unit tests (`packages/ui/test/contrast.test.ts` over every foreground/background pair the components use, in both themes, ≥ 4.5 for text and ≥ 3 for UI; `raw-hex.test.ts` over `packages/ui` and `apps/web/app`). Reading hex straight from `tokens.css` is deterministic, whereas computed browser colors would need a page per pair. The E2E suite covers reduced motion, the shell, missing keys, theme switching, tiers, and no horizontal scroll at 320 px plus the 4 widths.
+- The 320 px check found a real overflow (header); on phones the nav now wraps to its own row.
 
 ### Task 12 — Script import & review UI
 
@@ -991,6 +1030,9 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | H-22 | Supabase (session pooler, eu-west-1) keeps `pnpm test:int` under 60 s, and Neon keeps dev API calls responsive, from this machine | Task 1 | **Validated**: 45 s incl. build (Supabase transaction pooler works too); Neon cold start ≈ 3.4 s on first connect only |
 | H-26 | The `short`/`smart` word budgets (8 / 16, merge < 6 up to 12) give natural repeat-after chunks | Task 19 | Open |
 | H-27 | With the settle time and echo cancellation, no assistant residual reaches a take in A1 (a -20 dB residual is transcribed as the chunk and would advance a silent take) | Task 9 | Open |
+| H-28 | OpenAI TTS starts audio for a short chunk in ≤ 1.2 s from this network (uncached) | Task 10a | Open |
+| H-29 | Word timings derived by aligning OpenAI STT word timestamps on the TTS audio are within ≤ 50 ms of word onsets for most chunks | Task 10a | Open |
+| H-30 | Cloud speech costs stay small for a solo creator (target to set from the 10a numbers: 60-s script and a 45-min session) | Task 10a | Open |
 | H-21 | Nitro's experimental OpenAPI generator (`defineRouteMeta` + `$global` components) can meet the §B5.1 standard; else fall back to a hand-written typed document | Task 1 | **Refuted** (nitropack 2.13.4: no top-level tags, fixed `servers`) → fallback |
 
 **Decisions needed from the user:**
@@ -999,7 +1041,8 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 3. Git remote, and permission to commit.
 4. Databases: the user puts `DATABASE_URL` (Neon), `DATABASE_URL_TEST` (Supabase, session pooler) and `DATABASE_URL_TEST_CA_CERT` in `.env` before Task 1's integration tests. Storing scripts in hosted DBs the user chose and configured is the user's opt-in under §A6.8. Media stays on local disk (`STORAGE_DIR`). Other Neon platform features (Auth, buckets, functions, deploy) are **not** used in R1 (§A8); adopting any needs a spec change.
 
-6. **GPL in the AI service (from Task 7):** Kokoro's text-to-phoneme step uses `phonemizer` + `espeak-ng` (GPL-3.0). Fine while the AI service only runs locally for you; before distributing it, either accept GPL obligations or switch to Kokoro's Apache-licensed `misaki` G2P. Decide by Task 10.
+6. ~~GPL in the AI service~~ **Resolved 2026-09-28:** cloud speech (OpenAI) is primary; the Kokoro/faster-whisper AI service stays as a **local-only** offline fallback, where the GPL phonemizer carries no obligations. Revisit only if the AI service is ever distributed.
+7. **OpenAI API key** for Task 10a/10: put `OPENAI_API_KEY` in the repo-root `.env` (never committed).
 ---
 
 # PART F — CHANGE LOG
@@ -1011,6 +1054,10 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 0.3.0 | 2026-09-23 | Added §B10 code standards: zero TS/lint errors, named constants instead of string-literal comparisons, Record lookups instead of nested ternaries; wired into Task 0 and the D0 gate |
 | 0.3.1 | 2026-09-24 | Task 0 implemented; TypeScript pinned to 6.0.x; PostgreSQL/ffmpeg install moved to Tasks 1/9 (Homebrew dropped Intel); dependency register updated |
 | 0.3.2 | 2026-09-24 | Task 0 confirmed by user → DONE |
+| 0.17.1 | 2026-09-28 | Task 11 implemented (awaiting confirmation): `packages/ui` Nuxt layer (tokens, theme mapping, props-only status components), i18n setup with typed keys, app shell, `/_design`; §B8: @nuxtjs/i18n approved, @iconify-json/lucide and @vitejs/plugin-vue added; contrast and raw-hex checks run as unit tests |
+| 0.17.0 | 2026-09-28 | **Cloud speech (user decision):** OpenAI TTS + STT through Nitro (key server-side, explicit opt-in per §A6.8, cached TTS, derived word timings `timingSource: aligned`), with the Kokoro/faster-whisper AI service kept as the offline/no-consent fallback; new §B12; hosted AI / paid APIs allowed for OpenAI speech only; new Task 10a spike; Task 10 renamed to speech providers v0; H-28–H-30; open decision 6 resolved, 7 added (API key) |
+| 0.16.2 | 2026-09-28 | Task 9 tooling ready: capture lab (`spikes/capture/`, HTTPS on the LAN via a local openssl CA instead of mkcert, results POSTed back to the Mac); smoke-tested in headless Chromium (naive WebM concatenation plays only the first take; re-recording works); `docs/measurements/device-matrix.md` skeleton; device runs pending |
+| 0.16.1 | 2026-09-28 | Task 8 confirmed by user → DONE (real-voice takes remain an optional follow-up). Task 9 started |
 | 0.16.0 | 2026-09-28 | Task 8 spike: faster-whisper `base.en` int8 greedy chosen (0.63 s per 5 s take, 0 false advances); chunk-text prompting refuted (H-15); Silero VAD chosen over an energy VAD (H-17); new H-27: assistant echo in a take would look like a delivered line (Task 9 must set settle from the measured tail); Task 8 → AWAITING CONFIRMATION |
 | 0.15.1 | 2026-09-28 | Task 7 confirmed by user → DONE; the browser boundary-event runs on the user's devices are deferred (the probe stays in `spikes/tts/boundary.html`). Task 8 started |
 | 0.15.0 | 2026-09-28 | Task 7 spike: Kokoro via kokoro-onnx + onnx-community timestamped export (fp32) chosen; H-10 validated (word starts ≤ 40 ms), H-11 partly refuted (prefetch + cache); int8 3× slower on this CPU; onnxruntime pinned to 1.23.2 (last Intel-Mac wheels); GPL phonemizer/espeak-ng → open decision 6; boundary-event probe awaiting the user's devices |
