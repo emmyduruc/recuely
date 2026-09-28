@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TTS boundary probe</title>
+    <style>
+      :root { color-scheme: light dark; font: 16px/1.5 system-ui, sans-serif; }
+      body { margin: 0 auto; max-width: 42rem; padding: 1rem; }
+      button { font: inherit; padding: 0.75rem 1.25rem; min-height: 44px; }
+      pre { white-space: pre-wrap; background: color-mix(in srgb, currentColor 8%, transparent); padding: 0.75rem; border-radius: 8px; }
+      .word { padding: 0 2px; border-radius: 4px; }
+      .current { background: #ffd54a; color: #000; }
+    </style>
+  </head>
+  <body>
+    <h1>TTS boundary probe (SPEC.md Task 7)</h1>
+    <p>Tap <b>Run</b>, listen, then copy the report below into the chat. Nothing is recorded or sent anywhere.</p>
+    <p><button id="run">Run</button> <button id="copy">Copy report</button></p>
+    <p id="line"></p>
+    <pre id="report">Not run yet.</pre>
+    <script>
+      const TEXT = 'Welcome back, everyone. Today we build a small wooden shelf.';
+      const words = [...TEXT.matchAll(/\S+/g)].map((m) => ({ text: m[0], start: m.index }));
+      const line = document.getElementById('line');
+      const report = document.getElementById('report');
+      line.innerHTML = words.map((w, i) => `<span class="word" id="w${i}">${w.text}</span>`).join(' ');
+
+      function voicesReady() {
+        return new Promise((resolve) => {
+          const now = speechSynthesis.getVoices();
+          if (now.length > 0) return resolve(now);
+          speechSynthesis.onvoiceschanged = () => resolve(speechSynthesis.getVoices());
+          setTimeout(() => resolve(speechSynthesis.getVoices()), 2000);
+        });
+      }
+
+      document.getElementById('run').onclick = async () => {
+        const voices = await voicesReady();
+        const english = voices.filter((v) => v.lang.startsWith('en'));
+        const voice = english.find((v) => v.localService) ?? english[0] ?? voices[0];
+        const u = new SpeechSynthesisUtterance(TEXT);
+        if (voice) u.voice = voice;
+        const events = [];
+        let t0 = 0;
+        u.onstart = () => { t0 = performance.now(); events.push({ type: 'start', ms: 0 }); };
+        u.onboundary = (e) => {
+          const ms = Math.round(performance.now() - t0);
+          events.push({ type: e.name, charIndex: e.charIndex, charLength: e.charLength ?? null, elapsedTime: e.elapsedTime, ms });
+          const index = words.findIndex((w) => w.start === e.charIndex);
+          document.querySelectorAll('.word').forEach((el) => el.classList.remove('current'));
+          if (index >= 0) document.getElementById(`w${index}`).classList.add('current');
+        };
+        u.onend = () => {
+          const total = Math.round(performance.now() - t0);
+          const wordEvents = events.filter((e) => e.type === 'word');
+          const hits = wordEvents.filter((e) => words.some((w) => w.start === e.charIndex)).length;
+          report.textContent = JSON.stringify({
+            userAgent: navigator.userAgent,
+            voices: voices.length,
+            englishVoices: english.length,
+            voiceUsed: voice ? { name: voice.name, lang: voice.lang, localService: voice.localService } : null,
+            words: words.length,
+            wordBoundaryEvents: wordEvents.length,
+            eventsOnWordStarts: hits,
+            sentenceEvents: events.filter((e) => e.type === 'sentence').length,
+            totalMs: total,
+            events,
+          }, null, 1);
+        };
+        u.onerror = (e) => { report.textContent = 'error: ' + e.error + '\n' + navigator.userAgent; };
+        speechSynthesis.cancel();
+        speechSynthesis.speak(u);
+        report.textContent = 'Speaking…';
+      };
+      document.getElementById('copy').onclick = () => navigator.clipboard.writeText(report.textContent);
+    </script>
+  </body>
+</html>

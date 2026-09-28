@@ -1,6 +1,6 @@
 # SPEC — Filming Assistant
 
-> Single source of truth for this project. Version **0.14.0** · Last updated 2026-09-24
+> Single source of truth for this project. Version **0.15.0** · Last updated 2026-09-24
 > Input brief: `product.md` (frozen). Repo rules for Claude Code: `CLAUDE.md`.
 > "Filming Assistant" is a placeholder name. Never use it in package names, identifiers, or branding.
 
@@ -149,7 +149,7 @@ Root scripts: `pnpm dev`, `pnpm build`, `pnpm typecheck`, `pnpm lint`, `pnpm tes
 | ORM | **TypeORM** (not Prisma) | Entities use `EntitySchema` (no decorators), because Nitro/esbuild doesn't emit decorator metadata. Migrations in `packages/db/migrations`. `typeorm` + `pg` marked external in the Nitro build. |
 | Database | **Hosted PostgreSQL: Neon (dev) + Supabase (integration tests)**; no local install | `DATABASE_URL` → Neon project (the app's database). `DATABASE_URL_TEST` → a Supabase project used only by `pnpm test:int`. TLS always verified; each URL has its own optional CA setting (`DATABASE_URL_CA_CERT`, `DATABASE_URL_TEST_CA_CERT`), since Supabase uses its own CA and Neon a public one. Any PostgreSQL URL works. See §C1.1 |
 | Media files | Browser OPFS first (crash-safe), then upload to local disk storage (`STORAGE_DIR`) via the API | Large media never goes in DB rows. Storage sits behind a `Storage` interface so S3-compatible storage can be added later. |
-| AI service | FastAPI; candidates: faster-whisper (STT), Silero or in-browser VAD, Kokoro (TTS), Ollama (optional segmentation) | Candidates until measured (Tasks 7–9) |
+| AI service | FastAPI; TTS: **Kokoro-82M via kokoro-onnx, onnx-community *timestamped* export, fp32** (Task 7); candidates: faster-whisper (STT), Silero or in-browser VAD, Ollama (optional segmentation) | Candidates until measured (Tasks 7–9) |
 | Tests | Vitest, fast-check, Playwright, pytest, ruff | See Part C |
 | UI state | Vue composables; Pinia only if needed | Session truth lives in the engine, not in Pinia |
 
@@ -181,7 +181,7 @@ Rules:
 
 | Interface | Primary | Fallback |
 |---|---|---|
-| TTS | AI service / Kokoro (audio + word timings) | Browser `speechSynthesis` (chunk highlight; word highlight only if boundary events are confirmed) |
+| TTS | AI service / Kokoro (audio + per-phoneme durations → word start times; chunk highlight when the word mapping doesn't add up) | Browser `speechSynthesis` (chunk highlight; word highlight only if boundary events are confirmed) |
 | STT | AI service / faster-whisper (per take) | Browser Web Speech: **opt-in only**, since it may send audio to the vendor's cloud. Otherwise manual advance. |
 | VAD | In-browser AudioWorklet VAD or Silero (decided in Task 8) | none → manual advance |
 | Segmenter | Deterministic rules | Ollama proposals (boundaries only, validated) |
@@ -418,7 +418,7 @@ States: `idle, preparing, ready, assistant_speaking, settle, waiting_for_speech,
 
 ## B7. Audio, highlighting, matching (defaults to validate)
 
-- **Assistant highlight tiers:** `word-provider` (TTS timings, driven by `audio.currentTime`) → `word-approx` (browser boundary events, only where probed) → `chunk`. Never interpolated.
+- **Assistant highlight tiers:** `word-provider` (TTS timings, driven by `audio.currentTime`) → `word-approx` (browser boundary events, only where probed) → `chunk`. Never interpolated. Task 7: `word-provider` uses word **start** times (≤ 40 ms from the audio); a word stays current until the next starts (phrase-final end times overshoot by about 240 ms); a chunk whose phoneme words don't add up to its script words falls back to `chunk`.
 - **Creator highlight (teleprompter):** streaming STT + fuzzy token alignment (lookahead 30 tokens, lookbehind 10). Low confidence holds the position. Phrase-level by default; word-level only if measured error ≤ 1 word in 90% of samples.
 - **Capture:** `getUserMedia` with echoCancellation/noiseSuppression/AGC on (toggles in advanced settings); a rolling `MediaRecorder` for ≥ 200 ms pre-roll; MIME type from `isTypeSupported` (webm/vp9+opus, then mp4).
 - **Echo test (A1):** play a known 2 s phrase, measure the mic's residual tail, and store the recommended `settleMs` per Device.
@@ -445,7 +445,7 @@ States: `idle, preparing, ready, assistant_speaking, settle, waiting_for_speech,
 | fastapi, uvicorn (pydantic transitively) | AI service | — | MIT/BSD | Task 0 | Approved (Task 0) |
 | pytest, ruff, pyright, httpx2 | Py tests, lint, strict types; httpx2 backs Starlette 1.7's TestClient | — | MIT/BSD | Task 0 | Approved (Task 0) |
 | faster-whisper | STT candidate | whisper.cpp | MIT | Task 8 | Candidate |
-| kokoro (+ espeak-ng) | TTS candidate | browser TTS | Apache-2.0 (verify weights & voices) | Task 7 | Candidate |
+| kokoro-onnx 0.6.1 + onnxruntime 1.23.2 (pinned: last Intel-Mac wheels) + Kokoro-82M timestamped ONNX (fp32) | TTS with word timings | browser TTS | MIT / MIT / Apache-2.0 (weights, voices, export). Pulls **phonemizer + espeak-ng: GPL-3.0** (open decision 6) | Task 7 → Task 10 | Chosen (Task 7) |
 | silero-vad | VAD candidate | in-browser VAD | MIT | Task 8 | Candidate |
 
 ## B9. Design system (summary)
@@ -649,8 +649,8 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 3 | Script model: parsing, segmentation, text preservation | DONE | 2 |
 | 4 | Project, script & session persistence (entities + API) | DONE | 1, 3 |
 | 5 | Session engine (state machine) | DONE | 2 |
-| 6 | Command grammar & transcript matcher | AWAITING CONFIRMATION | 2 |
-| 7 | Spike: TTS (Kokoro timings & latency, browser boundary events) | TODO | 0 |
+| 6 | Command grammar & transcript matcher | DONE | 2 |
+| 7 | Spike: TTS (Kokoro timings & latency, browser boundary events) | AWAITING CONFIRMATION | 0 |
 | 8 | Spike: STT & VAD on the dev CPU | TODO | 0 |
 | 9 | Spike: browser capture, echo/settle, pre-roll, MIME, stitching | TODO | 0 |
 | 10 | AI service v0 (health, TTS, STT) | TODO | 7, 8 |
@@ -845,8 +845,9 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 **Why:** Decides whether word-level assistant highlighting is real or falls back to chunk highlighting, and whether prefetching is needed.
 **Tests:** Manual + scripted measurements → `docs/measurements/tts-<date>.md`
 **Done when:**
-- [ ] A measurements doc with tables and a recommendation
-- [ ] Part E hypotheses H-10/H-11 updated to validated or refuted
+- [x] A measurements doc with tables and a recommendation (`docs/measurements/tts-2026-09-28.md`)
+- [x] Part E hypotheses H-10/H-11 updated to validated or refuted
+- [ ] Browser boundary events on the device matrix: `spikes/tts/boundary.html` run by the user in Chrome and Safari on this Mac, on iPhone Safari and on Android Chrome (Chromium headless on this Mac: all 10 word starts reported)
 
 ### Task 8 — Spike: STT & VAD *(parallel-safe; timebox 1.5 days)*
 
@@ -970,13 +971,13 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 
 # PART E — ASSUMPTIONS & OPEN DECISIONS
 
-**Environment (updated 2026-09-24):** macOS 15.6.1, Intel i9-9980HK, 32 GB RAM, no Apple Silicon/CUDA → CPU-only inference; **~9 GB free disk**. Node 22.23.3 via nvm (Homebrew's `node@20` sits earlier on PATH, so shells must put `~/.nvm/versions/node/v22.23.3/bin` first); pnpm 10.15 via corepack; uv 0.12.18 (in `~/.local/share/uv-tool`, linked into `~/.local/bin`); Python 3.12.6 for the AI service; Ollama 0.34 (no models); Playwright headless Chromium installed. **Homebrew 6 has dropped Intel macOS support** (formulae would build from source and need newer Xcode CLT), so ffmpeg will come from a static build. **PostgreSQL is not installed locally: the app database is on Neon and the integration-test database on Supabase** (user decision, 2026-09-24). Missing: ffmpeg, docker. Git repo initialized, no commits.
+**Environment (updated 2026-09-24):** macOS 26.7 (was 15.6.1), Intel i9-9980HK (no AVX-512/VNNI), 32 GB RAM, no Apple Silicon/CUDA → CPU-only inference; **92 GB free disk (2026-09-28)**. Node 22.23.3 via nvm (Homebrew's `node@20` sits earlier on PATH, so shells must put `~/.nvm/versions/node/v22.23.3/bin` first); pnpm 10.15 via corepack; uv 0.12.18 (in `~/.local/share/uv-tool`, linked into `~/.local/bin`); Python 3.12.6 for the AI service; Ollama 0.34 (no models); Playwright headless Chromium installed. **Homebrew 6 has dropped Intel macOS support** (formulae would build from source and need newer Xcode CLT), so ffmpeg will come from a static build. **PostgreSQL is not installed locally: the app database is on Neon and the integration-test database on Supabase** (user decision, 2026-09-24). Missing: ffmpeg, docker. Git repo initialized, no commits.
 
 | ID | Hypothesis | Validated in | Status |
 |---|---|---|---|
 | H-01 | The repeat-after flow appeals beyond the founding user | 5 creator sessions after Task 19 | Open |
-| H-10 | Kokoro gives word timings, or they can be derived by aligning the generated audio | Task 7 | Open |
-| H-11 | Kokoro synthesizes a sentence in ≤ 1.2 s on this CPU | Task 7 | Open |
+| H-10 | Kokoro gives word timings, or they can be derived by aligning the generated audio | Task 7 | **Validated**: timestamped export; word starts ≤ 40 ms (median 38 ms) from the audio; mapping to script words works for 8/10 test lines, and misses are detectable → chunk tier |
+| H-11 | Kokoro synthesizes a sentence in ≤ 1.2 s on this CPU | Task 7 | **Partly refuted**: fp32 6 words 1.0 s, 13 words 1.5 s, 27 words 3.0 s; int8 3× slower (no VNNI). Mitigation: prefetch the next chunk + cache |
 | H-12 | Headset settle ≤ 150 ms is enough | Task 9 | Open |
 | H-13 | Browser echo cancellation materially reduces assistant leakage in A1 | Task 9 | Open |
 | H-14 | faster-whisper `base.en` int8 transcribes a 5 s take in ≤ 1.5 s | Task 8 | Open |
@@ -991,11 +992,12 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | H-21 | Nitro's experimental OpenAPI generator (`defineRouteMeta` + `$global` components) can meet the §B5.1 standard; else fall back to a hand-written typed document | Task 1 | **Refuted** (nitropack 2.13.4: no top-level tags, fixed `servers`) → fallback |
 
 **Decisions needed from the user:**
-1. Test devices and browsers actually available (sets the device matrix).
-2. Disk: free ≥ 15 GB, or name an external folder for models and media, before Tasks 7–9.
+1. ~~Test devices and browsers~~ **Decided 2026-09-28:** this Intel Mac (Chrome, Safari), an iPhone (Safari) and an Android phone (Chrome). That is the R1 device matrix (§A6.10: no claims beyond it).
+2. ~~Disk~~ **Resolved 2026-09-28:** 92 GB free on the system disk; models go in `models/` (gitignored).
 3. Git remote, and permission to commit.
 4. Databases: the user puts `DATABASE_URL` (Neon), `DATABASE_URL_TEST` (Supabase, session pooler) and `DATABASE_URL_TEST_CA_CERT` in `.env` before Task 1's integration tests. Storing scripts in hosted DBs the user chose and configured is the user's opt-in under §A6.8. Media stays on local disk (`STORAGE_DIR`). Other Neon platform features (Auth, buckets, functions, deploy) are **not** used in R1 (§A8); adopting any needs a spec change.
 
+6. **GPL in the AI service (from Task 7):** Kokoro's text-to-phoneme step uses `phonemizer` + `espeak-ng` (GPL-3.0). Fine while the AI service only runs locally for you; before distributing it, either accept GPL obligations or switch to Kokoro's Apache-licensed `misaki` G2P. Decide by Task 10.
 ---
 
 # PART F — CHANGE LOG
@@ -1007,6 +1009,8 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 0.3.0 | 2026-09-23 | Added §B10 code standards: zero TS/lint errors, named constants instead of string-literal comparisons, Record lookups instead of nested ternaries; wired into Task 0 and the D0 gate |
 | 0.3.1 | 2026-09-24 | Task 0 implemented; TypeScript pinned to 6.0.x; PostgreSQL/ffmpeg install moved to Tasks 1/9 (Homebrew dropped Intel); dependency register updated |
 | 0.3.2 | 2026-09-24 | Task 0 confirmed by user → DONE |
+| 0.15.0 | 2026-09-28 | Task 7 spike: Kokoro via kokoro-onnx + onnx-community timestamped export (fp32) chosen; H-10 validated (word starts ≤ 40 ms), H-11 partly refuted (prefetch + cache); int8 3× slower on this CPU; onnxruntime pinned to 1.23.2 (last Intel-Mac wheels); GPL phonemizer/espeak-ng → open decision 6; boundary-event probe awaiting the user's devices |
+| 0.14.1 | 2026-09-28 | Task 6 confirmed by user → DONE |
 | 0.14.0 | 2026-09-28 | Task 6 implemented: match normalizer, grammar matcher with safe aliases, command-vs-script classifier, transcript matcher (coverage, Dice similarity, end rule, missing spans); `SpeechGate` moved to contracts; matching fixtures in `tests/fixtures/matching/`; Task 6 → AWAITING CONFIRMATION |
 | 0.13.1 | 2026-09-28 | Task 5 confirmed by user → DONE |
 | 0.13.0 | 2026-09-28 | Task 5 implemented: pure session engine (tokens as the stale guard, timers as effects, 300 ms tap coalescing, permission matrix, isolated-voice gate); user decision: running sessions keep reading (§B6 engine interpretation); `Arrangement` constants in contracts; golden E3/E10 logs; Task 5 → AWAITING CONFIRMATION |

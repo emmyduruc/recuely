@@ -1,0 +1,76 @@
+{
+ "lines": 10,
+ "mappable": 8,
+ "results": [
+  {
+   "line": "Welcome back, everyone. Today we're launching something new.",
+   "script_words": 8,
+   "sum_per_word": 8,
+   "sentence": 8,
+   "maps": true
+  },
+  {
+   "line": "It's small, light, and fast. Dr. Smith designed it — with care.",
+   "script_words": 11,
+   "sum_per_word": 11,
+   "sentence": 11,
+   "maps": true
+  },
+  {
+   "line": "Here it is, finally.",
+   "script_words": 4,
+   "sum_per_word": 4,
+   "sentence": 4,
+   "maps": true
+  },
+  {
+   "line": "Let's open it together.",
+   "script_words": 4,
+   "sum_per_word": 4,
+   "sentence": 4,
+   "maps": true
+  },
+  {
+   "line": "First, charge it overnight.",
+   "script_words": 4,
+   "sum_per_word": 4,
+   "sentence": 4,
+   "maps": true
+  },
+  {
+   "line": "Use 3 screws, 2 brackets and 1.5 metres of wood.",
+   "script_words": 10,
+   "sum_per_word": 12,
+   "sentence": 11,
+   "maps": false
+  },
+  {
+   "line": "We start at 10:30, e.g. right after lunch, in the U.S. office.",
+   "script_words": 12,
+   "sum_per_word": 12,
+   "sentence": 11,
+   "maps": false
+  },
+  {
+   "line": "The well-known résumé trick costs $20 — or 15% less.",
+   "script_words": 9,
+   "sum_per_word": 11,
+   "sentence": 11,
+   "maps": true
+  },
+  {
+   "line": "Hi there 👋 and welcome to part 2!",
+   "script_words": 8,
+   "sum_per_word": 9,
+   "sentence": 9,
+   "maps": true
+  },
+  {
+   "line": "It's the 21st time we've done this, and it won't be the last.",
+   "script_words": 13,
+   "sum_per_word": 14,
+   "sentence": 14,
+   "maps": true
+  }
+ ]
+}

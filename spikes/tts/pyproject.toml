@@ -1,0 +1,9 @@
+[project]
+name = "spike-tts"
+version = "0.0.0"
+description = "Task 7 spike (throwaway): Kokoro TTS latency, RAM, timings on this CPU. Not part of the app."
+requires-python = ">=3.12,<3.13"
+dependencies = ["kokoro-onnx==0.6.1", "onnxruntime==1.23.2", "soundfile==0.14.0"]
+
+[tool.uv]
+package = false
