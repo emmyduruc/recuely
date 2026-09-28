@@ -219,3 +219,13 @@ export interface Export {
 export interface CreateExportRequest {
   kind: ExportKind;
 }
+
+/** Audio/device arrangements (SPEC.md §A5). Speaker arrangements never accept voice during assistant speech. */
+export const Arrangement = {
+  OneDeviceSpeaker: 'a1',
+  OneDeviceHeadset: 'a2',
+  TwoDevicesSpeaker: 'a3',
+  TwoDevicesHeadset: 'a4',
+  TeleprompterOnly: 'a5',
+} as const;
+export type Arrangement = (typeof Arrangement)[keyof typeof Arrangement];

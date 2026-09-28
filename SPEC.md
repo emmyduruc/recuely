@@ -1,6 +1,6 @@
 # SPEC — Filming Assistant
 
-> Single source of truth for this project. Version **0.12.0** · Last updated 2026-09-24
+> Single source of truth for this project. Version **0.13.0** · Last updated 2026-09-24
 > Input brief: `product.md` (frozen). Repo rules for Claude Code: `CLAUDE.md`.
 > "Filming Assistant" is a placeholder name. Never use it in package names, identifiers, or branding.
 
@@ -393,6 +393,14 @@ States: `idle, preparing, ready, assistant_speaking, settle, waiting_for_speech,
 | recovering | DEVICE_RESTORED | — | paused | — |
 | ready | FINISH / NEXT at last chunk | — | completed | persist |
 
+**Engine interpretation (Task 5, v0.13.0):**
+- **Running sessions keep reading (user decision).** While a session is running, `ready` is passed straight through: after NEXT, PREVIOUS/NAVIGATE while running, or a confident auto-advance, the target chunk is read at once (auto and manual alike); CONTINUE/START after a pause re-reads the current chunk; CONTINUE in `review_or_advance` advances. `ready` is where a session rests: before the first START, after `TTS_FAILED`, or after navigating while stopped. Navigation while paused moves the chunk and stays paused. NEXT at the last chunk (any accepting state) → `completed`.
+- **Stale guard = tokens.** Every async operation (speech, timer, capture, take, evaluation) gets a unique token; a result is accepted only while its token is current, and leaving a state clears them. "seq match" in the table means token match (an `EVAL_RESULT` must also name the current chunk). `seq` counts accepted changes (autosave ordering, invariant 5); a single seq can't be the guard because VAD events inside one take would go stale.
+- **Evaluation timeout** is an engine timer (`evalTimeoutMs`, 5 s = the STT timeout in §B7); `TIMEOUT` in the table is that timer.
+- `FINISH` is accepted in `ready`, `paused` and `review_or_advance`. `PREPARE` also leaves `error`. `DEVICE_LOST`/`PERMISSION_REVOKED` also apply in `paused`.
+- SPEED (±0.1, 0.5–2), CHUNK_SIZE (emits `request_rechunk`; the runner answers with `PLAN_CHANGED`) and HELP don't change state. Identical touch/keyboard commands within 300 ms are coalesced; voice never is. NAVIGATE carries the resolved `args.chunkId`.
+- ✓* cells: the recognizer reports `speechGate` (duration, exact grammar match, similarity to the remaining chunk); the engine accepts voice only if ≤ 2.5 s, exact, and similarity < 0.5.
+
 **Invariants (property-tested):** (1) leaving a state cancels its timers and in-flight requests; (2) `stopTake` always persists a take; (3) the mic is armed only in `waiting_for_speech`/`creator_speaking` and never while paused, recovering, or in error; (4) no capture during `assistant_speaking` in A1; (5) `seq` is strictly increasing.
 
 **Command permission matrix** (✓ accepted · ✗ ignored · T touch/keyboard only)
@@ -639,8 +647,8 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 1 | User modelling & database (TypeORM + PostgreSQL) | DONE | 0 |
 | 2 | Shared contracts & fixtures | DONE | 0 |
 | 3 | Script model: parsing, segmentation, text preservation | DONE | 2 |
-| 4 | Project, script & session persistence (entities + API) | AWAITING CONFIRMATION | 1, 3 |
-| 5 | Session engine (state machine) | TODO | 2 |
+| 4 | Project, script & session persistence (entities + API) | DONE | 1, 3 |
+| 5 | Session engine (state machine) | AWAITING CONFIRMATION | 2 |
 | 6 | Command grammar & transcript matcher | TODO | 2 |
 | 7 | Spike: TTS (Kokoro timings & latency, browser boundary events) | TODO | 0 |
 | 8 | Spike: STT & VAD on the dev CPU | TODO | 0 |
@@ -808,9 +816,11 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 **Why:** Timing and cancellation bugs are the biggest risk to takes. A deterministic, hardware-free engine makes them testable.
 **Tests:** Unit (table-driven over every transition row and every state × intent cell) · Property (invariants 1–5) · Golden event-log replays for E3 and E10
 **Done when:**
-- [ ] 100% of transition rows and matrix cells have a test
-- [ ] E3 (mid-sentence pause never advances) and E10 (late result ignored) green
-- [ ] Zero imports from vue/nuxt/DOM/typeorm (lint enforced)
+- [x] 100% of transition rows and matrix cells have a test
+- [x] E3 (mid-sentence pause never advances) and E10 (late result ignored) green
+- [x] Zero imports from vue/nuxt/DOM/typeorm (lint enforced)
+
+**Evidence (2026-09-28):** `packages/session-engine` 343 tests: 21 transition-row tests (`B6-R01`…`B6-R21`) + 7 detail tests; the §B6 matrix copied verbatim and checked cell by cell for voice, touch and keyboard, both via `isCommandAllowed` and end-to-end through `step` (6 rows × 9 columns × every intent × 3 sources), plus the 5 states outside the matrix; invariants 1–5 and the stale-token rule as fast-check properties (1,000 random sessions each, stale tokens mixed in); golden replays `tests/fixtures/golden/e3-mid-sentence-pause.json` and `e10-late-result.json` (state, chunk and effects after every event); a purity test (imports only `@repo/contracts`; no clock, randomness, timers or globals). A temporary `vue` import in `src/` fails both lint and the purity test. Repo: typecheck 9/9 · lint 9/9 · `pnpm test` (contracts 164, db 36, script-model 54, session-engine 343, web 30, ai 75) · build ✓ · e2e 2/2 · test:int 26 + 23.
 
 ### Task 6 — Command grammar & transcript matcher
 
@@ -989,6 +999,9 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 0.3.0 | 2026-09-23 | Added §B10 code standards: zero TS/lint errors, named constants instead of string-literal comparisons, Record lookups instead of nested ternaries; wired into Task 0 and the D0 gate |
 | 0.3.1 | 2026-09-24 | Task 0 implemented; TypeScript pinned to 6.0.x; PostgreSQL/ffmpeg install moved to Tasks 1/9 (Homebrew dropped Intel); dependency register updated |
 | 0.3.2 | 2026-09-24 | Task 0 confirmed by user → DONE |
+| 0.13.0 | 2026-09-28 | Task 5 implemented: pure session engine (tokens as the stale guard, timers as effects, 300 ms tap coalescing, permission matrix, isolated-voice gate); user decision: running sessions keep reading (§B6 engine interpretation); `Arrangement` constants in contracts; golden E3/E10 logs; Task 5 → AWAITING CONFIRMATION |
+| 0.12.2 | 2026-09-28 | Task 4 confirmed by user ("proceed with task 5") → DONE; the /api/docs manual check was not reported back. Task 5 started |
+| 0.12.1 | 2026-09-25 | `pnpm dev` under Node 20.17 (the shell's nvm default) served 500 on every page: Nuxt's `oxc-walker` `require()`s an ESM parser, which needs Node ≥ 20.19/22.12. Root scripts now run `scripts/check-node.mjs` first (fails fast with a fix hint); `uuid-v7` no longer uses BigInt literals (ES2019 dev-bundle warning); Task 4 migration applied to the Neon dev DB |
 | 0.12.0 | 2026-09-25 | Task 4 implemented (8 tables, trigger-protected takes, streamed write-once media with ranges, 22 routes, OpenAPI from contract schemas, storage settings in `.env.example`); Task 4 → AWAITING CONFIRMATION |
 | 0.11.0 | 2026-09-24 | Task 4 API decided with user: two-step take upload (JSON create + streamed raw `PUT …/media`, no multipart), immutable chunk-plan versions (`PATCH /api/chunk-plans/:id` dropped); route table updated (GET plan/session/takes, media GET/PUT, restore, script list); design decisions recorded under Task 4 |
 | 0.10.1 | 2026-09-24 | Task 3 confirmed by user → DONE. Task 4 started |

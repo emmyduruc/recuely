@@ -1,0 +1,20 @@
+{
+  "scenario": "E3",
+  "description": "Creator pauses mid-sentence: a short pause keeps the same take running (the stale silence timer is ignored), a long pause is evaluated, the half-delivered line is not advanced, and the take is committed, never erased.",
+  "settings": { "arrangement": "a1", "autoAdvance": true, "captureVideo": true, "settleMs": 600, "silenceMs": 1200, "noSpeechMs": 8000, "evalTimeoutMs": 5000, "rate": 1 },
+  "chunkIds": ["c1", "c2", "c3"],
+  "steps": [
+    { "at": 0, "event": { "type": "PREPARE" }, "state": "preparing", "chunkIndex": 0, "effects": ["probe_capabilities", "persist"] },
+    { "at": 100, "event": { "type": "CAPS_READY", "minCapsMet": true }, "state": "ready", "chunkIndex": 0, "effects": ["persist"] },
+    { "at": 200, "event": { "type": "COMMAND", "command": { "intent": "START", "source": "touch" } }, "state": "assistant_speaking", "chunkIndex": 0, "effects": ["speak", "persist"] },
+    { "at": 2000, "event": { "type": "TTS_ENDED", "token": 1 }, "state": "settle", "chunkIndex": 0, "effects": ["start_timer", "persist"] },
+    { "at": 2600, "event": { "type": "TIMER", "token": 2 }, "state": "waiting_for_speech", "chunkIndex": 0, "effects": ["arm_capture", "start_timer", "persist"] },
+    { "at": 3000, "event": { "type": "VAD_START", "token": 3 }, "state": "creator_speaking", "chunkIndex": 0, "effects": ["cancel_timer", "start_take", "persist"] },
+    { "at": 4500, "event": { "type": "VAD_END", "token": 3 }, "state": "creator_speaking", "chunkIndex": 0, "effects": ["start_timer"] },
+    { "at": 5400, "event": { "type": "VAD_START", "token": 3 }, "state": "creator_speaking", "chunkIndex": 0, "effects": ["cancel_timer"], "note": "Resumes after 0.9 s: same take, silence timer cancelled." },
+    { "at": 5700, "event": { "type": "TIMER", "token": 6 }, "state": "creator_speaking", "chunkIndex": 0, "effects": [], "note": "The cancelled silence timer fires late: ignored." },
+    { "at": 7000, "event": { "type": "VAD_END", "token": 3 }, "state": "creator_speaking", "chunkIndex": 0, "effects": ["start_timer"] },
+    { "at": 8200, "event": { "type": "TIMER", "token": 7 }, "state": "evaluating", "chunkIndex": 0, "effects": ["stop_take", "disarm_capture", "evaluate", "start_timer", "persist"], "note": "A long pause: the take is stopped (complete) and evaluated." },
+    { "at": 9000, "event": { "type": "EVAL_RESULT", "token": 8, "chunkId": "c1", "decision": "ask" }, "state": "review_or_advance", "chunkIndex": 0, "effects": ["cancel_timer", "commit_take", "prompt", "persist"], "note": "Half-delivered: ask, never advance." }
+  ]
+}

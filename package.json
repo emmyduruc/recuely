@@ -7,15 +7,15 @@
     "node": ">=22.19.0"
   },
   "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "typecheck": "turbo run typecheck",
-    "lint": "turbo run lint",
-    "test": "turbo run test",
-    "test:int": "turbo run test:int",
-    "test:e2e": "turbo run test:e2e",
-    "db:migrate": "turbo run db:migrate",
-    "db:seed": "turbo run db:seed"
+    "dev": "node scripts/check-node.mjs && turbo run dev",
+    "build": "node scripts/check-node.mjs && turbo run build",
+    "typecheck": "node scripts/check-node.mjs && turbo run typecheck",
+    "lint": "node scripts/check-node.mjs && turbo run lint",
+    "test": "node scripts/check-node.mjs && turbo run test",
+    "test:int": "node scripts/check-node.mjs && turbo run test:int",
+    "test:e2e": "node scripts/check-node.mjs && turbo run test:e2e",
+    "db:migrate": "node scripts/check-node.mjs && turbo run db:migrate",
+    "db:seed": "node scripts/check-node.mjs && turbo run db:seed"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

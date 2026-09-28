@@ -12,10 +12,11 @@ export function uuidv7(now: number = Date.now(), random: Uint8Array = randomByte
     throw new RangeError(`uuidv7 needs ${String(RANDOM_BYTES)} random bytes`);
   }
   const bytes = new Uint8Array(TIMESTAMP_BYTES + RANDOM_BYTES);
-  let timestamp = BigInt(now);
+  // Plain arithmetic (no BigInt literals, which the ES2019 dev bundle warns about): exact below 2^53.
+  let timestamp = Math.trunc(now);
   for (let i = TIMESTAMP_BYTES - 1; i >= 0; i -= 1) {
-    bytes[i] = Number(timestamp & 0xffn);
-    timestamp >>= 8n;
+    bytes[i] = timestamp % 256;
+    timestamp = Math.floor(timestamp / 256);
   }
   bytes.set(random, TIMESTAMP_BYTES);
   bytes[6] = 0x70 | ((bytes[6] ?? 0) & 0x0f); // version 7

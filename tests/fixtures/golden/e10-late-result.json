@@ -1,0 +1,20 @@
+{
+  "scenario": "E10",
+  "description": "The evaluation of chunk 1 times out, the creator moves on to chunk 2, then the late transcription result for chunk 1 (and a stale speech event) arrive: both are ignored and chunk 2 is not advanced.",
+  "settings": { "arrangement": "a1", "autoAdvance": true, "captureVideo": true, "settleMs": 600, "silenceMs": 1200, "noSpeechMs": 8000, "evalTimeoutMs": 5000, "rate": 1 },
+  "chunkIds": ["c1", "c2", "c3"],
+  "steps": [
+    { "at": 0, "event": { "type": "PREPARE" }, "state": "preparing", "chunkIndex": 0, "effects": ["probe_capabilities", "persist"] },
+    { "at": 100, "event": { "type": "CAPS_READY", "minCapsMet": true }, "state": "ready", "chunkIndex": 0, "effects": ["persist"] },
+    { "at": 200, "event": { "type": "COMMAND", "command": { "intent": "START", "source": "touch" } }, "state": "assistant_speaking", "chunkIndex": 0, "effects": ["speak", "persist"] },
+    { "at": 2000, "event": { "type": "TTS_ENDED", "token": 1 }, "state": "settle", "chunkIndex": 0, "effects": ["start_timer", "persist"] },
+    { "at": 2600, "event": { "type": "TIMER", "token": 2 }, "state": "waiting_for_speech", "chunkIndex": 0, "effects": ["arm_capture", "start_timer", "persist"] },
+    { "at": 3000, "event": { "type": "VAD_START", "token": 3 }, "state": "creator_speaking", "chunkIndex": 0, "effects": ["cancel_timer", "start_take", "persist"] },
+    { "at": 5000, "event": { "type": "VAD_END", "token": 3 }, "state": "creator_speaking", "chunkIndex": 0, "effects": ["start_timer"] },
+    { "at": 6200, "event": { "type": "TIMER", "token": 6 }, "state": "evaluating", "chunkIndex": 0, "effects": ["stop_take", "disarm_capture", "evaluate", "start_timer", "persist"] },
+    { "at": 11200, "event": { "type": "TIMER", "token": 8 }, "state": "review_or_advance", "chunkIndex": 0, "effects": ["cancel_evaluation", "commit_take", "prompt", "persist"], "note": "STT is slow: the 5 s evaluation timeout fires." },
+    { "at": 12000, "event": { "type": "COMMAND", "command": { "intent": "NEXT", "source": "touch" } }, "state": "assistant_speaking", "chunkIndex": 1, "effects": ["speak", "persist"] },
+    { "at": 12500, "event": { "type": "EVAL_RESULT", "token": 7, "chunkId": "c1", "decision": "advance" }, "state": "assistant_speaking", "chunkIndex": 1, "effects": [], "note": "The late result for chunk 1 is ignored: chunk 2 is not advanced." },
+    { "at": 12600, "event": { "type": "TTS_ENDED", "token": 1 }, "state": "assistant_speaking", "chunkIndex": 1, "effects": [], "note": "A stale speech event from chunk 1 is ignored too." }
+  ]
+}

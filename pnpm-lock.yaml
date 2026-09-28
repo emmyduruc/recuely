@@ -118,7 +118,18 @@ importers:
         specifier: 4.10.2
         version: 4.10.2
 
-  packages/session-engine: {}
+  packages/session-engine:
+    dependencies:
+      '@repo/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+    devDependencies:
+      '@types/node':
+        specifier: 22.20.4
+        version: 22.20.4
+      fast-check:
+        specifier: 4.10.2
+        version: 4.10.2
 
   packages/ui: {}
 
