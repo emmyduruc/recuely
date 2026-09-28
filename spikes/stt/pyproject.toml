@@ -1,0 +1,9 @@
+[project]
+name = "spike-stt"
+version = "0.0.0"
+description = "Task 8 spike (throwaway): faster-whisper and VAD latency/accuracy on this CPU. Not part of the app."
+requires-python = ">=3.12,<3.13"
+dependencies = ["faster-whisper==1.2.1", "ctranslate2==4.8.2", "onnxruntime==1.23.2", "scipy==1.18.1", "soundfile==0.14.0", "kokoro-onnx==0.6.1"]
+
+[tool.uv]
+package = false

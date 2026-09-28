@@ -1,0 +1,531 @@
+[
+ {
+  "model": "base.en",
+  "beam": 1,
+  "load_s": 20.05,
+  "peak_rss_mb": 977,
+  "latencyMedian_s": 0.63,
+  "latencyMax_s": 0.67,
+  "latency5sTake_s": 0.63,
+  "fiveSecondClips": 36,
+  "rtfMedian": 0.13,
+  "unbiased": {
+   "falseAdvances": [],
+   "falseAsks": [
+    "l3-paraphrase.wav: \"You just need three tools and about an hour.\""
+   ],
+   "inventedWords": 1,
+   "byCondition": {
+    "clean": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "noise 10 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "noise 5 dB": {
+     "werMedian": 0.038,
+     "werMax": 0.111,
+     "advanced": "6/6"
+    },
+    "paused 2.5 s": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "paraphrase": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "5/6"
+    },
+    "half-delivered": {
+     "werMedian": 0,
+     "werMax": 0.25,
+     "advanced": "0/6"
+    },
+    "another line": {
+     "werMedian": 0,
+     "werMax": 0.111,
+     "advanced": "0/6"
+    },
+    "assistant bleed -20 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    }
+   }
+  },
+  "biased": {
+   "falseAdvances": [],
+   "falseAsks": [
+    "l3-paraphrase.wav: \"You just need three tools and about an hour.\"",
+    "l5-paused.wav: \"See you in the next video.\""
+   ],
+   "inventedWords": 2,
+   "byCondition": {
+    "clean": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "6/6"
+    },
+    "noise 10 dB": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "6/6"
+    },
+    "noise 5 dB": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "6/6"
+    },
+    "paused 2.5 s": {
+     "werMedian": 0,
+     "werMax": 0.4,
+     "advanced": "5/6"
+    },
+    "paraphrase": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "5/6"
+    },
+    "half-delivered": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "0/6"
+    },
+    "another line": {
+     "werMedian": 0,
+     "werMax": 0.111,
+     "advanced": "0/6"
+    },
+    "assistant bleed -20 dB": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "6/6"
+    }
+   }
+  },
+  "silentClips": [
+   {
+    "file": "noise-only.wav",
+    "biased": false,
+    "transcript": ""
+   },
+   {
+    "file": "noise-only.wav",
+    "biased": true,
+    "transcript": ""
+   },
+   {
+    "file": "bleed-only.wav",
+    "biased": false,
+    "transcript": "Welcome back to the channel, everyone."
+   },
+   {
+    "file": "bleed-only.wav",
+    "biased": true,
+    "transcript": "Welcome back to the channel, everyone."
+   }
+  ]
+ },
+ {
+  "model": "base.en",
+  "beam": 5,
+  "load_s": 1.1,
+  "peak_rss_mb": 1243,
+  "latencyMedian_s": 0.67,
+  "latencyMax_s": 4.38,
+  "latency5sTake_s": 0.67,
+  "fiveSecondClips": 36,
+  "rtfMedian": 0.14,
+  "unbiased": {
+   "falseAdvances": [],
+   "falseAsks": [
+    "l3-paraphrase.wav: \"You just need three tools and about an hour.\""
+   ],
+   "inventedWords": 1,
+   "byCondition": {
+    "clean": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "noise 10 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "noise 5 dB": {
+     "werMedian": 0.038,
+     "werMax": 0.111,
+     "advanced": "6/6"
+    },
+    "paused 2.5 s": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "paraphrase": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "5/6"
+    },
+    "half-delivered": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "0/6"
+    },
+    "another line": {
+     "werMedian": 0,
+     "werMax": 0.111,
+     "advanced": "0/6"
+    },
+    "assistant bleed -20 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    }
+   }
+  },
+  "biased": {
+   "falseAdvances": [
+    "l5-half.wav"
+   ],
+   "falseAsks": [
+    "l3-paraphrase.wav: \"You just need three tools and about an hour.\""
+   ],
+   "inventedWords": 7,
+   "byCondition": {
+    "clean": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "6/6"
+    },
+    "noise 10 dB": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "6/6"
+    },
+    "noise 5 dB": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "6/6"
+    },
+    "paused 2.5 s": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "6/6"
+    },
+    "paraphrase": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "5/6"
+    },
+    "half-delivered": {
+     "werMedian": 0,
+     "werMax": 1,
+     "advanced": "1/6"
+    },
+    "another line": {
+     "werMedian": 0,
+     "werMax": 0.111,
+     "advanced": "0/6"
+    },
+    "assistant bleed -20 dB": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "6/6"
+    }
+   }
+  },
+  "silentClips": [
+   {
+    "file": "noise-only.wav",
+    "biased": false,
+    "transcript": "Good. Good. Great. Thank you. We're going to talk on our website. We'll see you later. Bye. Bye. Bye. Bye. Bye. Bye. Bye. Bye. Bye. Bye. Bye. Bye. Bye. Bye. Bye. Bye. Bye. Bye. Bye. Bye. Bye. Bye."
+   },
+   {
+    "file": "noise-only.wav",
+    "biased": true,
+    "transcript": ""
+   },
+   {
+    "file": "bleed-only.wav",
+    "biased": false,
+    "transcript": "Welcome back to the channel, everyone."
+   },
+   {
+    "file": "bleed-only.wav",
+    "biased": true,
+    "transcript": "Welcome back to the channel, everyone."
+   }
+  ]
+ },
+ {
+  "model": "small.en",
+  "beam": 1,
+  "load_s": 59.7,
+  "peak_rss_mb": 2147,
+  "latencyMedian_s": 1.95,
+  "latencyMax_s": 2.05,
+  "latency5sTake_s": 1.95,
+  "fiveSecondClips": 36,
+  "rtfMedian": 0.4,
+  "unbiased": {
+   "falseAdvances": [],
+   "falseAsks": [
+    "l3-paraphrase.wav: \"You just need three tools and about an hour.\""
+   ],
+   "inventedWords": 1,
+   "byCondition": {
+    "clean": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "noise 10 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "noise 5 dB": {
+     "werMedian": 0,
+     "werMax": 0.111,
+     "advanced": "6/6"
+    },
+    "paused 2.5 s": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "paraphrase": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "5/6"
+    },
+    "half-delivered": {
+     "werMedian": 0,
+     "werMax": 0.5,
+     "advanced": "0/6"
+    },
+    "another line": {
+     "werMedian": 0,
+     "werMax": 0.111,
+     "advanced": "0/6"
+    },
+    "assistant bleed -20 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    }
+   }
+  },
+  "biased": {
+   "falseAdvances": [],
+   "falseAsks": [
+    "l3-paraphrase.wav: \"You just need three tools and about an hour.\"",
+    "l4-paused.wav: \"Wait for the green light.\"",
+    "l5-paused.wav: \"See you in the next video.\""
+   ],
+   "inventedWords": 2,
+   "byCondition": {
+    "clean": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "6/6"
+    },
+    "noise 10 dB": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "6/6"
+    },
+    "noise 5 dB": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "6/6"
+    },
+    "paused 2.5 s": {
+     "werMedian": 0,
+     "werMax": 0.444,
+     "advanced": "4/6"
+    },
+    "paraphrase": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "5/6"
+    },
+    "half-delivered": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "0/6"
+    },
+    "another line": {
+     "werMedian": 0,
+     "werMax": 0.111,
+     "advanced": "0/6"
+    },
+    "assistant bleed -20 dB": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "6/6"
+    }
+   }
+  },
+  "silentClips": [
+   {
+    "file": "noise-only.wav",
+    "biased": false,
+    "transcript": ""
+   },
+   {
+    "file": "noise-only.wav",
+    "biased": true,
+    "transcript": ""
+   },
+   {
+    "file": "bleed-only.wav",
+    "biased": false,
+    "transcript": "Welcome back to the channel, everyone."
+   },
+   {
+    "file": "bleed-only.wav",
+    "biased": true,
+    "transcript": "Welcome back to the channel, everyone."
+   }
+  ]
+ },
+ {
+  "model": "tiny.en",
+  "beam": 1,
+  "load_s": 14.97,
+  "peak_rss_mb": 718,
+  "latencyMedian_s": 0.35,
+  "latencyMax_s": 0.4,
+  "latency5sTake_s": 0.35,
+  "fiveSecondClips": 36,
+  "rtfMedian": 0.07,
+  "unbiased": {
+   "falseAdvances": [],
+   "falseAsks": [
+    "l3-paraphrase.wav: \"You just need three tools and about an hour.\""
+   ],
+   "inventedWords": 0,
+   "byCondition": {
+    "clean": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "noise 10 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "noise 5 dB": {
+     "werMedian": 0,
+     "werMax": 0.1,
+     "advanced": "6/6"
+    },
+    "paused 2.5 s": {
+     "werMedian": 0,
+     "werMax": 0.154,
+     "advanced": "6/6"
+    },
+    "paraphrase": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "5/6"
+    },
+    "half-delivered": {
+     "werMedian": 0,
+     "werMax": 0.25,
+     "advanced": "0/6"
+    },
+    "another line": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "0/6"
+    },
+    "assistant bleed -20 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    }
+   }
+  },
+  "biased": {
+   "falseAdvances": [],
+   "falseAsks": [
+    "l3-paraphrase.wav: \"You just need three tools and about an hour.\""
+   ],
+   "inventedWords": 1,
+   "byCondition": {
+    "clean": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "6/6"
+    },
+    "noise 10 dB": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "6/6"
+    },
+    "noise 5 dB": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "6/6"
+    },
+    "paused 2.5 s": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "6/6"
+    },
+    "paraphrase": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "5/6"
+    },
+    "half-delivered": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "0/6"
+    },
+    "another line": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "0/6"
+    },
+    "assistant bleed -20 dB": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "6/6"
+    }
+   }
+  },
+  "silentClips": [
+   {
+    "file": "noise-only.wav",
+    "biased": false,
+    "transcript": ""
+   },
+   {
+    "file": "noise-only.wav",
+    "biased": true,
+    "transcript": ""
+   },
+   {
+    "file": "bleed-only.wav",
+    "biased": false,
+    "transcript": "Welcome back to the channel, everyone."
+   },
+   {
+    "file": "bleed-only.wav",
+    "biased": true,
+    "transcript": "Welcome back to the channel, everyone."
+   }
+  ]
+ }
+]

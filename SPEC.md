@@ -1,6 +1,6 @@
 # SPEC — Filming Assistant
 
-> Single source of truth for this project. Version **0.15.0** · Last updated 2026-09-24
+> Single source of truth for this project. Version **0.16.0** · Last updated 2026-09-24
 > Input brief: `product.md` (frozen). Repo rules for Claude Code: `CLAUDE.md`.
 > "Filming Assistant" is a placeholder name. Never use it in package names, identifiers, or branding.
 
@@ -182,8 +182,8 @@ Rules:
 | Interface | Primary | Fallback |
 |---|---|---|
 | TTS | AI service / Kokoro (audio + per-phoneme durations → word start times; chunk highlight when the word mapping doesn't add up) | Browser `speechSynthesis` (chunk highlight; word highlight only if boundary events are confirmed) |
-| STT | AI service / faster-whisper (per take) | Browser Web Speech: **opt-in only**, since it may send audio to the vendor's cloud. Otherwise manual advance. |
-| VAD | In-browser AudioWorklet VAD or Silero (decided in Task 8) | none → manual advance |
+| STT | AI service / faster-whisper `base.en` int8, greedy, **no chunk-text prompt**, only on VAD-detected speech (Task 8) | Browser Web Speech: **opt-in only**, since it may send audio to the vendor's cloud. Otherwise manual advance. |
+| VAD | **Silero** (Task 8; an energy VAD misses speech in noise). Browser (onnxruntime-web) vs AI-service placement decided in Task 13 | none → manual advance |
 | Segmenter | Deterministic rules | Ollama proposals (boundaries only, validated) |
 
 ## B4. Data model (TypeORM entities, PostgreSQL)
@@ -444,9 +444,9 @@ States: `idle, preparing, ready, assistant_speaking, settle, waiting_for_speech,
 | ajv | JSON Schema validation (OpenAPI 3.1 document check in Task 1; contract schemas in Task 2) | hand validators | MIT | Task 1, Task 2 | Approved (user) |
 | fastapi, uvicorn (pydantic transitively) | AI service | — | MIT/BSD | Task 0 | Approved (Task 0) |
 | pytest, ruff, pyright, httpx2 | Py tests, lint, strict types; httpx2 backs Starlette 1.7's TestClient | — | MIT/BSD | Task 0 | Approved (Task 0) |
-| faster-whisper | STT candidate | whisper.cpp | MIT | Task 8 | Candidate |
+| faster-whisper 1.2.1 + ctranslate2 4.8.2 (Intel-Mac wheels OK), model `base.en` int8 | STT | whisper.cpp | MIT | Task 8 → Task 10 | Chosen (Task 8); `tiny.en` kept only as a fallback if real takes show no accuracy difference |
 | kokoro-onnx 0.6.1 + onnxruntime 1.23.2 (pinned: last Intel-Mac wheels) + Kokoro-82M timestamped ONNX (fp32) | TTS with word timings | browser TTS | MIT / MIT / Apache-2.0 (weights, voices, export). Pulls **phonemizer + espeak-ng: GPL-3.0** (open decision 6) | Task 7 → Task 10 | Chosen (Task 7) |
-| silero-vad | VAD candidate | in-browser VAD | MIT | Task 8 | Candidate |
+| Silero VAD v5 (ONNX, 2.3 MB) | VAD | energy VAD (refuted) | MIT | Task 8 → Task 13 | Chosen (Task 8). Browser use needs `onnxruntime-web` (MIT), to be proposed in Task 13 |
 
 ## B9. Design system (summary)
 
@@ -650,8 +650,8 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 4 | Project, script & session persistence (entities + API) | DONE | 1, 3 |
 | 5 | Session engine (state machine) | DONE | 2 |
 | 6 | Command grammar & transcript matcher | DONE | 2 |
-| 7 | Spike: TTS (Kokoro timings & latency, browser boundary events) | AWAITING CONFIRMATION | 0 |
-| 8 | Spike: STT & VAD on the dev CPU | TODO | 0 |
+| 7 | Spike: TTS (Kokoro timings & latency, browser boundary events) | DONE | 0 |
+| 8 | Spike: STT & VAD on the dev CPU | AWAITING CONFIRMATION | 0 |
 | 9 | Spike: browser capture, echo/settle, pre-roll, MIME, stitching | TODO | 0 |
 | 10 | AI service v0 (health, TTS, STT) | TODO | 7, 8 |
 | 11 | Design system & app shell | TODO | 0 |
@@ -855,8 +855,9 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 **Why:** Picks the STT model and VAD approach that meet the latency targets on the real hardware.
 **Tests:** Synthetic audio (pytest) + manual → `docs/measurements/stt-vad-<date>.md`
 **Done when:**
-- [ ] A model and VAD approach chosen with numbers; §B8 updated (≤ 1 candidate kept per interface)
-- [ ] H-14, H-15, H-17 updated
+- [x] A model and VAD approach chosen with numbers; §B8 updated (≤ 1 candidate kept per interface): `docs/measurements/stt-vad-2026-09-28.md`
+- [x] H-14, H-15, H-17 updated (and H-27 added for Task 9)
+- [ ] Optional: real takes from the user (5–10 WAVs) to confirm accuracy on real voices; the fixtures so far are synthetic
 
 ### Task 9 — Spike: browser capture *(parallel-safe; timebox 1.5 days)*
 
@@ -980,15 +981,16 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | H-11 | Kokoro synthesizes a sentence in ≤ 1.2 s on this CPU | Task 7 | **Partly refuted**: fp32 6 words 1.0 s, 13 words 1.5 s, 27 words 3.0 s; int8 3× slower (no VNNI). Mitigation: prefetch the next chunk + cache |
 | H-12 | Headset settle ≤ 150 ms is enough | Task 9 | Open |
 | H-13 | Browser echo cancellation materially reduces assistant leakage in A1 | Task 9 | Open |
-| H-14 | faster-whisper `base.en` int8 transcribes a 5 s take in ≤ 1.5 s | Task 8 | Open |
-| H-15 | Biasing STT with the chunk text doesn't cause false "delivered" matches | Task 8 | Open |
+| H-14 | faster-whisper `base.en` int8 transcribes a 5 s take in ≤ 1.5 s | Task 8 | **Validated**: 0.63 s greedy (RTF 0.13), 1.0 GB RSS |
+| H-15 | Biasing STT with the chunk text doesn't cause false "delivered" matches | Task 8 | **Refuted**: 1 false advance and 7 invented chunk words (beam 5), paused takes truncated → never bias |
 | H-16 | Thresholds 0.80/0.70 + end-token rule → 0 false advances on the 60-s script | Task 19 | Open |
-| H-17 | In-browser VAD is good enough (no onnxruntime-web needed) | Task 8 | Open |
+| H-17 | In-browser VAD is good enough (no onnxruntime-web needed) | Task 8 | **Refuted** for an energy VAD (misses 4/6 takes at 5 dB SNR, onset up to 480 ms); Silero: 0 misses, 72 ms median |
 | H-18 | A rolling recorder avoids clipping take starts | Task 9 | Open |
 | H-19 | Same-MIME take stitching works in Chrome and Safari without ffmpeg.wasm | Task 9 | Open |
 | H-20 | TypeORM bundles cleanly in Nitro with `EntitySchema` + externals | Task 1 | **Validated (build)**: `@repo/*` inlined, `typeorm`/`pg` external and traced into `.output/server/node_modules`; `pg` passed to TypeORM as `driver`. The live-DB run is pending the Neon URLs |
 | H-22 | Supabase (session pooler, eu-west-1) keeps `pnpm test:int` under 60 s, and Neon keeps dev API calls responsive, from this machine | Task 1 | **Validated**: 45 s incl. build (Supabase transaction pooler works too); Neon cold start ≈ 3.4 s on first connect only |
 | H-26 | The `short`/`smart` word budgets (8 / 16, merge < 6 up to 12) give natural repeat-after chunks | Task 19 | Open |
+| H-27 | With the settle time and echo cancellation, no assistant residual reaches a take in A1 (a -20 dB residual is transcribed as the chunk and would advance a silent take) | Task 9 | Open |
 | H-21 | Nitro's experimental OpenAPI generator (`defineRouteMeta` + `$global` components) can meet the §B5.1 standard; else fall back to a hand-written typed document | Task 1 | **Refuted** (nitropack 2.13.4: no top-level tags, fixed `servers`) → fallback |
 
 **Decisions needed from the user:**
@@ -1009,6 +1011,8 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 0.3.0 | 2026-09-23 | Added §B10 code standards: zero TS/lint errors, named constants instead of string-literal comparisons, Record lookups instead of nested ternaries; wired into Task 0 and the D0 gate |
 | 0.3.1 | 2026-09-24 | Task 0 implemented; TypeScript pinned to 6.0.x; PostgreSQL/ffmpeg install moved to Tasks 1/9 (Homebrew dropped Intel); dependency register updated |
 | 0.3.2 | 2026-09-24 | Task 0 confirmed by user → DONE |
+| 0.16.0 | 2026-09-28 | Task 8 spike: faster-whisper `base.en` int8 greedy chosen (0.63 s per 5 s take, 0 false advances); chunk-text prompting refuted (H-15); Silero VAD chosen over an energy VAD (H-17); new H-27: assistant echo in a take would look like a delivered line (Task 9 must set settle from the measured tail); Task 8 → AWAITING CONFIRMATION |
+| 0.15.1 | 2026-09-28 | Task 7 confirmed by user → DONE; the browser boundary-event runs on the user's devices are deferred (the probe stays in `spikes/tts/boundary.html`). Task 8 started |
 | 0.15.0 | 2026-09-28 | Task 7 spike: Kokoro via kokoro-onnx + onnx-community timestamped export (fp32) chosen; H-10 validated (word starts ≤ 40 ms), H-11 partly refuted (prefetch + cache); int8 3× slower on this CPU; onnxruntime pinned to 1.23.2 (last Intel-Mac wheels); GPL phonemizer/espeak-ng → open decision 6; boundary-event probe awaiting the user's devices |
 | 0.14.1 | 2026-09-28 | Task 6 confirmed by user → DONE |
 | 0.14.0 | 2026-09-28 | Task 6 implemented: match normalizer, grammar matcher with safe aliases, command-vs-script classifier, transcript matcher (coverage, Dice similarity, end rule, missing spans); `SpeechGate` moved to contracts; matching fixtures in `tests/fixtures/matching/`; Task 6 → AWAITING CONFIRMATION |

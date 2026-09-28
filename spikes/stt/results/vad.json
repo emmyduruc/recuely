@@ -1,0 +1,1607 @@
+{
+ "summary": {
+  "silero": {
+   "false_starts": [
+    "l2-bleed.wav",
+    "l5-bleed.wav",
+    "bleed-only.wav"
+   ],
+   "missed": [],
+   "onset_latency_ms_median": 72.0,
+   "onset_latency_ms_max": 168,
+   "onset_latency_ms_min": 40,
+   "pause_ends_segment": "6/6",
+   "pause_restarts": "6/6",
+   "cpu_ms_per_audio_s": 7.2
+  },
+  "energy": {
+   "false_starts": [
+    "l1-bleed.wav",
+    "bleed-only.wav"
+   ],
+   "missed": [
+    "l1-noise5.wav",
+    "l2-noise5.wav",
+    "l3-noise5.wav",
+    "l5-noise5.wav"
+   ],
+   "onset_latency_ms_median": 40.0,
+   "onset_latency_ms_max": 480,
+   "onset_latency_ms_min": 20,
+   "pause_ends_segment": "6/6",
+   "pause_restarts": "6/6"
+  }
+ },
+ "rows": [
+  {
+   "file": "l0-clean.wav",
+   "condition": "clean",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 104,
+    "missed": false,
+    "segments": [
+     [
+      0.704,
+      2.176
+     ],
+     [
+      2.272,
+      2.848
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 100,
+    "missed": false,
+    "segments": [
+     [
+      0.7,
+      2.84
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l0-noise10.wav",
+   "condition": "noise 10 dB",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 136,
+    "missed": false,
+    "segments": [
+     [
+      0.736,
+      2.176
+     ],
+     [
+      2.272,
+      2.848
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 160,
+    "missed": false,
+    "segments": [
+     [
+      0.76,
+      1.22
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l0-noise5.wav",
+   "condition": "noise 5 dB",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 168,
+    "missed": false,
+    "segments": [
+     [
+      0.768,
+      2.176
+     ],
+     [
+      2.272,
+      2.88
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 180,
+    "missed": false,
+    "segments": [
+     [
+      0.78,
+      0.9
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l0-paused.wav",
+   "condition": "paused 2.5 s",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 104,
+    "missed": false,
+    "segments": [
+     [
+      0.704,
+      1.568
+     ],
+     [
+      4.064,
+      4.672
+     ],
+     [
+      4.8,
+      5.376
+     ]
+    ],
+    "ended_in_pause": true,
+    "restarted_after_pause": true
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 100,
+    "missed": false,
+    "segments": [
+     [
+      0.7,
+      1.58
+     ],
+     [
+      4.06,
+      5.34
+     ]
+    ],
+    "ended_in_pause": true,
+    "restarted_after_pause": true
+   }
+  },
+  {
+   "file": "l0-paraphrase.wav",
+   "condition": "paraphrase",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 104,
+    "missed": false,
+    "segments": [
+     [
+      0.704,
+      2.24
+     ],
+     [
+      2.4,
+      2.944
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 100,
+    "missed": false,
+    "segments": [
+     [
+      0.7,
+      2.18
+     ],
+     [
+      2.38,
+      2.94
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l0-half.wav",
+   "condition": "half-delivered",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 104,
+    "missed": false,
+    "segments": [
+     [
+      0.704,
+      1.792
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 80,
+    "missed": false,
+    "segments": [
+     [
+      0.68,
+      1.76
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l0-otherline.wav",
+   "condition": "another line",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.672,
+      1.12
+     ],
+     [
+      1.248,
+      3.424
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      3.38
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l0-bleed.wav",
+   "condition": "assistant bleed -20 dB",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 136,
+    "missed": false,
+    "segments": [
+     [
+      0.736,
+      2.176
+     ],
+     [
+      2.272,
+      2.848
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 100,
+    "missed": false,
+    "segments": [
+     [
+      0.7,
+      2.84
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l1-clean.wav",
+   "condition": "clean",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      1.12
+     ],
+     [
+      1.28,
+      3.648
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 20,
+    "missed": false,
+    "segments": [
+     [
+      0.62,
+      3.62
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l1-noise10.wav",
+   "condition": "noise 10 dB",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      1.152
+     ],
+     [
+      1.248,
+      3.584
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 60,
+    "missed": false,
+    "segments": [
+     [
+      0.66,
+      1.04
+     ],
+     [
+      1.28,
+      1.54
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l1-noise5.wav",
+   "condition": "noise 5 dB",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.672,
+      3.648
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": null,
+    "missed": true,
+    "segments": []
+   }
+  },
+  {
+   "file": "l1-paused.wav",
+   "condition": "paused 2.5 s",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      1.12
+     ],
+     [
+      1.28,
+      1.888
+     ],
+     [
+      4.384,
+      6.144
+     ]
+    ],
+    "ended_in_pause": true,
+    "restarted_after_pause": true
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 20,
+    "missed": false,
+    "segments": [
+     [
+      0.62,
+      1.9
+     ],
+     [
+      4.38,
+      6.12
+     ]
+    ],
+    "ended_in_pause": true,
+    "restarted_after_pause": true
+   }
+  },
+  {
+   "file": "l1-paraphrase.wav",
+   "condition": "paraphrase",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      2.208
+     ],
+     [
+      2.304,
+      3.648
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 20,
+    "missed": false,
+    "segments": [
+     [
+      0.62,
+      3.6
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l1-half.wav",
+   "condition": "half-delivered",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      2.24
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 20,
+    "missed": false,
+    "segments": [
+     [
+      0.62,
+      2.24
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l1-otherline.wav",
+   "condition": "another line",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      2.656
+     ],
+     [
+      2.912,
+      4.48
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 20,
+    "missed": false,
+    "segments": [
+     [
+      0.62,
+      2.62
+     ],
+     [
+      2.88,
+      4.46
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l1-bleed.wav",
+   "condition": "assistant bleed -20 dB",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      1.12
+     ],
+     [
+      1.28,
+      3.648
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": true,
+    "onset_latency_ms": 20,
+    "missed": false,
+    "segments": [
+     [
+      0.0,
+      0.06
+     ],
+     [
+      0.62,
+      3.62
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l2-clean.wav",
+   "condition": "clean",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.672,
+      2.624
+     ],
+     [
+      2.912,
+      4.544
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 80,
+    "missed": false,
+    "segments": [
+     [
+      0.68,
+      2.58
+     ],
+     [
+      2.92,
+      4.5
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l2-noise10.wav",
+   "condition": "noise 10 dB",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.672,
+      2.624
+     ],
+     [
+      2.912,
+      4.576
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 80,
+    "missed": false,
+    "segments": [
+     [
+      0.68,
+      0.98
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l2-noise5.wav",
+   "condition": "noise 5 dB",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.672,
+      2.688
+     ],
+     [
+      2.912,
+      4.64
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": null,
+    "missed": true,
+    "segments": []
+   }
+  },
+  {
+   "file": "l2-paused.wav",
+   "condition": "paused 2.5 s",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.672,
+      2.112
+     ],
+     [
+      4.576,
+      5.12
+     ],
+     [
+      5.408,
+      7.04
+     ]
+    ],
+    "ended_in_pause": true,
+    "restarted_after_pause": true
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 80,
+    "missed": false,
+    "segments": [
+     [
+      0.68,
+      2.08
+     ],
+     [
+      4.56,
+      5.08
+     ],
+     [
+      5.42,
+      7.0
+     ]
+    ],
+    "ended_in_pause": true,
+    "restarted_after_pause": true
+   }
+  },
+  {
+   "file": "l2-paraphrase.wav",
+   "condition": "paraphrase",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.672,
+      2.752
+     ],
+     [
+      3.072,
+      4.768
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 80,
+    "missed": false,
+    "segments": [
+     [
+      0.68,
+      2.72
+     ],
+     [
+      3.06,
+      4.7
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l2-half.wav",
+   "condition": "half-delivered",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.672,
+      2.208
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 80,
+    "missed": false,
+    "segments": [
+     [
+      0.68,
+      2.16
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l2-otherline.wav",
+   "condition": "another line",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 104,
+    "missed": false,
+    "segments": [
+     [
+      0.704,
+      2.24
+     ],
+     [
+      2.336,
+      3.424
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 80,
+    "missed": false,
+    "segments": [
+     [
+      0.68,
+      3.4
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l2-bleed.wav",
+   "condition": "assistant bleed -20 dB",
+   "silero": {
+    "false_start": true,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.096,
+      0.288
+     ],
+     [
+      0.672,
+      2.624
+     ],
+     [
+      2.912,
+      4.544
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 80,
+    "missed": false,
+    "segments": [
+     [
+      0.68,
+      2.58
+     ],
+     [
+      2.92,
+      4.5
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l3-clean.wav",
+   "condition": "clean",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      2.368
+     ],
+     [
+      2.592,
+      3.744
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      2.3
+     ],
+     [
+      2.58,
+      3.74
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l3-noise10.wav",
+   "condition": "noise 10 dB",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      2.464
+     ],
+     [
+      2.592,
+      3.744
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      0.86
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l3-noise5.wav",
+   "condition": "noise 5 dB",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      2.464
+     ],
+     [
+      2.592,
+      3.776
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": null,
+    "missed": true,
+    "segments": []
+   }
+  },
+  {
+   "file": "l3-paused.wav",
+   "condition": "paused 2.5 s",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      1.824
+     ],
+     [
+      4.32,
+      4.896
+     ],
+     [
+      5.088,
+      6.24
+     ]
+    ],
+    "ended_in_pause": true,
+    "restarted_after_pause": true
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      1.82
+     ],
+     [
+      4.3,
+      4.8
+     ],
+     [
+      5.08,
+      6.24
+     ]
+    ],
+    "ended_in_pause": true,
+    "restarted_after_pause": true
+   }
+  },
+  {
+   "file": "l3-paraphrase.wav",
+   "condition": "paraphrase",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      2.304
+     ],
+     [
+      2.528,
+      3.552
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 20,
+    "missed": false,
+    "segments": [
+     [
+      0.62,
+      2.24
+     ],
+     [
+      2.5,
+      3.54
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l3-half.wav",
+   "condition": "half-delivered",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      2.208
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 20,
+    "missed": false,
+    "segments": [
+     [
+      0.62,
+      2.2
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l3-otherline.wav",
+   "condition": "another line",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      2.304
+     ],
+     [
+      2.4,
+      3.488
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 20,
+    "missed": false,
+    "segments": [
+     [
+      0.62,
+      3.46
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l3-bleed.wav",
+   "condition": "assistant bleed -20 dB",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      2.368
+     ],
+     [
+      2.592,
+      3.744
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      2.3
+     ],
+     [
+      2.58,
+      3.74
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l4-clean.wav",
+   "condition": "clean",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.672,
+      2.784
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      2.84
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l4-noise10.wav",
+   "condition": "noise 10 dB",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.672,
+      2.848
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 80,
+    "missed": false,
+    "segments": [
+     [
+      0.68,
+      1.2
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l4-noise5.wav",
+   "condition": "noise 5 dB",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.672,
+      2.816
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 480,
+    "missed": false,
+    "segments": [
+     [
+      1.08,
+      1.16
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l4-paused.wav",
+   "condition": "paused 2.5 s",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.672,
+      1.664
+     ],
+     [
+      4.16,
+      5.28
+     ]
+    ],
+    "ended_in_pause": true,
+    "restarted_after_pause": true
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      1.66
+     ],
+     [
+      4.14,
+      5.34
+     ]
+    ],
+    "ended_in_pause": true,
+    "restarted_after_pause": true
+   }
+  },
+  {
+   "file": "l4-paraphrase.wav",
+   "condition": "paraphrase",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.672,
+      1.44
+     ],
+     [
+      1.6,
+      3.168
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 20,
+    "missed": false,
+    "segments": [
+     [
+      0.62,
+      1.38
+     ],
+     [
+      1.6,
+      3.14
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l4-half.wav",
+   "condition": "half-delivered",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.672,
+      1.792
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 20,
+    "missed": false,
+    "segments": [
+     [
+      0.62,
+      1.76
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l4-otherline.wav",
+   "condition": "another line",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 104,
+    "missed": false,
+    "segments": [
+     [
+      0.704,
+      1.696
+     ],
+     [
+      1.952,
+      3.584
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 60,
+    "missed": false,
+    "segments": [
+     [
+      0.66,
+      1.66
+     ],
+     [
+      1.94,
+      3.54
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l4-bleed.wav",
+   "condition": "assistant bleed -20 dB",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.672,
+      2.784
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      2.84
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l5-clean.wav",
+   "condition": "clean",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      1.76
+     ],
+     [
+      1.984,
+      3.776
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      1.74
+     ],
+     [
+      1.98,
+      3.74
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l5-noise10.wav",
+   "condition": "noise 10 dB",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.672,
+      1.792
+     ],
+     [
+      1.984,
+      3.808
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 60,
+    "missed": false,
+    "segments": [
+     [
+      0.66,
+      0.8
+     ],
+     [
+      1.0,
+      1.18
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l5-noise5.wav",
+   "condition": "noise 5 dB",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      1.856
+     ],
+     [
+      1.984,
+      3.84
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": null,
+    "missed": true,
+    "segments": []
+   }
+  },
+  {
+   "file": "l5-paused.wav",
+   "condition": "paused 2.5 s",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      1.76
+     ],
+     [
+      1.984,
+      2.304
+     ],
+     [
+      4.768,
+      6.272
+     ]
+    ],
+    "ended_in_pause": true,
+    "restarted_after_pause": true
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      1.74
+     ],
+     [
+      1.98,
+      2.24
+     ],
+     [
+      4.72,
+      6.24
+     ]
+    ],
+    "ended_in_pause": true,
+    "restarted_after_pause": true
+   }
+  },
+  {
+   "file": "l5-paraphrase.wav",
+   "condition": "paraphrase",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.672,
+      1.792
+     ],
+     [
+      2.016,
+      3.456
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 20,
+    "missed": false,
+    "segments": [
+     [
+      0.62,
+      1.76
+     ],
+     [
+      1.96,
+      3.46
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l5-half.wav",
+   "condition": "half-delivered",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 72,
+    "missed": false,
+    "segments": [
+     [
+      0.672,
+      1.856
+     ],
+     [
+      1.952,
+      2.592
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      2.6
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l5-otherline.wav",
+   "condition": "another line",
+   "silero": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      2.208
+     ],
+     [
+      2.368,
+      3.008
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 20,
+    "missed": false,
+    "segments": [
+     [
+      0.62,
+      3.0
+     ]
+    ]
+   }
+  },
+  {
+   "file": "l5-bleed.wav",
+   "condition": "assistant bleed -20 dB",
+   "silero": {
+    "false_start": true,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.096,
+      0.288
+     ],
+     [
+      0.64,
+      1.792
+     ],
+     [
+      1.984,
+      3.776
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": false,
+    "onset_latency_ms": 40,
+    "missed": false,
+    "segments": [
+     [
+      0.64,
+      1.74
+     ],
+     [
+      1.98,
+      3.74
+     ]
+    ]
+   }
+  },
+  {
+   "file": "noise-only.wav",
+   "condition": "noise only",
+   "silero": {
+    "false_start": false,
+    "segments": []
+   },
+   "energy": {
+    "false_start": false,
+    "segments": []
+   }
+  },
+  {
+   "file": "bleed-only.wav",
+   "condition": "assistant bleed only -20 dB",
+   "silero": {
+    "false_start": true,
+    "segments": [
+     [
+      0.096,
+      2.112
+     ]
+    ]
+   },
+   "energy": {
+    "false_start": true,
+    "segments": [
+     [
+      0.1,
+      0.56
+     ],
+     [
+      1.52,
+      1.9
+     ]
+    ]
+   }
+  }
+ ]
+}
