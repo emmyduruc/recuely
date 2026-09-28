@@ -1,6 +1,6 @@
 # SPEC — Filming Assistant
 
-> Single source of truth for this project. Version **0.13.0** · Last updated 2026-09-24
+> Single source of truth for this project. Version **0.14.0** · Last updated 2026-09-24
 > Input brief: `product.md` (frozen). Repo rules for Claude Code: `CLAUDE.md`.
 > "Filming Assistant" is a placeholder name. Never use it in package names, identifiers, or branding.
 
@@ -648,8 +648,8 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 2 | Shared contracts & fixtures | DONE | 0 |
 | 3 | Script model: parsing, segmentation, text preservation | DONE | 2 |
 | 4 | Project, script & session persistence (entities + API) | DONE | 1, 3 |
-| 5 | Session engine (state machine) | AWAITING CONFIRMATION | 2 |
-| 6 | Command grammar & transcript matcher | TODO | 2 |
+| 5 | Session engine (state machine) | DONE | 2 |
+| 6 | Command grammar & transcript matcher | AWAITING CONFIRMATION | 2 |
 | 7 | Spike: TTS (Kokoro timings & latency, browser boundary events) | TODO | 0 |
 | 8 | Spike: STT & VAD on the dev CPU | TODO | 0 |
 | 9 | Spike: browser capture, echo/settle, pre-roll, MIME, stitching | TODO | 0 |
@@ -828,8 +828,16 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 **Why:** Commands must work reliably without script lines like "Next, we repeat…" triggering them, and advancement must never skip unfinished lines.
 **Tests:** Unit (every synonym → intent; near-misses → null; "Next, we repeat the process" as script speech → no command; paraphrase → advance; half-delivered → ask; ending omitted → ask)
 **Done when:**
-- [ ] All grammar and matcher fixtures green
-- [ ] Thresholds read from settings, not hard-coded
+- [x] All grammar and matcher fixtures green
+- [x] Thresholds read from settings, not hard-coded
+
+**How it's built** (`packages/script-model/src/matching/`, pure TS, next to the text/offset logic):
+- **Normalizer** (`matchTokens`): case, punctuation, accents, contractions ("we're" → "we are", "gonna" → "going to"), numbers and ordinals to words ("3" → "three", "1,000", "3.5", "2nd"), `&`/`%`. Script and transcript go through the same function; every token keeps the UTF-16 range of its source word.
+- **Grammar** (`compileGrammar`, `matchCommand`): a command is the *whole* utterance (after trimming fillers: um, uh, okay, please…) matching one phrase exactly; `{target}` phrases capture the rest as `args.target` (resolving it to a chunk id is Task 16). Aliases only add phrases; an alias that collides with another intent's built-in phrase is rejected (reported in `rejectedAliases`), so PAUSE can't be lost.
+- **Command vs script speech** (`classifyUtterance`): if the remaining chunk text contains the utterance (containment ≥ 0.5) it's script speech, even when it's also a grammar phrase ("Next." / "Stop scrolling…"). Returns the `speechGate` the engine uses for ✓* cells. `SpeechGate` moved to `packages/contracts`.
+- **Transcript matcher** (`matchTranscript(chunkText, transcript, thresholds)` → `MatchResult`): token LCS with fuzzy equality for words ≥ 4 letters (edit-distance ratio ≥ 0.8); coverage = heard chunk words / chunk words; similarity = Dice (extra words count against it); **end rule**: the last heard chunk word is among the final 3 (§B7 "±2"). `missingSpans` point into the chunk text; `reasons` explain each check. Thresholds are a required argument; `thresholdsFrom(settings)` falls back to `DEFAULT_MATCH_THRESHOLDS`.
+
+**Evidence (2026-09-28):** 84 matching tests: every phrase of the en grammar → its intent; 12 real-world variants; 14 near-misses → null; 7 classification cases incl. "Next, we repeat the process" → script speech; 12 transcript fixtures (`tests/fixtures/matching/`) incl. paraphrase → advance, half-delivered → ask, ending omitted → ask (coverage 0.85 but ending not heard), last word dropped → advance, skipped middle / rambling / said twice / silence → ask, with expected missing spans; settings-driven thresholds (same take asks or advances); property test (1,000 runs: the chunk itself always advances, silence never does, spans stay in range). Every command/result validates against its contract. Repo: typecheck 9/9 · lint 9/9 · `pnpm test` all green (script-model 138) · build ✓ · e2e 2/2.
 
 ### Task 7 — Spike: TTS *(parallel-safe with 8, 9; timebox 1 day; throwaway code)*
 
@@ -999,6 +1007,8 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 0.3.0 | 2026-09-23 | Added §B10 code standards: zero TS/lint errors, named constants instead of string-literal comparisons, Record lookups instead of nested ternaries; wired into Task 0 and the D0 gate |
 | 0.3.1 | 2026-09-24 | Task 0 implemented; TypeScript pinned to 6.0.x; PostgreSQL/ffmpeg install moved to Tasks 1/9 (Homebrew dropped Intel); dependency register updated |
 | 0.3.2 | 2026-09-24 | Task 0 confirmed by user → DONE |
+| 0.14.0 | 2026-09-28 | Task 6 implemented: match normalizer, grammar matcher with safe aliases, command-vs-script classifier, transcript matcher (coverage, Dice similarity, end rule, missing spans); `SpeechGate` moved to contracts; matching fixtures in `tests/fixtures/matching/`; Task 6 → AWAITING CONFIRMATION |
+| 0.13.1 | 2026-09-28 | Task 5 confirmed by user → DONE |
 | 0.13.0 | 2026-09-28 | Task 5 implemented: pure session engine (tokens as the stale guard, timers as effects, 300 ms tap coalescing, permission matrix, isolated-voice gate); user decision: running sessions keep reading (§B6 engine interpretation); `Arrangement` constants in contracts; golden E3/E10 logs; Task 5 → AWAITING CONFIRMATION |
 | 0.12.2 | 2026-09-28 | Task 4 confirmed by user ("proceed with task 5") → DONE; the /api/docs manual check was not reported back. Task 5 started |
 | 0.12.1 | 2026-09-25 | `pnpm dev` under Node 20.17 (the shell's nvm default) served 500 on every page: Nuxt's `oxc-walker` `require()`s an ESM parser, which needs Node ≥ 20.19/22.12. Root scripts now run `scripts/check-node.mjs` first (fails fast with a fix hint); `uuid-v7` no longer uses BigInt literals (ES2019 dev-bundle warning); Task 4 migration applied to the Neon dev DB |

@@ -78,6 +78,14 @@ export interface CommandEvent {
   confidence?: number;
 }
 
+/** What the recognizer reports about a voice command heard during creator speech (SPEC.md §B6 ✓*). */
+export interface SpeechGate {
+  durationMs: number;
+  exactGrammarMatch: boolean;
+  /** Similarity of the utterance to the remaining chunk text. */
+  chunkSimilarity: number;
+}
+
 /** The spoken command grammar for one locale (SPEC.md §B5). `{target}` is the only placeholder. */
 export interface CommandGrammar {
   locale: Locale;

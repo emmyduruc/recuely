@@ -1,4 +1,6 @@
-import type { Arrangement, ChunkMode, CommandEvent, MatchDecision, SessionState } from '@repo/contracts';
+import type { Arrangement, ChunkMode, CommandEvent, MatchDecision, SessionState, SpeechGate } from '@repo/contracts';
+
+export type { SpeechGate } from '@repo/contracts';
 
 // Session engine types (SPEC.md §B6). The engine is a pure reducer:
 //   (snapshot, event, now) → { snapshot, effects[] }
@@ -73,14 +75,6 @@ export interface EngineSnapshot {
   error: EngineError | null;
   lastTap: { intent: CommandEvent['intent']; at: number } | null;
   settings: EngineSettings;
-}
-
-/** What the recognizer reports about a voice command heard during creator speech (SPEC.md §B6 ✓*). */
-export interface SpeechGate {
-  durationMs: number;
-  exactGrammarMatch: boolean;
-  /** Similarity of the utterance to the remaining chunk text. */
-  chunkSimilarity: number;
 }
 
 export const EventType = {

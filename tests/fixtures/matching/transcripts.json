@@ -1,0 +1,85 @@
+{
+  "description": "Transcript-matcher fixtures (SPEC.md Task 6) with the §B7 default thresholds (coverage 0.80, similarity 0.70, ending ±2).",
+  "thresholds": { "coverage": 0.8, "similarity": 0.7 },
+  "cases": [
+    {
+      "name": "exact delivery",
+      "chunk": "Today we are going to build a small wooden shelf.",
+      "transcript": "Today we are going to build a small wooden shelf.",
+      "decision": "advance"
+    },
+    {
+      "name": "paraphrase (contraction, one word changed) advances",
+      "chunk": "Today we are going to build a small wooden shelf.",
+      "transcript": "today we're going to build a little wooden shelf",
+      "decision": "advance"
+    },
+    {
+      "name": "digits in the transcript match number words in the script",
+      "chunk": "Use three screws and two brackets.",
+      "transcript": "use 3 screws and 2 brackets",
+      "decision": "advance"
+    },
+    {
+      "name": "accents and case don't matter",
+      "chunk": "Café, naïve, résumé.",
+      "transcript": "cafe naive resume",
+      "decision": "advance"
+    },
+    {
+      "name": "STT spelling slip is tolerated",
+      "chunk": "The colour of the shelf matters.",
+      "transcript": "the color of the shelf matters",
+      "decision": "advance"
+    },
+    {
+      "name": "half-delivered asks",
+      "chunk": "Welcome back to the channel, everyone. Today we build a shelf.",
+      "transcript": "welcome back to the channel",
+      "decision": "ask",
+      "missing": ["everyone. Today we build a shelf"]
+    },
+    {
+      "name": "ending omitted asks even with high coverage",
+      "chunk": "This small shelf fits neatly in any corner of your room and holds all of your favourite books and plants.",
+      "transcript": "this small shelf fits neatly in any corner of your room and holds all of your favourite",
+      "decision": "ask",
+      "missing": ["books and plants"],
+      "reasonsInclude": ["ending not heard"]
+    },
+    {
+      "name": "only the last word dropped still advances (±2 tolerance)",
+      "chunk": "This small shelf fits neatly in any corner of your room and holds all of your favourite books and plants.",
+      "transcript": "this small shelf fits neatly in any corner of your room and holds all of your favourite books and",
+      "decision": "advance",
+      "missing": ["plants"]
+    },
+    {
+      "name": "skipped middle asks",
+      "chunk": "One, two, three, four, five, six, seven, eight, nine, ten.",
+      "transcript": "one two three eight nine ten",
+      "decision": "ask",
+      "missing": ["four, five, six, seven"]
+    },
+    {
+      "name": "rambling past the line asks (similarity)",
+      "chunk": "Hi, I'm Ada.",
+      "transcript": "hi i am ada and um let me also tell you about my other channel and some other stuff",
+      "decision": "ask"
+    },
+    {
+      "name": "the line said twice asks",
+      "chunk": "Press the button and wait.",
+      "transcript": "press the button and wait press the button and wait",
+      "decision": "ask"
+    },
+    {
+      "name": "nothing heard asks",
+      "chunk": "Thanks for watching.",
+      "transcript": "",
+      "decision": "ask",
+      "reasonsInclude": ["nothing was heard"],
+      "missing": ["Thanks for watching"]
+    }
+  ]
+}

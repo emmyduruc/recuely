@@ -1,0 +1,42 @@
+{
+  "description": "Grammar fixtures (SPEC.md Task 6). Every phrase of packages/contracts/fixtures/grammar/en.json is also tested directly; these add real-world variants, near-misses and command-vs-script cases.",
+  "commands": [
+    { "utterance": "Next!", "intent": "NEXT" },
+    { "utterance": "  NEXT line. ", "intent": "NEXT" },
+    { "utterance": "Um, repeat.", "intent": "REPEAT" },
+    { "utterance": "Okay, let me try again", "intent": "RETAKE" },
+    { "utterance": "Stop.", "intent": "PAUSE" },
+    { "utterance": "Hold on, please", "intent": "PAUSE" },
+    { "utterance": "What can I say?", "intent": "HELP" },
+    { "utterance": "Read a full sentence.", "intent": "CHUNK_SIZE" },
+    { "utterance": "Go to the intro", "intent": "NAVIGATE", "args": { "target": "the intro" } },
+    { "utterance": "Back to scene 3.", "intent": "NAVIGATE", "args": { "target": "scene 3" } },
+    { "utterance": "One more time", "intent": "RETAKE" },
+    { "utterance": "Go back", "intent": "PREVIOUS" }
+  ],
+  "nearMisses": [
+    "nexxt",
+    "next please line",
+    "the next line",
+    "go",
+    "go to",
+    "repeat repeat",
+    "stop it",
+    "retake the shot",
+    "pause for a second",
+    "i will begin",
+    "go back to",
+    "slowly",
+    "what can we say",
+    ""
+  ],
+  "classification": [
+    { "utterance": "Next, we repeat the process", "remainingChunkText": "Next, we repeat the process until the wood shines.", "kind": "script_speech" },
+    { "utterance": "Next.", "remainingChunkText": "Next. Let's look at the price.", "kind": "script_speech" },
+    { "utterance": "Stop", "remainingChunkText": "Stop scrolling for a second.", "kind": "script_speech" },
+    { "utterance": "we build a shelf", "remainingChunkText": "Today we build a shelf.", "kind": "script_speech" },
+    { "utterance": "next", "remainingChunkText": "Let's look at the price.", "kind": "command", "intent": "NEXT" },
+    { "utterance": "pause", "remainingChunkText": "", "kind": "command", "intent": "PAUSE" },
+    { "utterance": "banana bread", "remainingChunkText": "Let's look at the price.", "kind": "unrecognized" }
+  ]
+}

@@ -28,3 +28,4 @@ export {
   spokenTextOf,
   stripEmphasis,
 } from './text.ts';
+export * from './matching/index.ts';
