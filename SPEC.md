@@ -1,6 +1,6 @@
 # SPEC — Filming Assistant
 
-> Single source of truth for this project. Version **0.17.1** · Last updated 2026-09-28
+> Single source of truth for this project. Version **0.17.2** · Last updated 2026-09-28
 > Input brief: `product.md` (frozen). Repo rules for Claude Code: `CLAUDE.md`.
 > "Filming Assistant" is a placeholder name. Never use it in package names, identifiers, or branding.
 
@@ -672,7 +672,7 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 9 | Spike: browser capture, echo/settle, pre-roll, MIME, stitching | IN PROGRESS | 0 |
 | 10a | Spike: OpenAI speech (latency, cost, derived word timings, STT on the Task 8 fixtures) | TODO | 8 |
 | 10 | Speech providers v0: OpenAI via Nitro + local AI service fallback | TODO | 7, 8, 10a |
-| 11 | Design system & app shell | AWAITING CONFIRMATION | 0 |
+| 11 | Design system & app shell | DONE | 0 |
 | 12 | Script import & review UI | TODO | 4, 11 |
 | 13 | Media adapters & effect runner | TODO | 5, 9, 10 |
 | 14 | Preflight UI | TODO | 13 |
@@ -1054,6 +1054,7 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 0.3.0 | 2026-09-23 | Added §B10 code standards: zero TS/lint errors, named constants instead of string-literal comparisons, Record lookups instead of nested ternaries; wired into Task 0 and the D0 gate |
 | 0.3.1 | 2026-09-24 | Task 0 implemented; TypeScript pinned to 6.0.x; PostgreSQL/ffmpeg install moved to Tasks 1/9 (Homebrew dropped Intel); dependency register updated |
 | 0.3.2 | 2026-09-24 | Task 0 confirmed by user → DONE |
+| 0.17.2 | 2026-09-28 | Task 11 confirmed by the user → DONE |
 | 0.17.1 | 2026-09-28 | Task 11 implemented (awaiting confirmation): `packages/ui` Nuxt layer (tokens, theme mapping, props-only status components), i18n setup with typed keys, app shell, `/_design`; §B8: @nuxtjs/i18n approved, @iconify-json/lucide and @vitejs/plugin-vue added; contrast and raw-hex checks run as unit tests |
 | 0.17.0 | 2026-09-28 | **Cloud speech (user decision):** OpenAI TTS + STT through Nitro (key server-side, explicit opt-in per §A6.8, cached TTS, derived word timings `timingSource: aligned`), with the Kokoro/faster-whisper AI service kept as the offline/no-consent fallback; new §B12; hosted AI / paid APIs allowed for OpenAI speech only; new Task 10a spike; Task 10 renamed to speech providers v0; H-28–H-30; open decision 6 resolved, 7 added (API key) |
 | 0.16.2 | 2026-09-28 | Task 9 tooling ready: capture lab (`spikes/capture/`, HTTPS on the LAN via a local openssl CA instead of mkcert, results POSTed back to the Mac); smoke-tested in headless Chromium (naive WebM concatenation plays only the first take; re-recording works); `docs/measurements/device-matrix.md` skeleton; device runs pending |
