@@ -47,7 +47,7 @@ pnpm typecheck
 pnpm lint
 pnpm test         # unit + property + contract
 pnpm test:int     # DB + API integration (DATABASE_URL = Neon dev; DATABASE_URL_TEST = Supabase test project; schema dropped after each run)
-pnpm test:e2e     # Playwright
+pnpm test:e2e     # Playwright against the built app + a per-run test schema (needs DATABASE_URL_TEST)
 pnpm build
 pnpm db:migrate
 ```

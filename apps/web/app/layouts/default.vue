@@ -34,18 +34,24 @@ function toggleTheme(): void {
         </NuxtLink>
         <nav
           :aria-label="t('nav.primary')"
-          class="order-last -mx-3 flex w-full items-center gap-1 sm:order-none sm:mx-0 sm:w-auto sm:flex-1"
+          class="order-last -mx-3 flex w-full flex-wrap items-center gap-x-1 sm:order-none sm:mx-0 sm:w-auto sm:flex-1"
         >
           <NuxtLink
             to="/"
-            class="flex min-h-target items-center rounded-md px-3 text-ink-muted hover:text-ink aria-[current=page]:text-ink"
+            class="flex min-h-target items-center rounded-md px-3 whitespace-nowrap text-ink-muted hover:text-ink aria-[current=page]:text-ink"
           >
             {{ t('nav.projects') }}
           </NuxtLink>
           <NuxtLink
+            to="/import"
+            class="flex min-h-target items-center rounded-md px-3 whitespace-nowrap text-ink-muted hover:text-ink aria-[current=page]:text-ink"
+          >
+            {{ t('nav.import') }}
+          </NuxtLink>
+          <NuxtLink
             v-if="designPageEnabled"
             to="/_design"
-            class="flex min-h-target items-center rounded-md px-3 text-ink-muted hover:text-ink aria-[current=page]:text-ink"
+            class="flex min-h-target items-center rounded-md px-3 whitespace-nowrap text-ink-muted hover:text-ink aria-[current=page]:text-ink"
           >
             {{ t('nav.design') }}
           </NuxtLink>

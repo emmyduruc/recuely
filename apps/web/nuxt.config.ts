@@ -36,7 +36,8 @@ export default defineNuxtConfig({
   $development: { runtimeConfig: { public: { designPageEnabled: true } } },
   typescript: {
     strict: true,
-    tsConfig: { compilerOptions: strictCompilerOptions },
+    // An unknown component in a template is a type error (a misnamed component would otherwise render nothing).
+    tsConfig: { compilerOptions: strictCompilerOptions, vueCompilerOptions: { checkUnknownComponents: true } },
     nodeTsConfig: { compilerOptions: strictCompilerOptions, include: ['../test/**/*', '../vitest.config.ts', '../vitest.int.config.ts'] },
   },
   nitro: {

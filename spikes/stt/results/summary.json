@@ -265,6 +265,318 @@
   ]
  },
  {
+  "model": "openai:gpt-4o-mini-transcribe",
+  "beam": 0,
+  "load_s": 0,
+  "peak_rss_mb": 0,
+  "latencyMedian_s": 0.75,
+  "latencyMax_s": 4.28,
+  "latency5sTake_s": 0.74,
+  "fiveSecondClips": 36,
+  "rtfMedian": 0.17,
+  "unbiased": {
+   "falseAdvances": [],
+   "falseAsks": [
+    "l3-paraphrase.wav: \"You just need three tools and about an hour.\""
+   ],
+   "inventedWords": 0,
+   "byCondition": {
+    "clean": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "noise 10 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "noise 5 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "paused 2.5 s": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "paraphrase": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "5/6"
+    },
+    "half-delivered": {
+     "werMedian": 0,
+     "werMax": 0.25,
+     "advanced": "0/6"
+    },
+    "another line": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "0/6"
+    },
+    "assistant bleed -20 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    }
+   }
+  },
+  "biased": {
+   "falseAdvances": [],
+   "falseAsks": [],
+   "inventedWords": 0,
+   "byCondition": {}
+  },
+  "silentClips": [
+   {
+    "file": "noise-only.wav",
+    "biased": false,
+    "transcript": ""
+   },
+   {
+    "file": "bleed-only.wav",
+    "biased": false,
+    "transcript": "Welcome back to the channel, everyone."
+   }
+  ]
+ },
+ {
+  "model": "openai:gpt-4o-transcribe",
+  "beam": 0,
+  "load_s": 0,
+  "peak_rss_mb": 0,
+  "latencyMedian_s": 0.8,
+  "latencyMax_s": 1.35,
+  "latency5sTake_s": 0.8,
+  "fiveSecondClips": 36,
+  "rtfMedian": 0.17,
+  "unbiased": {
+   "falseAdvances": [],
+   "falseAsks": [
+    "l3-paraphrase.wav: \"You just need three tools and about an hour.\""
+   ],
+   "inventedWords": 0,
+   "byCondition": {
+    "clean": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "noise 10 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "noise 5 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "paused 2.5 s": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "paraphrase": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "5/6"
+    },
+    "half-delivered": {
+     "werMedian": 0,
+     "werMax": 0.25,
+     "advanced": "0/6"
+    },
+    "another line": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "0/6"
+    },
+    "assistant bleed -20 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    }
+   }
+  },
+  "biased": {
+   "falseAdvances": [],
+   "falseAsks": [],
+   "inventedWords": 0,
+   "byCondition": {}
+  },
+  "silentClips": [
+   {
+    "file": "noise-only.wav",
+    "biased": false,
+    "transcript": "すげえ"
+   },
+   {
+    "file": "bleed-only.wav",
+    "biased": false,
+    "transcript": "Welcome back to the channel, everyone."
+   }
+  ]
+ },
+ {
+  "model": "openai:gpt-transcribe",
+  "beam": 0,
+  "load_s": 0,
+  "peak_rss_mb": 0,
+  "latencyMedian_s": 0.81,
+  "latencyMax_s": 1.34,
+  "latency5sTake_s": 0.81,
+  "fiveSecondClips": 36,
+  "rtfMedian": 0.17,
+  "unbiased": {
+   "falseAdvances": [],
+   "falseAsks": [
+    "l3-paraphrase.wav: \"You just need three tools and about an hour.\""
+   ],
+   "inventedWords": 0,
+   "byCondition": {
+    "clean": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "noise 10 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "noise 5 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "paused 2.5 s": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "paraphrase": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "5/6"
+    },
+    "half-delivered": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "0/6"
+    },
+    "another line": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "0/6"
+    },
+    "assistant bleed -20 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    }
+   }
+  },
+  "biased": {
+   "falseAdvances": [],
+   "falseAsks": [],
+   "inventedWords": 0,
+   "byCondition": {}
+  },
+  "silentClips": [
+   {
+    "file": "noise-only.wav",
+    "biased": false,
+    "transcript": ""
+   },
+   {
+    "file": "bleed-only.wav",
+    "biased": false,
+    "transcript": "Welcome back to the channel, everyone."
+   }
+  ]
+ },
+ {
+  "model": "openai:whisper-1",
+  "beam": 0,
+  "load_s": 0,
+  "peak_rss_mb": 0,
+  "latencyMedian_s": 0.84,
+  "latencyMax_s": 2.04,
+  "latency5sTake_s": 0.86,
+  "fiveSecondClips": 36,
+  "rtfMedian": 0.19,
+  "unbiased": {
+   "falseAdvances": [],
+   "falseAsks": [
+    "l3-paraphrase.wav: \"You just need three tools and about an hour.\""
+   ],
+   "inventedWords": 0,
+   "byCondition": {
+    "clean": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "noise 10 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "noise 5 dB": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "paused 2.5 s": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "6/6"
+    },
+    "paraphrase": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "5/6"
+    },
+    "half-delivered": {
+     "werMedian": 0,
+     "werMax": 0,
+     "advanced": "0/6"
+    },
+    "another line": {
+     "werMedian": 0,
+     "werMax": 0.077,
+     "advanced": "0/6"
+    },
+    "assistant bleed -20 dB": {
+     "werMedian": 0,
+     "werMax": 0.167,
+     "advanced": "6/6"
+    }
+   }
+  },
+  "biased": {
+   "falseAdvances": [],
+   "falseAsks": [],
+   "inventedWords": 0,
+   "byCondition": {}
+  },
+  "silentClips": [
+   {
+    "file": "noise-only.wav",
+    "biased": false,
+    "transcript": "."
+   },
+   {
+    "file": "bleed-only.wav",
+    "biased": false,
+    "transcript": "Welcome back to the channel, everyone."
+   }
+  ]
+ },
+ {
   "model": "small.en",
   "beam": 1,
   "load_s": 59.7,

@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "SpeechTtsResult.json",
+  "title": "SpeechTtsResult",
+  "type": "object",
+  "description": "Synthesized audio for one chunk. The cloud voice has no word timings (chunk highlight, §B12); the local voice may have them. `timings` is null exactly when `timingSource` is `none`.",
+  "properties": {
+    "audioUrl": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Where to fetch the audio."
+    },
+    "durationMs": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Audio duration in ms."
+    },
+    "timings": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "$ref": "WordTiming.json"
+      },
+      "description": "Word timings, or null (chunk highlight)."
+    },
+    "timingSource": {
+      "type": "string",
+      "enum": [
+        "provider",
+        "boundary-event",
+        "none"
+      ],
+      "description": "Origin of the timings."
+    },
+    "cacheKey": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Key of the cached audio."
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "openai",
+        "local"
+      ],
+      "description": "Who synthesized it."
+    },
+    "voiceId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The voice used."
+    },
+    "cached": {
+      "type": "boolean",
+      "description": "Served from the cache without an upstream call."
+    }
+  },
+  "required": [
+    "audioUrl",
+    "durationMs",
+    "timings",
+    "timingSource",
+    "cacheKey",
+    "provider",
+    "voiceId",
+    "cached"
+  ],
+  "additionalProperties": true,
+  "examples": [
+    {
+      "audioUrl": "/api/speech/audio/3f9c2a",
+      "durationMs": 2160,
+      "timings": null,
+      "timingSource": "none",
+      "cacheKey": "3f9c2a",
+      "provider": "openai",
+      "voiceId": "alloy",
+      "cached": false
+    }
+  ]
+}

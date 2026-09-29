@@ -1,0 +1,104 @@
+{
+  "type": "SpeechTtsResult",
+  "valid": [
+    {
+      "name": "cloud voice: chunk highlight",
+      "value": {
+        "audioUrl": "/api/speech/audio/3f9c2a",
+        "durationMs": 2160,
+        "timings": null,
+        "timingSource": "none",
+        "cacheKey": "3f9c2a",
+        "provider": "openai",
+        "voiceId": "alloy",
+        "cached": false
+      }
+    },
+    {
+      "name": "local voice with timings",
+      "value": {
+        "audioUrl": "/api/speech/audio/3f9c2a",
+        "durationMs": 2160,
+        "timings": [
+          {
+            "index": 0,
+            "start": 0,
+            "end": 320,
+            "charStart": 0,
+            "charEnd": 7
+          }
+        ],
+        "timingSource": "provider",
+        "cacheKey": "3f9c2a",
+        "provider": "local",
+        "voiceId": "af_heart",
+        "cached": true
+      }
+    },
+    {
+      "name": "unknown fields are ignored",
+      "value": {
+        "audioUrl": "/api/speech/audio/3f9c2a",
+        "durationMs": 2160,
+        "timings": null,
+        "timingSource": "none",
+        "cacheKey": "3f9c2a",
+        "provider": "openai",
+        "voiceId": "alloy",
+        "cached": false,
+        "extra": 1
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "unknown provider",
+      "path": "provider",
+      "value": {
+        "audioUrl": "/api/speech/audio/3f9c2a",
+        "durationMs": 2160,
+        "timings": null,
+        "timingSource": "none",
+        "cacheKey": "3f9c2a",
+        "provider": "azure",
+        "voiceId": "alloy",
+        "cached": false
+      }
+    },
+    {
+      "name": "timings without a source",
+      "path": "timings",
+      "value": {
+        "audioUrl": "/api/speech/audio/3f9c2a",
+        "durationMs": 2160,
+        "timings": [
+          {
+            "index": 0,
+            "start": 0,
+            "end": 320,
+            "charStart": 0,
+            "charEnd": 7
+          }
+        ],
+        "timingSource": "none",
+        "cacheKey": "3f9c2a",
+        "provider": "openai",
+        "voiceId": "alloy",
+        "cached": false
+      }
+    },
+    {
+      "name": "missing cached",
+      "path": "cached",
+      "value": {
+        "audioUrl": "/api/speech/audio/3f9c2a",
+        "durationMs": 2160,
+        "timings": null,
+        "timingSource": "none",
+        "cacheKey": "3f9c2a",
+        "provider": "openai",
+        "voiceId": "alloy"
+      }
+    }
+  ]
+}

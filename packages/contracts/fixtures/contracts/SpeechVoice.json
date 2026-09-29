@@ -1,0 +1,40 @@
+{
+  "type": "SpeechVoice",
+  "valid": [
+    {
+      "name": "openai",
+      "value": {
+        "provider": "openai",
+        "voiceId": "alloy",
+        "label": "Alloy"
+      }
+    },
+    {
+      "name": "local",
+      "value": {
+        "provider": "local",
+        "voiceId": "af_heart",
+        "label": "Heart (US English)"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "missing label",
+      "path": "label",
+      "value": {
+        "provider": "openai",
+        "voiceId": "alloy"
+      }
+    },
+    {
+      "name": "empty voice id",
+      "path": "voiceId",
+      "value": {
+        "provider": "openai",
+        "voiceId": "",
+        "label": "x"
+      }
+    }
+  ]
+}

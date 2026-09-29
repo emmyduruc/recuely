@@ -17,6 +17,7 @@ from app.contracts import (
     Intent,
     Locale,
     MatchDecision,
+    SpeechProvider,
     TimingSource,
 )
 from app.text_offsets import index_to_utf16, slice_utf16, utf16_length, utf16_to_index
@@ -79,6 +80,7 @@ ENUM_FIELDS: list[tuple[ContractType, str, type[StrEnum]]] = [
     (ContractType.COMMAND_EVENT, "intent", Intent),
     (ContractType.COMMAND_EVENT, "source", CommandSource),
     (ContractType.COMMAND_GRAMMAR, "locale", Locale),
+    (ContractType.SPEECH_VOICE, "provider", SpeechProvider),
 ]
 
 

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "SpeechVoice.json",
+  "title": "SpeechVoice",
+  "type": "object",
+  "description": "A voice a provider offers.",
+  "properties": {
+    "provider": {
+      "type": "string",
+      "enum": [
+        "openai",
+        "local"
+      ],
+      "description": "Who offers the voice."
+    },
+    "voiceId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The provider's voice id."
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Name shown in the picker."
+    }
+  },
+  "required": [
+    "provider",
+    "voiceId",
+    "label"
+  ],
+  "additionalProperties": true,
+  "examples": [
+    {
+      "provider": "openai",
+      "voiceId": "alloy",
+      "label": "Alloy"
+    }
+  ]
+}

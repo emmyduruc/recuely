@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "SpeechSttResult.json",
+  "title": "SpeechSttResult",
+  "type": "object",
+  "description": "Transcript of one take, with the provider that produced it.",
+  "properties": {
+    "text": {
+      "type": "string",
+      "description": "What was said; empty for silence or noise."
+    },
+    "durationMs": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Audio duration in ms (0 when unknown)."
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Model that transcribed it."
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Echoed from the request."
+    },
+    "chunkId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Echoed from the request."
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Echoed from the request; stale results (lower seq) are dropped (§B6)."
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "openai",
+        "local"
+      ],
+      "description": "Who transcribed it."
+    }
+  },
+  "required": [
+    "text",
+    "durationMs",
+    "model",
+    "provider"
+  ],
+  "additionalProperties": true,
+  "examples": [
+    {
+      "text": "Welcome back, everyone.",
+      "durationMs": 0,
+      "model": "gpt-transcribe",
+      "provider": "openai",
+      "chunkId": "c1",
+      "seq": 4
+    }
+  ]
+}

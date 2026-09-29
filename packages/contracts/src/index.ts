@@ -8,6 +8,7 @@ export * from './payloads.ts';
 export * from './recording.ts';
 export * from './schemas/index.ts';
 export * from './script.ts';
+export * from './speech.ts';
 export * from './storage.ts';
 export * from './theme.ts';
 export * from './ui.ts';

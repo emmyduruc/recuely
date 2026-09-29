@@ -7,11 +7,10 @@ import { checkCompleteness, scanRouteFiles, validateOpenApi31 } from '../support
 import { api } from './helpers';
 
 describe('/api/health', () => {
-  it('T1: reports the database as ok', async () => {
-    expect(await api('GET', '/api/health')).toEqual({
-      status: 200,
-      body: { app: HealthStatus.Ok, db: HealthStatus.Ok },
-    });
+  it('T1: reports the database as ok (and T10: both speech providers)', async () => {
+    const health = await api('GET', '/api/health');
+    expect(health.status).toBe(200);
+    expect(health.body).toMatchObject({ app: HealthStatus.Ok, db: HealthStatus.Ok, speech: { local: HealthStatus.Ok } });
   });
 });
 

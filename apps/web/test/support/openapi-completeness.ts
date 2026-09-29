@@ -19,6 +19,8 @@ const ROUTE_FILE = /^(?<route>.+?)\.(?<method>get|post|put|patch|delete)\.ts$/;
 const METHODS: readonly HttpMethod[] = Object.values(HttpMethod);
 const INDEX_SEGMENT = 'index';
 const API_ERROR_REF = '#/components/schemas/ApiError';
+/** The method-agnostic fallback that answers unknown `/api` paths and methods with an `ApiError` (not a route). */
+export const FALLBACK_ROUTE_FILE = '[...path].ts';
 
 function isHttpMethod(value: string | undefined): value is HttpMethod {
   return METHODS.some((method) => method === value);
@@ -45,7 +47,7 @@ export function scanRouteFiles(apiDir: string): { routes: RouteFile[]; unrecogni
     .map((entry) => relative(apiDir, join(entry.parentPath, entry.name)));
   const routes: RouteFile[] = [];
   const unrecognized: string[] = [];
-  for (const file of files) {
+  for (const file of files.filter((name) => name !== FALLBACK_ROUTE_FILE)) {
     const route = routeFromFile(file);
     if (route === null) {
       unrecognized.push(file);

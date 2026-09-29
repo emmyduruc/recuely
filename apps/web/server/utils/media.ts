@@ -17,6 +17,11 @@ export function baseMediaType(mimeType: string): MediaType | null {
   return isValueOf(MediaType, base) ? base : null;
 }
 
+/** File extension for a container type (e.g. to name an upload for a provider that sniffs by name). */
+export function mediaExtension(type: MediaType): string {
+  return FILE_EXTENSION[type];
+}
+
 export function mediaKey(sessionId: string, takeId: string, type: MediaType): string {
   return `takes/${sessionId}/${takeId}${FILE_EXTENSION[type]}`;
 }

@@ -24,6 +24,14 @@ async function tableNames(): Promise<string[]> {
   return rows.map((row) => row.table_name);
 }
 
+async function settingsColumns(): Promise<string[]> {
+  const rows: { column_name: string }[] = await ds().query(
+    'SELECT column_name FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 ORDER BY column_name',
+    [schema, 'user_settings'],
+  );
+  return rows.map((row) => row.column_name);
+}
+
 async function expectPgError(action: Promise<unknown>, code: PgErrorCode): Promise<void> {
   const error: unknown = await action.then(
     () => null,
@@ -33,19 +41,24 @@ async function expectPgError(action: Promise<unknown>, code: PgErrorCode): Promi
 }
 
 describe('Task 1 schema', () => {
-  it('T1/T4: every migration goes down and up again cleanly', async () => {
+  it('T1/T4/T10: every migration goes down and up again cleanly', async () => {
     const all = [
       'chunk_plans', 'devices', 'exports', 'migrations', 'projects', 'script_blocks', 'script_chunks', 'scripts',
       'sessions', 'takes', 'user_settings', 'users', 'voice_favorites',
     ];
     expect(await tableNames()).toEqual(all);
+    expect(await settingsColumns()).toContain('cloud_speech_consent_at');
+    await ds().undoLastMigration({ transaction: 'each' });
+    expect(await tableNames()).toEqual(all);
+    expect(await settingsColumns()).not.toContain('cloud_speech_consent_at');
     await ds().undoLastMigration({ transaction: 'each' });
     expect(await tableNames()).toEqual(['devices', 'migrations', 'user_settings', 'users', 'voice_favorites']);
     await ds().undoLastMigration({ transaction: 'each' });
     expect(await tableNames()).toEqual(['migrations']);
     const applied = await ds().runMigrations({ transaction: 'each' });
-    expect(applied.map((m) => m.name)).toEqual(['InitUsers1727136000000', 'InitRecording1727222400000']);
+    expect(applied.map((m) => m.name)).toEqual(['InitUsers1727136000000', 'InitRecording1727222400000', 'CloudSpeechConsent1727308800000']);
     expect(await tableNames()).toEqual(all);
+    expect(await settingsColumns()).toContain('cloud_speech_consent_at');
   });
 
   it('T1: email is unique, case-insensitively; many users may have no email', async () => {

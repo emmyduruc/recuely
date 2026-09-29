@@ -24,6 +24,7 @@ export function toUserSettings(row: UserSettingsRow): UserSettings {
     reducedMotion: row.reducedMotion,
     commandAliases: row.commandAliases,
     matchThresholds: row.matchThresholds,
+    cloudSpeechConsentAt: row.cloudSpeechConsentAt?.toISOString() ?? null,
     updatedAt: row.updatedAt.toISOString(),
   };
 }
@@ -47,6 +48,7 @@ export function defaultSettingsRow(userId: string, now: Date): UserSettingsRow {
     reducedMotion: false,
     commandAliases: {},
     matchThresholds: { ...DEFAULT_MATCH_THRESHOLDS },
+    cloudSpeechConsentAt: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -62,8 +64,12 @@ export function applyUserPatch(row: UserRow, patch: UpdateMeRequest): UserRow {
   };
 }
 
-/** Only fields present in the patch change. `commandAliases` and `matchThresholds` are replaced whole. */
-export function applySettingsPatch(row: UserSettingsRow, patch: UpdateSettingsRequest): UserSettingsRow {
+/**
+ * Only fields present in the patch change. `commandAliases` and `matchThresholds` are replaced whole.
+ * `cloudSpeechConsent: true` records `now` (an existing consent keeps its original time); `false` revokes it.
+ */
+export function applySettingsPatch(row: UserSettingsRow, patch: UpdateSettingsRequest, now: Date): UserSettingsRow {
+  const consent = patch.cloudSpeechConsent === undefined ? row.cloudSpeechConsentAt : consentAt(row, patch.cloudSpeechConsent, now);
   return {
     ...row,
     ...(patch.defaultVoiceId === undefined ? {} : { defaultVoiceId: patch.defaultVoiceId }),
@@ -72,5 +78,10 @@ export function applySettingsPatch(row: UserSettingsRow, patch: UpdateSettingsRe
     ...(patch.reducedMotion === undefined ? {} : { reducedMotion: patch.reducedMotion }),
     ...(patch.commandAliases === undefined ? {} : { commandAliases: patch.commandAliases }),
     ...(patch.matchThresholds === undefined ? {} : { matchThresholds: patch.matchThresholds }),
+    cloudSpeechConsentAt: consent,
   };
+}
+
+function consentAt(row: UserSettingsRow, consent: boolean, now: Date): Date | null {
+  return consent ? (row.cloudSpeechConsentAt ?? now) : null;
 }

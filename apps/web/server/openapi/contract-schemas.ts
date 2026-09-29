@@ -64,6 +64,11 @@ export const CONTRACT_COMPONENT_TYPES: readonly ContractType[] = [
   ContractType.CreateExportRequest,
   ContractType.MatchResult,
   ContractType.TextSpan,
+  ContractType.WordTiming,
+  ContractType.TtsRequest,
+  ContractType.SpeechTtsResult,
+  ContractType.SpeechSttResult,
+  ContractType.SpeechVoice,
 ];
 
 export const CONTRACT_COMPONENTS: Readonly<Record<string, SchemaObject>> = Object.fromEntries(

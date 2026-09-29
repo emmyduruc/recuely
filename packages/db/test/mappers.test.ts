@@ -34,6 +34,7 @@ describe('repository helpers', () => {
       reducedMotion: false,
       commandAliases: {},
       matchThresholds: DEFAULT_MATCH_THRESHOLDS,
+      cloudSpeechConsentAt: null,
       updatedAt: now.toISOString(),
     });
   });
@@ -49,7 +50,7 @@ describe('repository helpers', () => {
     const patched = applySettingsPatch(base, {
       theme: Theme.Light,
       commandAliases: { [Intent.Pause]: ['hang on'] },
-    });
+    }, now);
     expect(patched.theme).toBe(Theme.Light);
     expect(patched.defaultRate).toBe(1);
     expect(patched.commandAliases).toEqual({ [Intent.Pause]: ['hang on'] });
@@ -57,6 +58,16 @@ describe('repository helpers', () => {
 
   it('T1: a null defaultVoiceId clears the voice', () => {
     const base = { ...defaultSettingsRow(user.id, now), defaultVoiceId: 'af_heart' };
-    expect(applySettingsPatch(base, { defaultVoiceId: null }).defaultVoiceId).toBeNull();
+    expect(applySettingsPatch(base, { defaultVoiceId: null }, now).defaultVoiceId).toBeNull();
+  });
+
+  it('T10: consent records the time once; revoking clears it; other patches keep it', () => {
+    const later = new Date(now.getTime() + 60_000);
+    const consented = applySettingsPatch(defaultSettingsRow(user.id, now), { cloudSpeechConsent: true }, now);
+    expect(consented.cloudSpeechConsentAt).toEqual(now);
+    expect(applySettingsPatch(consented, { cloudSpeechConsent: true }, later).cloudSpeechConsentAt).toEqual(now);
+    expect(applySettingsPatch(consented, { theme: Theme.Light }, later).cloudSpeechConsentAt).toEqual(now);
+    expect(applySettingsPatch(consented, { cloudSpeechConsent: false }, later).cloudSpeechConsentAt).toBeNull();
+    expect(toUserSettings(consented).cloudSpeechConsentAt).toBe(now.toISOString());
   });
 });

@@ -13,6 +13,7 @@ export const ApiTag = {
   Sessions: 'Sessions',
   Takes: 'Takes',
   Exports: 'Exports',
+  Speech: 'Speech',
 } as const;
 export type ApiTag = (typeof ApiTag)[keyof typeof ApiTag];
 
@@ -28,6 +29,7 @@ const TAG_DESCRIPTION: Record<ApiTag, string> = {
   [ApiTag.Sessions]: 'Recording session snapshots.',
   [ApiTag.Takes]: 'Recorded takes: upload, select, soft delete.',
   [ApiTag.Exports]: 'Per-take and stitched exports.',
+  [ApiTag.Speech]: 'Assistant voice (TTS) and take transcription (STT): OpenAI after consent, else the local AI service.',
 };
 
 export const TAGS: readonly TagObject[] = Object.values(ApiTag).map((name) => ({

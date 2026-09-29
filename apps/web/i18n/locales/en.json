@@ -6,7 +6,8 @@
   "nav": {
     "primary": "Main",
     "projects": "Projects",
-    "design": "Design system"
+    "design": "Design system",
+    "import": "Import script"
   },
   "theme": {
     "switch_to_light": "Switch to light theme",
@@ -15,7 +16,9 @@
   "projects": {
     "title": "Projects",
     "empty_title": "No projects yet",
-    "empty_hint": "Projects you create will appear here."
+    "empty_hint": "Import a script to start your first project.",
+    "import_cta": "Import a script",
+    "updated": "Updated {date}"
   },
   "studio": {
     "status": {
@@ -69,5 +72,88 @@
       "current": "Current",
       "upcoming": "Upcoming"
     }
+  },
+  "script": {
+    "title": "Import a script",
+    "intro": "Paste your script, then check what will be read aloud and how it's split. Nothing is recorded or read aloud on this page, and your wording is never changed.",
+    "source_title": "Script",
+    "project_title_label": "Project title",
+    "project_title_placeholder": "e.g. Product launch video",
+    "source_label": "Script text",
+    "source_placeholder": "Paste your script here…",
+    "source_hint": "Headings (#), “Note:” lines, [scene cues], bullets and tables are recognized automatically.",
+    "blocks": {
+      "title": "Blocks",
+      "hint": "Only spoken blocks are read aloud. If a block was recognized wrongly, change its type.",
+      "empty": "Paste a script to see its blocks.",
+      "type_label": "Type of block {number}"
+    },
+    "block_type": {
+      "spoken": "Spoken",
+      "heading": "Heading",
+      "note": "Note",
+      "scene_cue": "Scene cue"
+    },
+    "tables": {
+      "column_label": "Table {number}: spoken column",
+      "none": "None (all notes)",
+      "column": "Column {number}"
+    },
+    "mode": {
+      "label": "Chunk size",
+      "short": "Short",
+      "short_hint": "Breath-sized phrases",
+      "sentence": "Sentence",
+      "sentence_hint": "One sentence at a time",
+      "paragraph": "Paragraph",
+      "paragraph_hint": "Whole paragraphs",
+      "smart": "Smart",
+      "smart_hint": "Sentences, long ones split"
+    },
+    "resegment_note": "Changing the text, a block type or the chunk size splits the script again and discards boundary edits.",
+    "coverage": {
+      "ok": "All spoken text is covered exactly once",
+      "problems": "Coverage problems: {count}"
+    },
+    "chunks": {
+      "title": "Chunks",
+      "hint": "Click a word to split before it, drag a boundary onto a word to move it, or merge two chunks. Keyboard: on a chunk, Enter starts a split (arrow keys choose, Enter splits, Escape cancels); on a boundary, arrow keys move it by one word and Delete merges.",
+      "empty": "No spoken text yet.",
+      "count": "Chunks: {count} · Words: {words}",
+      "chunk_label": "Chunk {number} of {total}",
+      "boundary_label": "Boundary between chunks {before} and {after}",
+      "merge": "Merge chunks {before} and {after}",
+      "split_mode": "Choose where to split: arrow keys move, Enter splits, Escape cancels.",
+      "scene_cue": "Scene: {cue}"
+    },
+    "edit_error": {
+      "block_not_found": "That block no longer exists.",
+      "chunk_not_found": "That chunk no longer exists.",
+      "not_spoken": "Boundaries can only be placed in spoken text.",
+      "no_boundary_nearby": "There's no word start close enough to place a boundary.",
+      "outside_chunk": "A boundary can't move past its neighbours; each chunk needs at least one word.",
+      "first_chunk": "The first chunk has no boundary before it.",
+      "last_chunk": "The last chunk has nothing after it to merge with."
+    },
+    "save": "Save script",
+    "saving": "Saving…"
+  },
+  "errors": {
+    "network": "The server couldn't be reached. Check that the app is running, then try again.",
+    "validation_failed": "Some of the data wasn't valid. Please check it and try again.",
+    "not_found": "This item doesn't exist anymore.",
+    "conflict": "This was changed elsewhere. Reload and try again.",
+    "local_user_missing": "The local user is missing. Run the database seed, then try again.",
+    "database_unavailable": "The database isn't available. Check the database settings, then try again.",
+    "internal_error": "Something went wrong on the server. Please try again.",
+    "coverage_violation": "The chunks don't cover the spoken text exactly once, so nothing was saved.",
+    "confirmation_required": "This action needs your confirmation.",
+    "stale_update": "A newer change was already saved.",
+    "payload_too_large": "The file is too large.",
+    "insufficient_storage": "There isn't enough disk space.",
+    "unsupported_media_type": "This file type isn't supported.",
+    "range_not_satisfiable": "The requested part of the file isn't available.",
+    "speech_unavailable": "The assistant voice or transcription isn't available right now. Check your connection or the local AI service, then try again.",
+    "method_not_allowed": "The app sent a request the server doesn't support. Please reload the page and try again."
   }
 }

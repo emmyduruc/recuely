@@ -1,4 +1,4 @@
-import { type BlockType, type ScriptBlock, type ScriptBlockInput } from '@repo/contracts';
+import { BlockType, type ScriptBlock, type ScriptBlockInput } from '@repo/contracts';
 import { type EditResult, fail, type IdFactory, ok, ScriptEditError } from './result.ts';
 
 export const BlockInputIssue = {
@@ -99,4 +99,55 @@ export function reconcileBlockIds(previous: readonly ScriptBlock[], next: readon
     }
   }
   return next.map((block, index) => ({ ...block, id: ids[index] ?? block.id }));
+}
+
+/** A table found in the blocks: its columns (with header text, if any) and the column read aloud, if exactly one. */
+export interface TableSummary {
+  index: number;
+  columns: { column: number; header: string | null }[];
+  spokenColumn: number | null;
+}
+
+function bodyCells(blocks: readonly ScriptBlock[], tableIndex: number): ScriptBlock[] {
+  return blocks.filter((block) => block.source.table?.index === tableIndex && block.metadata.tableHeader !== true);
+}
+
+/** Tables in block order, for the review UI's column picker. */
+export function tablesOf(blocks: readonly ScriptBlock[]): TableSummary[] {
+  const tables = new Map<number, Map<number, string | null>>();
+  for (const block of blocks) {
+    const table = block.source.table;
+    if (table === undefined) continue;
+    const columns = tables.get(table.index) ?? new Map<number, string | null>();
+    if (!columns.has(table.column)) columns.set(table.column, table.header);
+    tables.set(table.index, columns);
+  }
+  return [...tables].map(([index, columns]) => {
+    const cells = bodyCells(blocks, index);
+    const spoken = new Set(cells.filter((cell) => cell.type === BlockType.Spoken).map((cell) => cell.source.table?.column));
+    const [only] = spoken;
+    const allOfIt = only !== undefined && spoken.size === 1 && cells.filter((cell) => cell.source.table?.column === only).every((cell) => cell.type === BlockType.Spoken);
+    return {
+      index,
+      columns: [...columns].sort(([a], [b]) => a - b).map(([column, header]) => ({ column, header })),
+      spokenColumn: allOfIt ? only : null,
+    };
+  });
+}
+
+/**
+ * Makes one column of a table the spoken one: its body cells become spoken, the other body cells notes.
+ * `column: null` makes the whole table notes. Header cells and all other blocks are untouched.
+ */
+export function setSpokenColumn(blocks: readonly ScriptBlock[], tableIndex: number, column: number | null): EditResult<ScriptBlock[]> {
+  const cells = new Set(bodyCells(blocks, tableIndex).map((cell) => cell.id));
+  if (cells.size === 0) {
+    return fail(ScriptEditError.BlockNotFound);
+  }
+  return ok(
+    blocks.map((block) => {
+      if (!cells.has(block.id)) return block;
+      return { ...block, type: block.source.table?.column === column ? BlockType.Spoken : BlockType.Note };
+    }),
+  );
 }

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "SttTranscript.json",
+  "title": "SttTranscript",
+  "type": "object",
+  "description": "Transcript of one take (local AI service). Ids from the request are echoed.",
+  "properties": {
+    "text": {
+      "type": "string",
+      "description": "What was said; empty for silence or noise."
+    },
+    "durationMs": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Audio duration in ms."
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Model that transcribed it."
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Echoed from the request."
+    },
+    "chunkId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Echoed from the request."
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Echoed from the request; stale results (lower seq) are dropped (§B6)."
+    }
+  },
+  "required": [
+    "text",
+    "durationMs",
+    "model"
+  ],
+  "additionalProperties": true,
+  "examples": [
+    {
+      "text": "Welcome back, everyone.",
+      "durationMs": 2400,
+      "model": "base.en",
+      "chunkId": "c1",
+      "seq": 4
+    }
+  ]
+}

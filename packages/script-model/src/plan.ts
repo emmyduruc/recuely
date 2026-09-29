@@ -9,7 +9,7 @@ import {
 } from '@repo/contracts';
 import { type EditResult, fail, type IdFactory, ok, ScriptEditError } from './result.ts';
 import { DEFAULT_TUNING, type SegmentationTuning, segmentText } from './segment.ts';
-import { isCutPosition, snapToCut, spokenTextOf, trimRange } from './text.ts';
+import { isCutPosition, snapToCut, spokenTextOf, trimRange, wordsIn } from './text.ts';
 
 // A plan is a set of cuts over the spoken text: all spoken blocks in order, as one stream. A chunk runs from
 // one cut to the next, so chunks always partition the spoken text: every non-whitespace character is covered
@@ -273,6 +273,48 @@ export function moveBoundary(
     return fail(ScriptEditError.OutsideChunk);
   }
   return ok(buildPlan(stream, plan.mode, cuts.map((cut, i) => (i === index ? position.value : cut)), plan.chunks, newId));
+}
+
+/** Direction for keyboard boundary editing: one word earlier or later. */
+export const BoundaryStep = {
+  Earlier: 'earlier',
+  Later: 'later',
+} as const;
+export type BoundaryStep = (typeof BoundaryStep)[keyof typeof BoundaryStep];
+
+/** Every word start of the spoken stream, in order (the legal cut positions). */
+function streamWordStarts(stream: Stream): number[] {
+  return stream.blocks.flatMap(({ block, base }) => wordsIn(block.text).map((word) => base + word.start));
+}
+
+/**
+ * Moves the boundary at the start of `chunkId` by one word (keyboard editing). Neither neighbour may become
+ * empty; at the limit the edit fails with `outside_chunk` and the plan is unchanged.
+ */
+export function nudgeBoundary(
+  blocks: readonly ScriptBlock[],
+  plan: ChunkPlan,
+  chunkId: string,
+  step: BoundaryStep,
+  newId: IdFactory,
+): EditResult<ChunkPlan> {
+  const found = locate(blocks, plan, chunkId);
+  if (found === null) {
+    return fail(ScriptEditError.ChunkNotFound);
+  }
+  const { stream, cuts, index } = found;
+  if (index === 0) {
+    return fail(ScriptEditError.FirstChunk);
+  }
+  const current = cuts[index] ?? 0;
+  const starts = streamWordStarts(stream);
+  const target = step === BoundaryStep.Earlier ? starts.findLast((start) => start < current) : starts.find((start) => start > current);
+  const lower = cuts[index - 1] ?? 0;
+  const upper = cuts[index + 1] ?? stream.end;
+  if (target === undefined || target <= lower || target >= upper) {
+    return fail(ScriptEditError.OutsideChunk);
+  }
+  return ok(buildPlan(stream, plan.mode, cuts.map((cut, i) => (i === index ? target : cut)), plan.chunks, newId));
 }
 
 /**

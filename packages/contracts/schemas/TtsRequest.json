@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "TtsRequest.json",
+  "title": "TtsRequest",
+  "type": "object",
+  "description": "POST /api/speech/tts (and /v0/tts) body. Unknown fields are rejected.",
+  "properties": {
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "\\S",
+      "description": "The chunk text to read, verbatim."
+    },
+    "voiceId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "\\S",
+      "description": "The provider's voice id; defaults to the user setting or the provider default."
+    },
+    "rate": {
+      "type": "number",
+      "minimum": 0.5,
+      "maximum": 2,
+      "description": "Speech rate multiplier; defaults to the user setting."
+    }
+  },
+  "required": [
+    "text"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "text": "Welcome back, everyone.",
+      "voiceId": "alloy",
+      "rate": 1
+    }
+  ]
+}

@@ -51,7 +51,7 @@ export const BODY_ERRORS = {
 const getHealth: OperationObject = {
   tags: [ApiTag.Health],
   operationId: 'getHealth',
-  summary: 'Report app and database status',
+  summary: 'Report app, database and speech status',
   description:
     'Always answers 200 while the server runs. `db` is `ok` when the database answers within 1 s. ' +
     'No side effects; safe to poll.',

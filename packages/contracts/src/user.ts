@@ -33,6 +33,8 @@ export interface UserSettings {
   reducedMotion: boolean;
   commandAliases: CommandAliases;
   matchThresholds: MatchThresholds;
+  /** When the user opted in to cloud speech (OpenAI, §A6.8/§B12), or null: everything stays local. */
+  cloudSpeechConsentAt: string | null;
   updatedAt: string;
 }
 
@@ -43,6 +45,8 @@ export interface UpdateSettingsRequest {
   reducedMotion?: boolean;
   commandAliases?: CommandAliases;
   matchThresholds?: MatchThresholds;
+  /** true opts in to cloud speech (records the time); false revokes it. */
+  cloudSpeechConsent?: boolean;
 }
 
 export interface VoiceFavorite {

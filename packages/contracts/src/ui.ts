@@ -47,3 +47,17 @@ export const DecisionAction = {
   Retake: Intent.Retake,
 } as const;
 export type DecisionAction = (typeof DecisionAction)[keyof typeof DecisionAction];
+
+/** `KeyboardEvent.key` values the UI handles (SPEC.md §B9 keyboard shortcuts and editing keys). */
+export const KeyboardKey = {
+  Enter: 'Enter',
+  Escape: 'Escape',
+  Space: ' ',
+  ArrowLeft: 'ArrowLeft',
+  ArrowRight: 'ArrowRight',
+  ArrowUp: 'ArrowUp',
+  ArrowDown: 'ArrowDown',
+  Delete: 'Delete',
+  Backspace: 'Backspace',
+} as const;
+export type KeyboardKey = (typeof KeyboardKey)[keyof typeof KeyboardKey];

@@ -1,5 +1,5 @@
 import { type ChildProcess, spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { createWriteStream, existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createServer } from 'node:net';
@@ -15,6 +15,7 @@ import {
   sweepStaleRunSchemas,
 } from '@repo/db/testing';
 import type { TestProject } from 'vitest/node';
+import { FAKE_OPENAI_KEY, type FakeSpeech, startFakeSpeech } from './fake-speech';
 
 declare module 'vitest' {
   export interface ProvidedContext {
@@ -22,6 +23,9 @@ declare module 'vitest' {
     testDatabase: DatabaseConnection;
     testSchema: string;
     storageDir: string;
+    fakeOpenAiUrl: string;
+    fakeAiServiceUrl: string;
+    serverLogPath: string;
   }
 }
 
@@ -76,8 +80,10 @@ export default async function setup(project: TestProject): Promise<() => Promise
   await createRunSchema(db, schema);
 
   let server: ChildProcess | undefined;
+  let fakes: FakeSpeech | undefined;
   const teardown = async (): Promise<void> => {
     server?.kill();
+    await fakes?.close();
     // Test media only; the app itself never deletes media.
     rmSync(storageDir, { recursive: true, force: true });
     await dropRunSchema(db, schema);
@@ -90,6 +96,10 @@ export default async function setup(project: TestProject): Promise<() => Promise
     await seedLocalUser(ds);
     await ds.destroy();
 
+    fakes = await startFakeSpeech();
+    // The server's stdout/stderr are kept, so tests can check the OpenAI key never reaches the logs.
+    const serverLogPath = join(storageDir, 'server.log');
+    const log = createWriteStream(serverLogPath);
     const port = await freePort();
     const baseUrl = `http://127.0.0.1:${String(port)}`;
     server = spawn(process.execPath, [SERVER_ENTRY], {
@@ -105,15 +115,32 @@ export default async function setup(project: TestProject): Promise<() => Promise
         STORAGE_DIR: storageDir,
         MAX_UPLOAD_BYTES: String(TEST_MAX_UPLOAD_BYTES),
         MIN_FREE_BYTES: '1',
+        // Speech against the fakes, with short deadlines so stall tests stay quick.
+        OPENAI_API_KEY: FAKE_OPENAI_KEY,
+        OPENAI_BASE_URL: fakes.openAiUrl,
+        AI_SERVICE_URL: fakes.aiServiceUrl,
+        SPEECH_TTS_FIRST_BYTE_MS: '400',
+        SPEECH_TTS_STALL_MS: '400',
+        SPEECH_STT_TIMEOUT_MS: '600',
+        SPEECH_LOCAL_TIMEOUT_MS: '2000',
       },
-      stdio: ['ignore', 'inherit', 'inherit'],
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
+    for (const stream of [server.stdout, server.stderr]) {
+      stream?.on('data', (chunk: Buffer) => {
+        log.write(chunk);
+        process.stdout.write(chunk);
+      });
+    }
     await waitUntilReady(baseUrl, server);
 
     project.provide('baseUrl', baseUrl);
     project.provide('testDatabase', db);
     project.provide('testSchema', schema);
     project.provide('storageDir', storageDir);
+    project.provide('fakeOpenAiUrl', fakes.openAiUrl);
+    project.provide('fakeAiServiceUrl', fakes.aiServiceUrl);
+    project.provide('serverLogPath', serverLogPath);
   } catch (error) {
     await teardown();
     throw error;

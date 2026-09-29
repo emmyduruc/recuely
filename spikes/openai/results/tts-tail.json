@@ -1,0 +1,35 @@
+{
+ "summary": {
+  "n": 20,
+  "failures": 3,
+  "p50": 0.941,
+  "p90": 1.144,
+  "max": 1.193,
+  "over4s": 0,
+  "over1_2s": 0
+ },
+ "ttfb": [
+  0.862,
+  0.981,
+  0.871,
+  1.031,
+  1.144,
+  0.832,
+  1.039,
+  0.764,
+  0.713,
+  0.578,
+  1.027,
+  0.469,
+  0.844,
+  0.965,
+  1.193,
+  1.043,
+  0.941
+ ],
+ "failures": [
+  "1: 0 after 30.002 s: body failed: TimeoutError: The operation was aborted due to timeout",
+  "4: 0 after 30 s: body failed: TimeoutError: The operation was aborted due to timeout",
+  "15: 0 after 30.001 s: request failed: TimeoutError: The operation was aborted due to timeout"
+ ]
+}

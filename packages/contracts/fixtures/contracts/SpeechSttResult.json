@@ -1,0 +1,46 @@
+{
+  "type": "SpeechSttResult",
+  "valid": [
+    {
+      "name": "cloud",
+      "value": {
+        "text": "Welcome back, everyone.",
+        "durationMs": 0,
+        "model": "gpt-transcribe",
+        "provider": "openai",
+        "chunkId": "c1",
+        "seq": 4
+      }
+    },
+    {
+      "name": "local",
+      "value": {
+        "text": "Welcome back, everyone.",
+        "durationMs": 2400,
+        "model": "base.en",
+        "provider": "local"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "missing provider",
+      "path": "provider",
+      "value": {
+        "text": "Welcome back, everyone.",
+        "durationMs": 2400,
+        "model": "base.en"
+      }
+    },
+    {
+      "name": "unknown provider",
+      "path": "provider",
+      "value": {
+        "text": "Welcome back, everyone.",
+        "durationMs": 2400,
+        "model": "base.en",
+        "provider": "google"
+      }
+    }
+  ]
+}

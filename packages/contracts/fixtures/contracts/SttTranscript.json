@@ -1,0 +1,61 @@
+{
+  "type": "SttTranscript",
+  "valid": [
+    {
+      "name": "minimal",
+      "value": {
+        "text": "Welcome back, everyone.",
+        "durationMs": 2400,
+        "model": "base.en"
+      }
+    },
+    {
+      "name": "echoed ids",
+      "value": {
+        "text": "Welcome back, everyone.",
+        "durationMs": 2400,
+        "model": "base.en",
+        "sessionId": "s1",
+        "chunkId": "c1",
+        "seq": 4
+      }
+    },
+    {
+      "name": "silence",
+      "value": {
+        "text": "",
+        "durationMs": 2400,
+        "model": "base.en"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "missing model",
+      "path": "model",
+      "value": {
+        "text": "x",
+        "durationMs": 1
+      }
+    },
+    {
+      "name": "negative seq",
+      "path": "seq",
+      "value": {
+        "text": "Welcome back, everyone.",
+        "durationMs": 2400,
+        "model": "base.en",
+        "seq": -1
+      }
+    },
+    {
+      "name": "negative duration",
+      "path": "durationMs",
+      "value": {
+        "text": "Welcome back, everyone.",
+        "durationMs": -5,
+        "model": "base.en"
+      }
+    }
+  ]
+}

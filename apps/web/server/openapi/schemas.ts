@@ -42,14 +42,33 @@ const commandAliasesSchema: SchemaObject = {
 export const SCHEMAS = {
   Health: {
     type: 'object',
-    description: 'Status of the web app and its database.',
-    required: ['app', 'db'],
+    description: 'Status of the web app, its database and the speech providers.',
+    required: ['app', 'db', 'speech'],
     properties: {
       app: { type: 'string', enum: Object.values(HealthStatus), description: 'The web server itself.' },
       db: {
         type: 'string',
         enum: Object.values(HealthStatus),
         description: '`ok` when the database answers `SELECT 1` within 1 s, otherwise `unavailable`.',
+      },
+      speech: {
+        type: 'object',
+        description: 'Speech providers (SPEC.md §B12).',
+        required: ['openai', 'local'],
+        properties: {
+          openai: {
+            type: 'string',
+            enum: Object.values(HealthStatus),
+            description:
+              '`unavailable` without OPENAI_API_KEY; `degraded` if an OpenAI request failed in the last minute; else `ok`. ' +
+              'Never probed over the network (nothing reaches OpenAI without consent).',
+          },
+          local: {
+            type: 'string',
+            enum: Object.values(HealthStatus),
+            description: "The local AI service's `/v0/health` within 1 s: `ok` (TTS and STT), `degraded` (one), `unavailable`.",
+          },
+        },
       },
     },
     examples: [exampleHealth],
@@ -99,7 +118,7 @@ export const SCHEMAS = {
   UserSettings: {
     type: 'object',
     description: 'Preferences of the current user.',
-    required: ['defaultVoiceId', 'defaultRate', 'theme', 'reducedMotion', 'commandAliases', 'matchThresholds', 'updatedAt'],
+    required: ['defaultVoiceId', 'defaultRate', 'theme', 'reducedMotion', 'commandAliases', 'matchThresholds', 'cloudSpeechConsentAt', 'updatedAt'],
     properties: {
       defaultVoiceId: {
         type: ['string', 'null'],
@@ -116,6 +135,11 @@ export const SCHEMAS = {
       reducedMotion: { type: 'boolean', description: 'When true, UI changes are instant.' },
       commandAliases: { $ref: '#/components/schemas/CommandAliases', description: 'Extra command phrases.' },
       matchThresholds: { $ref: '#/components/schemas/MatchThresholds', description: 'Auto-advance thresholds.' },
+      cloudSpeechConsentAt: {
+        type: ['string', 'null'],
+        format: 'date-time',
+        description: 'When the user opted in to cloud speech (OpenAI), or null: speech stays local (SPEC.md §A6.8).',
+      },
       updatedAt: timestamp('When the settings last changed.'),
     },
     examples: [exampleSettings],
@@ -144,6 +168,12 @@ export const SCHEMAS = {
       reducedMotion: { type: 'boolean', description: 'Turn reduced motion on or off.' },
       commandAliases: { $ref: '#/components/schemas/CommandAliases', description: 'Replacement alias map.' },
       matchThresholds: { $ref: '#/components/schemas/MatchThresholds', description: 'Replacement thresholds.' },
+      cloudSpeechConsent: {
+        type: 'boolean',
+        description:
+          'true opts in to cloud speech: chunk text (TTS) and take audio (STT) are sent to OpenAI. The time is ' +
+          'recorded once; false revokes it and everything stays local (SPEC.md §A6.8, §B12).',
+      },
     },
     examples: [exampleUpdateSettings],
   },

@@ -35,6 +35,7 @@ export const exampleSettings: UserSettings = {
   reducedMotion: false,
   commandAliases: { [Intent.Next]: ['onward'] },
   matchThresholds: { coverage: 0.8, similarity: 0.7 },
+  cloudSpeechConsentAt: null,
   updatedAt: '2026-09-24T09:31:00.000Z',
 };
 
@@ -54,7 +55,11 @@ export const exampleAddVoiceFavorite: AddVoiceFavoriteRequest = {
   label: 'Heart (warm, US)',
 };
 
-export const exampleHealth: AppHealth = { app: HealthStatus.Ok, db: HealthStatus.Ok };
+export const exampleHealth: AppHealth = {
+  app: HealthStatus.Ok,
+  db: HealthStatus.Ok,
+  speech: { openai: HealthStatus.Ok, local: HealthStatus.Unavailable },
+};
 
 export const exampleValidationError: ApiError = {
   statusCode: 422,

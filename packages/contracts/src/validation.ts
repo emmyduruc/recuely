@@ -140,20 +140,23 @@ function mediaKindIssues(take: { kind: TakeKind; mimeType: string }): ContractIs
     : [{ path: 'mimeType', issue: `must be a ${take.kind} type for a ${take.kind} take` }];
 }
 
+function ttsResultIssues(result: TtsResult): ContractIssue[] {
+  const noTimings = result.timings === null;
+  const issues: ContractIssue[] =
+    noTimings === (result.timingSource === TimingSource.None)
+      ? []
+      : [{ path: 'timings', issue: 'must be null exactly when timingSource is none' }];
+  (result.timings ?? []).forEach((timing, index) => {
+    issues.push(...wordTimingIssues(timing, `timings[${String(index)}]`));
+  });
+  return issues;
+}
+
 const REFINE: { [K in ContractType]?: Refinement<ContractTypes[K]> } = {
   WordTiming: (timing) => wordTimingIssues(timing, ROOT),
   TextSpan: (span) => spanIssues(span, ROOT),
-  TtsResult: (result: TtsResult) => {
-    const noTimings = result.timings === null;
-    const issues: ContractIssue[] =
-      noTimings === (result.timingSource === TimingSource.None)
-        ? []
-        : [{ path: 'timings', issue: 'must be null exactly when timingSource is none' }];
-    (result.timings ?? []).forEach((timing, index) => {
-      issues.push(...wordTimingIssues(timing, `timings[${String(index)}]`));
-    });
-    return issues;
-  },
+  TtsResult: ttsResultIssues,
+  SpeechTtsResult: ttsResultIssues,
   MatchResult: (result) => result.missingSpans.flatMap((span, index) => spanIssues(span, `missingSpans[${String(index)}]`)),
   CreateTakeRequest: mediaKindIssues,
   Take: mediaKindIssues,

@@ -24,6 +24,12 @@
       "value": {
         "defaultVoiceId": null
       }
+    },
+    {
+      "name": "cloud speech consent",
+      "value": {
+        "cloudSpeechConsent": true
+      }
     }
   ],
   "invalid": [
@@ -77,6 +83,13 @@
       "path": "reducedMotion",
       "value": {
         "reducedMotion": "yes"
+      }
+    },
+    {
+      "name": "consent must be boolean",
+      "path": "cloudSpeechConsent",
+      "value": {
+        "cloudSpeechConsent": "yes"
       }
     }
   ]

@@ -2,6 +2,7 @@ import { CONTRACT_COMPONENTS } from './contract-schemas';
 import { PATHS } from './paths';
 import { RECORDING_PATHS } from './recording-paths';
 import { SCHEMAS } from './schemas';
+import { SPEECH_PATHS } from './speech-paths';
 import { TAGS } from './tags';
 import type { OpenApiDocument } from './types';
 
@@ -13,12 +14,12 @@ export const openApiDocument: OpenApiDocument = {
   openapi: '3.1.0',
   info: {
     title: 'Recording Companion API',
-    description: 'Local API for the user, settings, projects, scripts, chunk plans, sessions, takes and exports.',
+    description: 'Local API for the user, settings, projects, scripts, chunk plans, sessions, takes, exports and speech.',
     version: '0.1.0',
   },
   servers: [{ url: '/', description: 'This server' }],
   tags: TAGS,
-  paths: { ...PATHS, ...RECORDING_PATHS },
+  paths: { ...PATHS, ...RECORDING_PATHS, ...SPEECH_PATHS },
   components: { schemas: { ...SCHEMAS, ...CONTRACT_COMPONENTS } },
 };
 

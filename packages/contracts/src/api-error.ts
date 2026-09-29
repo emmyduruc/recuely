@@ -16,6 +16,10 @@ export const ApiErrorCode = {
   InsufficientStorage: 'insufficient_storage',
   UnsupportedMediaType: 'unsupported_media_type',
   RangeNotSatisfiable: 'range_not_satisfiable',
+  /** No speech provider could serve the request (OpenAI not allowed or failing, local service down). */
+  SpeechUnavailable: 'speech_unavailable',
+  /** The path exists, but not with this HTTP method (the `Allow` header lists the ones it has). */
+  MethodNotAllowed: 'method_not_allowed',
 } as const;
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
 

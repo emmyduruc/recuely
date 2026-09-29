@@ -5,3 +5,8 @@ export function useT(): (key: MessageKey, params?: MessageParams) => string {
   const { t } = useI18n();
   return (key, params) => (params === undefined ? t(key) : t(key, params));
 }
+
+/** The active locale, e.g. for `Intl` date and number formats (never concatenate them by hand, §B11). */
+export function useLocaleTag(): Ref<string> {
+  return useI18n().locale;
+}

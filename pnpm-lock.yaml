@@ -170,6 +170,9 @@ importers:
       '@repo/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@repo/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@repo/web':
         specifier: workspace:*
         version: link:../../apps/web

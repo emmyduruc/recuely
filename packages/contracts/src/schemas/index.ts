@@ -39,9 +39,11 @@ import type {
   UpdateTakeRequest,
 } from '../recording.ts';
 import type { ScriptBlock, ScriptChunk } from '../script.ts';
+import type { SpeechSttResult, SpeechTtsResult, SpeechVoice, SttTranscript, TtsRequest } from '../speech.ts';
 import { EMAIL_PATTERN, nonNegativeInt, ref, text, unit } from './helpers.ts';
 import { JSON_SCHEMA_DIALECT, type JsonSchema, nullable, objectSchema } from './json-schema.ts';
 import { RECORDING_SCHEMAS } from './recording.ts';
+import { SPEECH_SCHEMAS } from './speech.ts';
 
 export * from './helpers.ts';
 export * from './json-schema.ts';
@@ -77,6 +79,11 @@ export const ContractType = {
   UpdateTakeRequest: 'UpdateTakeRequest',
   Export: 'Export',
   CreateExportRequest: 'CreateExportRequest',
+  TtsRequest: 'TtsRequest',
+  SpeechTtsResult: 'SpeechTtsResult',
+  SttTranscript: 'SttTranscript',
+  SpeechSttResult: 'SpeechSttResult',
+  SpeechVoice: 'SpeechVoice',
 } as const;
 export type ContractType = (typeof ContractType)[keyof typeof ContractType];
 
@@ -110,6 +117,11 @@ export interface ContractTypes {
   [ContractType.UpdateTakeRequest]: UpdateTakeRequest;
   [ContractType.Export]: Export;
   [ContractType.CreateExportRequest]: CreateExportRequest;
+  [ContractType.TtsRequest]: TtsRequest;
+  [ContractType.SpeechTtsResult]: SpeechTtsResult;
+  [ContractType.SttTranscript]: SttTranscript;
+  [ContractType.SpeechSttResult]: SpeechSttResult;
+  [ContractType.SpeechVoice]: SpeechVoice;
 }
 
 /** Lower-case words, optionally ending in the `{target}` placeholder. */
@@ -150,6 +162,7 @@ const wordTiming = objectSchema<WordTiming>()({
   },
   required: ['index', 'start', 'end', 'charStart', 'charEnd'],
   additionalProperties: true,
+  examples: [{ index: 0, start: 0, end: 320, charStart: 0, charEnd: 7 }],
 });
 
 const ttsResult = objectSchema<TtsResult>()({
@@ -282,6 +295,10 @@ const updateSettings = objectSchema<UpdateSettingsRequest>()({
       },
     },
     matchThresholds: { ...matchThresholds, description: 'Replacement thresholds.' },
+    cloudSpeechConsent: {
+      type: 'boolean',
+      description: 'true opts in to cloud speech (OpenAI; records the time); false revokes it (§A6.8).',
+    },
   },
   required: [],
   minProperties: 1,
@@ -312,6 +329,7 @@ const DEFINITIONS: Record<ContractType, JsonSchema> = {
   [ContractType.UpdateSettingsRequest]: updateSettings,
   [ContractType.AddVoiceFavoriteRequest]: addVoiceFavorite,
   ...RECORDING_SCHEMAS,
+  ...SPEECH_SCHEMAS,
 };
 
 /** Published schemas: `$id` is `<Type>.json`, so `$ref`s resolve between files and inside ajv alike. */
@@ -331,4 +349,7 @@ export const SHARED_CONTRACTS: readonly ContractType[] = [
   ContractType.MatchResult,
   ContractType.CommandEvent,
   ContractType.CommandGrammar,
+  ContractType.TtsRequest,
+  ContractType.SttTranscript,
+  ContractType.SpeechVoice,
 ];

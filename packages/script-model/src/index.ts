@@ -1,14 +1,25 @@
-export { BlockInputIssue, buildBlocks, type BuildBlocksResult, reconcileBlockIds, retypeBlock } from './blocks.ts';
+export {
+  BlockInputIssue,
+  buildBlocks,
+  type BuildBlocksResult,
+  reconcileBlockIds,
+  retypeBlock,
+  setSpokenColumn,
+  type TableSummary,
+  tablesOf,
+} from './blocks.ts';
 export { assertCoverage, checkCoverage, CoverageError, type CoverageIssue, CoverageIssueCode } from './coverage.ts';
 export { parseScript, type ParseOptions, splitLines } from './parse.ts';
 export {
   applyBoundaryProposals,
   type BlockPosition,
+  BoundaryStep,
   chunksFromRanges,
   isLegalCut,
   MAX_SNAP_DISTANCE,
   mergeWithNext,
   moveBoundary,
+  nudgeBoundary,
   type PlanOptions,
   ProposalRejection,
   type ProposalOutcome,
@@ -27,5 +38,7 @@ export {
   snapToCut,
   spokenTextOf,
   stripEmphasis,
+  type WordSpan,
+  wordsIn,
 } from './text.ts';
 export * from './matching/index.ts';

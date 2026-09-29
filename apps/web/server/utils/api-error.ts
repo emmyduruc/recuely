@@ -22,6 +22,7 @@ export const HttpStatus = {
   PartialContent: 206,
   BadRequest: 400,
   NotFound: 404,
+  MethodNotAllowed: 405,
   Conflict: 409,
   PayloadTooLarge: 413,
   UnsupportedMediaType: 415,

@@ -23,6 +23,9 @@ class ContractType(StrEnum):
     MATCH_RESULT = "MatchResult"
     COMMAND_EVENT = "CommandEvent"
     COMMAND_GRAMMAR = "CommandGrammar"
+    TTS_REQUEST = "TtsRequest"
+    STT_TRANSCRIPT = "SttTranscript"
+    SPEECH_VOICE = "SpeechVoice"
 
 
 class Intent(StrEnum):
@@ -52,6 +55,20 @@ class TimingSource(StrEnum):
 class MatchDecision(StrEnum):
     ADVANCE = "advance"
     ASK = "ask"
+
+
+class SpeechProvider(StrEnum):
+    """Who synthesized or transcribed (SPEC.md §B12). This service is always `local`."""
+
+    OPENAI = "openai"
+    LOCAL = "local"
+
+
+# Limits shared with packages/contracts (speech.ts, user.ts).
+SPEECH_TEXT_MAX = 4096
+SPEECH_VOICE_ID_MAX = 100
+RATE_MIN = 0.5
+RATE_MAX = 2.0
 
 
 class CommandSource(StrEnum):
@@ -190,6 +207,41 @@ class CommandGrammar(Contract):
         return self
 
 
+VoiceId = Annotated[str, StringConstraints(min_length=1, max_length=SPEECH_VOICE_ID_MAX, pattern=r"\S")]
+
+
+class TtsRequest(Contract):
+    """`POST /v0/tts` body: the chunk text verbatim, optional voice and rate. Unknown fields are rejected."""
+
+    model_config = ConfigDict(extra="forbid")
+    optional_not_null = frozenset({"voiceId", "rate"})
+
+    text: Annotated[str, StringConstraints(min_length=1, max_length=SPEECH_TEXT_MAX, pattern=r"\S")]
+    voice_id: VoiceId | None = None
+    rate: Annotated[float, Field(ge=RATE_MIN, le=RATE_MAX)] | None = None
+
+
+class SttTranscript(Contract):
+    """Transcript of one take; request ids are echoed so stale results can be dropped."""
+
+    optional_not_null = frozenset({"sessionId", "chunkId", "seq"})
+
+    text: str
+    duration_ms: NonNegativeFloat
+    model: NonEmpty
+    session_id: NonEmpty | None = None
+    chunk_id: NonEmpty | None = None
+    seq: NonNegativeInt | None = None
+
+
+class SpeechVoice(Contract):
+    """A voice a provider offers."""
+
+    provider: SpeechProvider
+    voice_id: NonEmpty
+    label: NonEmpty
+
+
 CONTRACT_MODELS: dict[ContractType, type[Contract]] = {
     ContractType.ENVELOPE: Envelope,
     ContractType.WORD_TIMING: WordTiming,
@@ -198,4 +250,7 @@ CONTRACT_MODELS: dict[ContractType, type[Contract]] = {
     ContractType.MATCH_RESULT: MatchResult,
     ContractType.COMMAND_EVENT: CommandEvent,
     ContractType.COMMAND_GRAMMAR: CommandGrammar,
+    ContractType.TTS_REQUEST: TtsRequest,
+    ContractType.STT_TRANSCRIPT: SttTranscript,
+    ContractType.SPEECH_VOICE: SpeechVoice,
 }

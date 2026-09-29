@@ -86,6 +86,10 @@
         "similarity"
       ],
       "additionalProperties": false
+    },
+    "cloudSpeechConsent": {
+      "type": "boolean",
+      "description": "true opts in to cloud speech (OpenAI; records the time); false revokes it (§A6.8)."
     }
   },
   "required": [],

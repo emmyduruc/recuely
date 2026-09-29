@@ -37,7 +37,7 @@ export async function updateSettings(
   patch: UpdateSettingsRequest,
 ): Promise<UserSettingsRow> {
   const current = await getOrCreateSettings(ds, userId);
-  return ds.getRepository(UserSettingsEntity).save(applySettingsPatch(current, patch));
+  return ds.getRepository(UserSettingsEntity).save(applySettingsPatch(current, patch, new Date()));
 }
 
 export async function listVoiceFavorites(ds: DataSource, userId: string): Promise<VoiceFavoriteRow[]> {

@@ -1,6 +1,6 @@
 # SPEC — Filming Assistant
 
-> Single source of truth for this project. Version **0.17.2** · Last updated 2026-09-28
+> Single source of truth for this project. Version **0.21.1** · Last updated 2026-09-28
 > Input brief: `product.md` (frozen). Repo rules for Claude Code: `CLAUDE.md`.
 > "Filming Assistant" is a placeholder name. Never use it in package names, identifiers, or branding.
 
@@ -292,6 +292,7 @@ interface CommandEvent { intent: Intent; args?: Record<string,string>; source: '
 | Nitro | `POST/GET /api/sessions/:id/takes`, `PATCH /api/takes/:id`, `DELETE /api/takes/:id?confirm=true`, `POST /api/takes/:id/restore` | Takes: create (JSON metadata), select, mark, soft delete, restore |
 | Nitro | `PUT /api/takes/:id/media`, `GET /api/takes/:id/media` | Media: raw body **streamed to disk** once (never overwritten); download with HTTP `Range` |
 | Nitro | `POST /api/sessions/:id/exports`, `GET /api/exports/:id` | Exports (entity + routes in Task 4; producing files in Task 17) |
+| Nitro | `POST /api/speech/tts`, `GET /api/speech/audio/:key`, `POST /api/speech/stt`, `GET /api/speech/voices` | Speech (§B12): synthesis (cached; OpenAI after consent, else local), cached audio with `Range`, per-take transcription (raw audio body; echoes sessionId/chunkId/seq), voices of both providers |
 | AI | `GET /v0/health` | Status of each capability + model versions |
 | AI | `GET /v0/tts/voices`, `POST /v0/tts`, `GET /v0/tts/audio/:key` | Voices, synthesis, cached audio |
 | AI | `POST /v0/stt` | Per-take transcription (echoes sessionId/chunkId/seq) |
@@ -330,6 +331,7 @@ Both HTTP services publish an OpenAPI document and Swagger UI. **An endpoint doe
 | Sessions | Recording session snapshots | Task 4 |
 | Takes | Recorded takes: upload, select, soft delete | Task 4 |
 | Exports | Per-take and stitched exports | Task 4/17 |
+| Speech | Assistant voice (TTS) and take transcription (STT): OpenAI after consent, else the local AI service | `/api/speech/*` (Task 10) |
 
 **Documentation standard (every operation):**
 1. `tags`: exactly one registered tag.
@@ -342,6 +344,11 @@ Both HTTP services publish an OpenAPI document and Swagger UI. **An endpoint doe
    - The success response has a `$ref` schema and an `example`.
    - Every applicable error response (`400`, `404`, `409`, `422`, `500`) references `ApiError`.
 8. Component schemas have a `description` on the schema **and on every property**. Enums list their values, and formats are set (`uuid`, `date-time`, `email`).
+
+**Every `/api` error is an `ApiError` (v0.21.0).** This includes requests no route handles:
+- An unknown path gets 404 `not_found` from the fallback `server/api/[...path].ts`, the only route file without a method suffix; the completeness checker knows it.
+- A documented path with the wrong method gets 405 `method_not_allowed` with an `Allow` header, from `server/middleware/api-methods.ts`, which checks the OpenAPI document.
+- Before this, both fell through to the page renderer, which answered in its own format (with a stack trace in dev).
 
 **Error shape** (all web API errors):
 
@@ -565,15 +572,23 @@ apps/web/i18n/locales/en.json   ← the only locale in R1; source of truth for k
 **Why:** the user prefers hosted models to running speech locally. Tasks 7–8 remain valid and become the **offline fallback**.
 
 **Shape**
-- **Server-side only.** The browser never talks to OpenAI and never sees the key. Nitro routes proxy TTS and STT: `POST /api/speech/tts` (chunk text, voice, rate → cached audio + timings) and `POST /api/speech/stt` (take audio → transcript + word timestamps). `OPENAI_API_KEY` lives only in the server environment (`.env`), is never logged, and never reaches responses or the client bundle.
+- **Server-side only.** The browser never talks to OpenAI and never sees the key. Nitro routes proxy TTS and STT: `POST /api/speech/tts` (chunk text, voice, rate → cached audio) and `POST /api/speech/stt` (take audio → transcript). `OPENAI_API_KEY` lives only in the server environment (`.env`), is never logged, and never reaches responses or the client bundle.
 - **Providers behind the existing interfaces** (§B3): `TTSProvider` / `STTProvider` get an OpenAI implementation (Nitro) and a local one (AI service). A `Record<SpeechProvider, …>` selects the provider per request. Default: OpenAI when the user has opted in and the network is up; otherwise local.
 - **Consent (§A6.8).** A one-time opt-in names exactly what is sent (chunk text for TTS; take audio for STT), to whom (OpenAI), and that it's needed for cloud voices and transcription. It's stored in `UserSettings`, shown in preflight and in the privacy statement (Task 21), and can be revoked. Until then, everything stays local.
-- **Word highlighting (§A6.4).** OpenAI TTS returns audio only. Timings are **derived** by transcribing the generated audio with word timestamps and aligning those words to the chunk (Task 6 aligner). `TtsResult.timingSource` gets a new value, `aligned`. If the alignment doesn't cover every chunk word, the chunk falls back to `chunk` highlighting. Nothing is interpolated.
+- **Word highlighting (§A6.4; user decision after Task 10a).** OpenAI TTS returns audio only. Derived timings (`whisper-1` word timestamps on the TTS audio) were measured at a median 90–100 ms and up to 560 ms off the audio (H-29 refuted), so **the cloud voice uses the `chunk` tier** (`timingSource: none`, `timings: null`). Word-level highlighting stays available with the local Kokoro voice (`word-provider`). No `aligned` timing source is added.
 - **Caching.** TTS audio is cached by (text, voice, rate, model) on local storage (`Storage`), so repeats and re-takes cost nothing and start instantly (§B7 target ≤ 150 ms).
 - **No dependency needed:** plain `fetch` to the REST API (no `openai` SDK) unless the spike shows a real need.
-- **Timeouts and failure:** the §B7 TTS 4 s / STT 5 s timeouts apply; on timeout, quota or network errors a request falls back to local, and the session engine's existing failure paths apply (`TTS_FAILED`, `EVAL_FAILED`).
+- **Timeouts and failure (Task 10a: 15% of TTS requests stalled > 30 s, one mid-stream):**
+  - Timeouts: server-side per OpenAI attempt, TTS first byte 2 s (successful requests all started within 1.19 s), a stall timeout while streaming (no bytes for 2 s), and STT 4 s. With one retry, the worst case before the local fallback stays around 4 s (TTS) and 8 s (STT). The client's §B7 timeouts are revisited in Task 13 against these budgets.
+  - One retry, then the local provider.
+  - The next chunk (N+1, and N+2 when idle) is prefetched while the creator records chunk N, and served from the cache.
+  - The engine's existing failure paths apply (`TTS_FAILED`, `EVAL_FAILED`).
 
-**Open until the Task 10a spike:** exact models (e.g. `gpt-4o-mini-tts` / `tts-1` for TTS; `whisper-1` for STT, since it offers word timestamps), latency, cost per session, and alignment accuracy (H-28–H-30).
+**Chosen in Task 10a** (`docs/measurements/openai-speech-2026-09-28.md`):
+- **TTS `gpt-4o-mini-tts`**, mp3, streamed: first byte p90 1.14 s, and `speed` works. About $0.015/min.
+- **STT `gpt-transcribe`**, never prompted with the chunk text: the same decisions as local `base.en` on all Task 8 fixtures, p90 1.01 s per take, silent on noise, $0.0045/min. `gpt-4o-mini-transcribe` ($0.003/min) is a configurable option; it had one 4.3 s outlier. `gpt-4o-transcribe` invented text on a noise-only clip.
+- **Cost:** ≈ $0.02–0.04 per 60-s script and ≈ $0.26–0.41 per 45-min session.
+- **Consent-text facts:** OpenAI doesn't train on API data. The speech endpoints keep no application state, and abuse-monitoring logs are retained for up to 30 days.
 
 ---
 
@@ -606,7 +621,8 @@ apps/web/i18n/locales/en.json   ← the only locale in R1; source of truth for k
   - Supabase exposes the `public` schema through its REST Data API, so every table (incl. `migrations`) gets **row-level security enabled with no policies**. That API's roles are denied; the app connects as the table owner, which bypasses RLS.
   - Connect timeout ≥ 15 s so a paused Supabase project or a Neon scale-to-zero cold start doesn't flake anything.
 - **Neon (dev):** the pooled or direct string both work for the app; use the direct one for `db:migrate`.
-- CI doesn't run `test:int` yet. When it does, it'll use a `DATABASE_URL_TEST` repository secret.
+- **E2E uses the same lifecycle (v0.18.0, Task 12):** `pnpm test:e2e` creates its own `it_*` schema on `DATABASE_URL_TEST`, seeds it, serves the built app on port 3100 against it (`tests/e2e/global-setup.ts`), and drops it afterwards, so UI flows that save (E1) run against a real database. Like `test:int`, it fails without `DATABASE_URL_TEST`.
+- CI doesn't run `test:int` or `test:e2e` with a database yet. When it does, it'll use a `DATABASE_URL_TEST` repository secret.
 
 **A mocked AI response does not prove a real recording flow works.** Any task touching capture, playback, or routing needs manual device evidence.
 
@@ -670,11 +686,12 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 7 | Spike: TTS (Kokoro timings & latency, browser boundary events) | DONE | 0 |
 | 8 | Spike: STT & VAD on the dev CPU | DONE | 0 |
 | 9 | Spike: browser capture, echo/settle, pre-roll, MIME, stitching | IN PROGRESS | 0 |
-| 10a | Spike: OpenAI speech (latency, cost, derived word timings, STT on the Task 8 fixtures) | TODO | 8 |
-| 10 | Speech providers v0: OpenAI via Nitro + local AI service fallback | TODO | 7, 8, 10a |
+| 10a | Spike: OpenAI speech (latency, cost, derived word timings, STT on the Task 8 fixtures) | DONE | 8 |
+| 10 | Cloud speech via Nitro (OpenAI TTS/STT, consent, cache, timeouts, fallback hook) | DONE | 4, 10a |
+| 10b | Local AI service fallback (Kokoro TTS + word timings, faster-whisper STT, real health) | IN PROGRESS | 7, 8, 10 |
 | 11 | Design system & app shell | DONE | 0 |
-| 12 | Script import & review UI | TODO | 4, 11 |
-| 13 | Media adapters & effect runner | TODO | 5, 9, 10 |
+| 12 | Script import & review UI | DONE | 4, 11 |
+| 13 | Media adapters & effect runner | TODO | 5, 9, 10, 10b |
 | 14 | Preflight UI | TODO | 13 |
 | 15 | Recording studio: Listen & Repeat | TODO | 13, 14 |
 | 16 | Voice commands wired | TODO | 6, 15 |
@@ -891,19 +908,96 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 **What:** Against the OpenAI API with the user's key: TTS latency to first byte / full audio for short, medium and long chunks; STT latency and decisions on the Task 8 fixtures (through the Task 6 matcher, as in `spikes/stt/score.ts`); word-timestamp alignment of TTS audio (start-time error against the audio, fraction of chunks fully aligned); cost per 60-s script and per 45-min session; data-retention terms to state in the privacy notice.
 **Tests:** scripted measurements → `docs/measurements/openai-speech-<date>.md`
 **Done when:**
-- [ ] Models chosen with numbers; H-28, H-29, H-30 updated
-- [ ] The privacy statement's facts (what is sent, retention) are written down with sources
+- [x] Models chosen with numbers; H-28, H-29, H-30 updated
+- [x] The privacy statement's facts (what is sent, retention) are written down with sources
 
-### Task 10 — Speech providers v0 (OpenAI via Nitro + local fallback)
+**Evidence (2026-09-28):** `docs/measurements/openai-speech-2026-09-28.md`, with raw data in `spikes/openai/results/` and `spikes/stt/results/stt-openai-*.json`. Only synthetic text and takes were sent.
+- **TTS:** 3 models × 3 lengths × mp3/wav × 3 runs, a speed check, and a 20-request tail test (17 succeeded with p90 1.14 s; 3 stalled past 30 s).
+- **STT:** 4 models × 50 Task 8 fixtures, scored with the app's matcher: 0 false advances for every model.
+- **Derived word timings:** 14 chunks × 3 voices. 12–13 of 14 chunks were fully aligned, but start errors had a median of 90–100 ms and a max of 560 ms, with only 25–36% within 50 ms.
+- **User decision:** chunk highlighting for the cloud voice.
 
-**What:** Nitro `POST /api/speech/tts` and `POST /api/speech/stt` (OpenAI; key server-side; cached TTS; derived word timings with `timingSource: aligned`; consent check), and the local AI service `/v0/health`, `/v0/tts/voices`, `/v0/tts` (Kokoro + timings), `/v0/stt` (faster-whisper) as the fallback; provider selection (consent + reachability); timeouts, cancellation on client disconnect, per-capability health. Every route documented to §B5.1 (web `/api/docs`; AI service `/docs`).
-**Why:** Gives the web app real voice and transcription providers, in the cloud by default after consent and local otherwise.
-**Tests:** Contract (responses validate against the shared fixtures) · Synthetic audio (STT on fixtures; TTS returns audio + timings) · Unit (cache key, timeout, cancellation)
+### Task 10 — Cloud speech via Nitro
+
+**What:** the OpenAI half of §B12, in `apps/web/server`, with the local AI service reached only through an HTTP contract (implemented for real in Task 10b):
+- **Routes (tag Speech, §B5.1):**
+  - `POST /api/speech/tts` `{text, voiceId?, rate?}` → `SpeechTtsResult`: `TtsResult` plus `provider`, `voiceId`, `cached`. `rate`/`voiceId` default to the user's settings.
+  - `GET /api/speech/audio/:key`: the cached audio, with `Range`.
+  - `POST /api/speech/stt?sessionId&chunkId&seq`: a raw audio body (≤ 25 MB) → `SpeechSttResult` (text, provider, echoed ids).
+  - `GET /api/speech/voices`: OpenAI and local voices.
+- **Provider choice:** OpenAI only if the user has consented (`UserSettings.cloudSpeechConsentAt`, set through `PATCH /api/me/settings {cloudSpeechConsent}`) and `OPENAI_API_KEY` is set. Otherwise the local AI service (`AI_SERVICE_URL`). If neither is available: 503 `speech_unavailable`.
+- **OpenAI calls:**
+  - TTS `gpt-4o-mini-tts`, mp3, `speed` = rate. STT `gpt-transcribe`, `language=en`, **never a prompt**.
+  - Plain `fetch`; the key is sent only in the `Authorization` header.
+  - The §B12 per-attempt timeouts (first byte 2 s, stall 2 s, STT 4 s) and one retry, then local.
+  - TTS audio is streamed from OpenAI straight into `Storage` (never buffered whole) under a key hashed from provider, model, voice, rate and text, with a metadata object beside it (duration from the mp3 frames).
+- **Health:** `GET /api/health` adds `speech: {openai, local}`. OpenAI: `unavailable` without a key, otherwise a cached 1 s probe. Local: the AI service's `/v0/health` with a 1 s timeout.
+- **The AI-service contract** (`/v0/tts`, `/v0/tts/audio/:key`, `/v0/stt`, `/v0/tts/voices`, `/v0/health`) is fixed in `packages/contracts` now; Task 10b implements it.
+
+**Why:** the creator gets fast cloud voices and transcription after an explicit opt-in, and the app keeps working when the cloud stalls.
+**Tests:**
+- **Unit:** cache key, mp3 duration, provider choice, timeout/stall/retry logic against scripted fake streams.
+- **Integration:** the built server against a fake OpenAI and a fake AI service (behaviour chosen per request), plus a per-run DB schema.
+- **Contract:** every response validates against its schema; completeness of the OpenAPI docs.
+- **Manual:** one real call each for TTS and STT with the user's key and consent.
 **Done when:**
-- [ ] `pnpm --filter ai test` green; the health endpoints reflect real provider status (OpenAI reachable / key present; local models loaded)
-- [ ] A second identical TTS request is served from cache (both providers)
-- [ ] Without consent, no request reaches OpenAI (test)
-- [ ] The key never appears in responses, logs or the client bundle (test)
+- [x] Without consent, no request reaches OpenAI (test)
+- [x] A second identical TTS request is served from cache and makes no upstream call (test)
+- [x] A stalled (before or during the stream), failing or rate-limited OpenAI request is retried once and then served by the local provider (test)
+- [x] The key never appears in responses, server logs, or the client bundle/page (test)
+- [x] `/api/health` reports both speech providers; `/api/docs` documents the Speech routes
+
+**How it's built:**
+- **Contracts:** `SpeechProvider`, `TtsRequest`, `SpeechTtsResult`, `SttTranscript`, `SpeechSttResult`, `SpeechVoice`, `SpeechLimits`, `AiCapabilityStatus`; `ApiErrorCode.SpeechUnavailable` and `MethodNotAllowed`. `TtsRequest`, `SttTranscript` and `SpeechVoice` are shared with Python (Pydantic mirrors; the drift tests cover them).
+- **Consent:** `UserSettings.cloudSpeechConsentAt` (migration `CloudSpeechConsent1727308800000`, a nullable column), set by `PATCH /api/me/settings {cloudSpeechConsent}`. The first consent's time is kept; `false` clears it.
+- **`server/utils/speech/`:**
+  - `config` (env: `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_TTS_MODEL`, `OPENAI_STT_MODEL`, `AI_SERVICE_URL`, per-attempt timeouts). The key is not in `runtimeConfig`, so it can't reach the client.
+  - `openai`: plain `fetch`. TTS asks for mp3 with `speed` = rate; STT is multipart with `language=en` and no prompt.
+  - `guarded-stream`: first-byte and stall deadlines, measured from the request start; on failure it aborts the upstream and cancels the reader.
+  - `local`: the `/v0` client; every response is validated against the contracts, and audio is fetched only from the service's own `/v0/` paths.
+  - `cache`: write-once `speech/<sha256>.audio` + `.json` in `Storage`. A concurrent identical request counts as success, and a failed stream leaves no clip.
+  - `mp3`: duration from the frame headers; it matches `afinfo` on a real OpenAI clip.
+  - `service`: provider order by consent and key, `Record<SpeechProvider, …>` dispatch, and one retry for transient failures only (not for a bad key or a rejected request). Failures are logged by kind only, and the 503 `details` names each provider's failure.
+- **Health:** OpenAI health never calls OpenAI: `unavailable` without a key, `degraded` after a failure in the last minute. The local health reads `/v0/health` with a 1 s timeout.
+- **Routes:** `POST /api/speech/tts`, `GET /api/speech/audio/:key` (Range, through the shared `sendStoredObject`, which the take media route now also uses), `POST /api/speech/stt` (415/413/422 checks), `GET /api/speech/voices`, and the Speech tag in the docs.
+
+**Evidence (2026-09-29):**
+- `pnpm typecheck` 9/9 · `pnpm lint` 9/9 (0 warnings; ruff + pyright strict 0).
+- `pnpm test`: contracts 193, db 37, script-model 144, session-engine 343, ui 17, **web 54** (+16: mp3 incl. the real clip, guarded stream, provider choice, cache key, voices, retry incl. no retry on a bad key, config, the `/api` fallback), **ai 96** (+21 fixture/drift cases), media-adapters 1.
+- `pnpm test:int`: db 26 (the migration round trip includes the consent column), **web 39** (+15 against a fake OpenAI and a fake AI service):
+  - no OpenAI call without consent
+  - consent stored and revoked
+  - the exact OpenAI request (model, voice, speed, mp3, auth), duration, chunk highlight, Range, and a cached repeat with no upstream call
+  - no first byte, a stall mid-stream, a 500 and a 429 each retried once and then local, all within 3 s
+  - a flaky first attempt succeeding on retry
+  - 503 with per-provider details
+  - STT without a prompt, in English, echoing ids, falling back to local
+  - 415/413/422 checks
+  - voices and health
+  - 404/405 ApiErrors
+  - the key absent from responses, pages, the server log (even when OpenAI echoes it) and `.output/public`
+- `pnpm build` ✓ · `pnpm test:e2e` 13/13.
+- **Real check (the user's key, consent simulated in context, not in the DB):**
+  - TTS "Here it is, finally. Let us open it together." → OpenAI, 1.38 s to a fully cached clip, 3,864 ms of audio (by the frame count); an identical repeat was served from the cache in 1 ms.
+  - STT on the Task 8 clip → "Welcome back to the channel, everyone." in 0.81 s, with `chunkId`/`seq` echoed.
+- **Found while checking the dev server (fixed):**
+  - Unknown `/api` paths and wrong methods returned the page renderer's error JSON with a stack trace. Now they return `ApiError` 404/405.
+  - The Neon dev DB lacked the new column (`/api/me/settings` → 500); `pnpm db:migrate` applied it.
+  - A dev server started before `OPENAI_API_KEY` was added doesn't see the key until it's restarted.
+
+### Task 10b — Local AI service fallback
+
+**What:** `apps/ai` implements the Task 10 contract for real:
+- Kokoro-82M through kokoro-onnx, the timestamped fp32 export, voice `af_heart` by default. Word start times come from phoneme durations mapped onto script words (Task 7); when the mapping doesn't add up, `timingSource: none`.
+- faster-whisper `base.en` int8, greedy, no prompt (Task 8).
+- A disk cache for TTS audio.
+- `/v0/health` reports real model status (loading → available). Models load from `models/` at startup.
+- Cancellation on client disconnect. Every route documented in `/docs` (tags Health, TTS, STT).
+**Tests:** pytest with injected fake engines (default `pnpm --filter ai test`), plus `test:models` with the real models (TTS returns audio and timings for the E1 lines; STT on the Task 8 fixtures); contract (responses validate against the shared schemas).
+**Done when:**
+- [ ] `pnpm --filter ai test` green; the health endpoint reflects real model status
+- [ ] With consent off, the web app reads and transcribes through the local service end to end (manual)
+- [ ] A second identical TTS request is served from the AI service's cache
 
 ### Task 11 — Design system & app shell
 
@@ -933,7 +1027,42 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 **Why:** The creator must trust that what will be read is exactly what they wrote.
 **Tests:** E2E (E1 through the UI; keyboard-only boundary editing) · Integration (saved plan round-trips)
 **Done when:**
-- [ ] E1 green in Playwright; screenshots at 4 widths
+- [x] E1 green in Playwright; screenshots at 4 widths (`docs/screenshots/task-12/import-<width>.png`)
+
+**How it's built:**
+- **`/import`** (`apps/web/app/pages/import.vue`), linked from the header and the projects page:
+  - project title and paste area; blocks re-parse 150 ms after typing stops, and `reconcileBlockIds` keeps the user's re-typing on unchanged blocks
+  - block list with a type chip per block (a native select: spoken, heading, note, scene cue)
+  - per-table spoken-column picker (`tablesOf` / `setSpokenColumn`; header cells stay headings, the others become notes)
+  - chunk-size radio group (short, sentence, paragraph, smart)
+  - a live coverage pill (`checkCoverage`) and a chunk and word count
+  - save is disabled until there's a title, at least one chunk and zero coverage issues
+- **ChunkEditor** (`app/components/script/ChunkEditor.vue`):
+  - Mouse: click a word to split before it; drag a boundary handle onto a word to move the boundary (`moveBoundary`); use the merge button (`mergeWithNext`).
+  - Keyboard: every chunk and boundary is a tab stop. On a boundary, ↑/← and ↓/→ move it one word (`nudgeBoundary`, new in script-model), and Delete/Backspace merges. On a chunk, Enter starts split mode (arrow keys pick the word, Enter splits, Escape cancels). After an edit, focus returns to the same position.
+  - A refused edit (e.g. emptying a neighbour) leaves the plan unchanged and announces why (`Record<ScriptEditError, MessageKey>`, `aria-live`).
+  - Words and the gaps between them come from the block text (`chunkWords`) and are rendered with `v-text`, so the rendered text is the chunk text verbatim.
+- **Re-segmenting:** changing the text, a block type or the chunk size re-segments and discards boundary edits (stated on the page).
+- **Save:** `POST /api/projects` → `POST /api/projects/:id/scripts` (types + ranges only, `blockInputs`) → `POST /api/scripts/:id/chunk-plans` (ranges only; the server's block ids are mapped by block order, `planInputs`). The server rebuilds all text and checks coverage again. API errors are shown as `Record<ApiErrorCode, MessageKey>` → `errors.*`; with no response, `errors.network`.
+- **Projects page:** lists real projects (`GET /api/projects`) with a localized updated date (`Intl`, via `useLocaleTag()`), plus an empty state and an error state.
+- **Contracts:** `KeyboardKey` (§B10 R3 for key handling).
+- **script-model:** `nudgeBoundary`/`BoundaryStep`, `tablesOf`, `setSpokenColumn`; `wordsIn` is exported.
+- **Type safety:** `vueCompilerOptions.checkUnknownComponents` is on, so a misnamed component is a type error. It caught this task's first bug: a component rendered nothing because Nuxt prefixes components in sub-folders (`ScriptChunkEditor`).
+- **E2E against a real database** (§C1.1).
+
+**Evidence (2026-09-28):**
+- `pnpm typecheck` 9/9 and `pnpm lint` 9/9 (0 warnings).
+- `pnpm test`: contracts 164, db 36, script-model 144, session-engine 343, ui 17, web 38, ai 75, media-adapters 1.
+  - script-model +6: nudge (incl. a 1,000-run coverage property) and the column picker.
+  - web +3: `chunkWords` rebuilds chunk text verbatim across a merge; block and plan inputs carry no text and map ids by order.
+- `pnpm test:int`: db 26, web 24 (+1 **plan round-trip**: column picker, split, move, nudge and merge in the model, then save; the stored text, spokenText, scene cues and range positions equal the edited plan, and the re-typed blocks are stored).
+- `pnpm build` ✓.
+- `pnpm test:e2e` 13/13 (+4):
+  - **T12-E1** through the UI: 17 typed blocks, sentence chunks, mark a table note spoken, split by click, move by drag, merge across a paragraph break, save; the saved plan equals the UI, and its wording equals the spoken blocks.
+  - The column picker switches the column that's read.
+  - **Keyboard-only editing:** Tab to the title, the source and a boundary; arrows move it (and are refused at the limit); Delete merges; Enter/arrows/Enter split; Escape cancels.
+  - No horizontal scroll from 320 px, plus the 4 screenshots.
+- **Screenshot note:** the Save bar is `sticky` at the bottom of the chunk column, so in full-page screenshots it appears where the first viewport ended.
 
 ### Task 13 — Media adapters & effect runner
 
@@ -1030,9 +1159,9 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | H-22 | Supabase (session pooler, eu-west-1) keeps `pnpm test:int` under 60 s, and Neon keeps dev API calls responsive, from this machine | Task 1 | **Validated**: 45 s incl. build (Supabase transaction pooler works too); Neon cold start ≈ 3.4 s on first connect only |
 | H-26 | The `short`/`smart` word budgets (8 / 16, merge < 6 up to 12) give natural repeat-after chunks | Task 19 | Open |
 | H-27 | With the settle time and echo cancellation, no assistant residual reaches a take in A1 (a -20 dB residual is transcribed as the chunk and would advance a silent take) | Task 9 | Open |
-| H-28 | OpenAI TTS starts audio for a short chunk in ≤ 1.2 s from this network (uncached) | Task 10a | Open |
-| H-29 | Word timings derived by aligning OpenAI STT word timestamps on the TTS audio are within ≤ 50 ms of word onsets for most chunks | Task 10a | Open |
-| H-30 | Cloud speech costs stay small for a solo creator (target to set from the 10a numbers: 60-s script and a 45-min session) | Task 10a | Open |
+| H-28 | OpenAI TTS starts audio for a short chunk in ≤ 1.2 s from this network (uncached) | Task 10a | **Validated with a caveat**: `gpt-4o-mini-tts` mp3 first byte p90 1.14 s, max 1.19 s over successful requests; 15% of requests stalled > 30 s, so timeouts, retry, prefetch and fallback are required (§B12) |
+| H-29 | Word timings derived by aligning OpenAI STT word timestamps on the TTS audio are within ≤ 50 ms of word onsets for most chunks | Task 10a | **Refuted**: `whisper-1` starts are a median 90–100 ms off (max 560 ms, both directions), with only 25–36% within 50 ms; the cloud voice uses chunk highlighting (user decision) |
+| H-30 | Cloud speech costs stay small for a solo creator (target to set from the 10a numbers: 60-s script and a 45-min session) | Task 10a | **Validated**: ≈ $0.02–0.04 per 60-s script, ≈ $0.26–0.41 per 45-min session (list prices) |
 | H-21 | Nitro's experimental OpenAPI generator (`defineRouteMeta` + `$global` components) can meet the §B5.1 standard; else fall back to a hand-written typed document | Task 1 | **Refuted** (nitropack 2.13.4: no top-level tags, fixed `servers`) → fallback |
 
 **Decisions needed from the user:**
@@ -1054,6 +1183,13 @@ Status values: `TODO` · `IN PROGRESS` · `AWAITING CONFIRMATION` · `DONE` · `
 | 0.3.0 | 2026-09-23 | Added §B10 code standards: zero TS/lint errors, named constants instead of string-literal comparisons, Record lookups instead of nested ternaries; wired into Task 0 and the D0 gate |
 | 0.3.1 | 2026-09-24 | Task 0 implemented; TypeScript pinned to 6.0.x; PostgreSQL/ffmpeg install moved to Tasks 1/9 (Homebrew dropped Intel); dependency register updated |
 | 0.3.2 | 2026-09-24 | Task 0 confirmed by user → DONE |
+| 0.21.1 | 2026-09-29 | Task 10 confirmed by the user → DONE; Task 10b started |
+| 0.21.0 | 2026-09-29 | Task 10 implemented (awaiting confirmation): Speech routes, consent column + migration, OpenAI client with first-byte/stall deadlines and a transient-only retry, local `/v0` client, write-once speech cache, mp3 duration, speech health; **§B5.1: every `/api` error is an `ApiError`** (404 fallback route, 405 + `Allow` middleware), `ApiErrorCode.SpeechUnavailable`/`MethodNotAllowed`; Speech tag |
+| 0.20.0 | 2026-09-28 | **Task 10 split (user decision):** Task 10 = cloud speech via Nitro (routes, consent, cache, per-attempt timeouts + retry + local fallback hook, health); new Task 10b = the local AI service fallback (Kokoro, faster-whisper, real health); Task 13 depends on 10b. §B12 per-attempt budget: TTS first byte 2 s, stall 2 s, STT 4 s, one retry. §B5 lists the Speech routes |
+| 0.19.1 | 2026-09-28 | Task 10a confirmed by the user → DONE; Task 10 started |
+| 0.19.0 | 2026-09-28 | Task 10a spike done (awaiting confirmation): `gpt-4o-mini-tts` + `gpt-transcribe` chosen; H-28 validated with a stall caveat, H-29 refuted, H-30 validated; **user decision: the cloud voice uses chunk highlighting** (no `aligned` timing source); §B12 adds stall timeout, retry and N+1/N+2 prefetch; consent-text facts with sources; Task 10 scope updated |
+| 0.18.1 | 2026-09-28 | Task 12 confirmed by the user → DONE |
+| 0.18.0 | 2026-09-28 | Task 12 implemented (awaiting confirmation): `/import` review UI (type chips, table column picker, chunk size, click/drag/keyboard boundary editing, live coverage, save via the Task 4 API), projects list; script-model `nudgeBoundary`/`tablesOf`/`setSpokenColumn`; contracts `KeyboardKey`; **§C1.1: E2E now runs against a per-run test schema** (needs `DATABASE_URL_TEST`); `checkUnknownComponents` on in the web typecheck |
 | 0.17.2 | 2026-09-28 | Task 11 confirmed by the user → DONE |
 | 0.17.1 | 2026-09-28 | Task 11 implemented (awaiting confirmation): `packages/ui` Nuxt layer (tokens, theme mapping, props-only status components), i18n setup with typed keys, app shell, `/_design`; §B8: @nuxtjs/i18n approved, @iconify-json/lucide and @vitejs/plugin-vue added; contrast and raw-hex checks run as unit tests |
 | 0.17.0 | 2026-09-28 | **Cloud speech (user decision):** OpenAI TTS + STT through Nitro (key server-side, explicit opt-in per §A6.8, cached TTS, derived word timings `timingSource: aligned`), with the Kokoro/faster-whisper AI service kept as the offline/no-consent fallback; new §B12; hosted AI / paid APIs allowed for OpenAI speech only; new Task 10a spike; Task 10 renamed to speech providers v0; H-28–H-30; open decision 6 resolved, 7 added (API key) |
